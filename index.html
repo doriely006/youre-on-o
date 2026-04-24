@@ -1,0 +1,242 @@
+const lineChars=[{name:'Andy',avatar:'😎',s:0},{name:'Anna',avatar:'🙂',s:1},{name:'Allan',avatar:'🧔',s:2},{name:'Amy',avatar:'👩',s:3}];
+const linePool={
+0:[[['欸你那個{cat}','本週{pct}%','你是在跟我開玩笑嗎']],[['親愛的','我看了你{cat}的數據','{pct}%','我是為你好才說的']],[['你的{cat}','本週{pct}%','這不是偷懶','這是放棄']],[['哎唷{cat}才{pct}%','你是不是都在滑手機','阿姨跟你說這樣不行']]],
+1:[[['你{cat}本週{pct}%','有做','但不多','跟你的決心一樣']],[['我看到你{cat}有在努力耶','但{pct}%','這個努力有點小聲']],[['{cat}{pct}%','不上不下','最危險','因為你會覺得還行']],[['你{cat}才{pct}%','還敢記錄喔','臉皮比我還厚']]],
+2:[[['你{cat}本週{pct}%','半半','不好不壞','就像溫開水']],[['{cat}{pct}%耶','有進步','吧','我也不確定']],[['{cat}{pct}%','半桶水最容易晃','你習慣了？']],[['{cat}{pct}%','哎唷','做一半也好意思記錄']]],
+3:[[['你{cat}{pct}%','不錯','真心的','但你可以更好']],[['{cat}{pct}%','我好感動','終於看到你認真','不確定能持續多久']],[['{cat}{pct}%','行','這個數字我看了點頭','小幅度的']],[['哎唷{cat}{pct}%','不錯嘛','今天是吃了什麼變認真了']]],
+4:[[['你{cat}本週{pct}%','強','差那一點是在等什麼']],[['{cat}{pct}%','好厲害','差一點就滿了','雖然還是沒滿']],[['{cat}{pct}%','嗯','這個我認可','去收尾吧']],[['哎唷{cat}{pct}%了','阿姨都替你緊張','趕快去']]],
+5:[[['你{cat}本週100%','可以','終於','你做到了']],[['{cat}100%??','你認真的嗎','你終於長大了']],[['你{cat}100%','嗯','就是這樣','繼續']],[['哎唷{cat}100%！','阿姨的眼睛有問題嗎','真的耶！']]]
+};
+
+const finPool=[
+'「{cat}」本週重挫，僅收{pct}%|持有人投入{hrs}小時，市場質疑是否仍在營運',
+'「{cat}」低迷盤整，本週收{pct}%|技術面呈現死亡交叉，投資人信心疲弱',
+'「{cat}」平盤震盪，本週{pct}%乏善可陳|不上不下讓分析師陷入沉默',
+'「{cat}」穩步走高，本週收{pct}%|投資人信心回溫，惟仍未觸及前高',
+'「{cat}」強勢攻頂{pct}%，距歷史高點僅一步|全市場屏息以待',
+'「{cat}」漲停鎖死！本週100%達成|全場鼓掌。惟市場擔心是否為一日行情'
+];
+const pttUsers=['嘴砲王','厭世工程師','路過鄉民','酸民代表','深夜觀眾','鍵盤分析師','佛系青年','認真魔人'];
+
+const genComment=(cats,recs,submittedCatIds)=>{
+if(!submittedCatIds||submittedCatIds.length===0)return null;
+const catId=pick(submittedCatIds);
+const cat=cats.find(c=>c.id===catId);
+if(!cat)return null;
+const t=todayS(),wd=weekDates(t);
+const hrs=recs.filter(r=>r.categoryId===catId&&wd.includes(r.date)).reduce((s,r)=>s+r.hours,0);
+const goal=cat.weeklyGoalHours;
+const pct=goal>0?Math.round(hrs/goal100):0;
+const ti=tierN(pct);
+const v={cat:cat.name,pct,hrs:Math.round(hrs10)/10,gap:Math.max(0,Math.round((goal-hrs)*10)/10)};
+const rand=Math.random();
+if(rand<0.5){const raw=pick(pttPool[ti]);const idx=raw.indexOf('|');return{type:'ptt',tp:raw.slice(0,idx),text:fill(raw.slice(idx+1),v),user:pick(pttUsers)}}
+else if(rand<0.9){const ch=pick(lineChars);const msgs=pick(linePool[ti][ch.s]);return{type:'line',char:ch,msgs:msgs.map(m=>fill(m,v)),time:${8+Math.floor(Math.random()*14)}:${String(Math.floor(Math.random()*60)).padStart(2,'0')}}}
+else{const raw=finPool[ti];const idx=raw.indexOf('|');return{type:'fin',headline:fill(raw.slice(0,idx),v),body:fill(raw.slice(idx+1),v)}}
+};
+
+// Ring Component
+function Ring({size,tPct,wPct,mPct,label,onClick,selected}){
+const r1=size/2-4,r2=size/2-12,r3=size/2-20;
+const cx=size/2,cy=size/2;
+const arc=(r,pct)=>{const p=Math.min(pct,100)/100;if(p<=0)return'';if(p>=1){returnM${cx},${cy-r} A${r},${r} 0 1,1 ${cx-0.01},${cy-r} A${r},${r} 0 1,1 ${cx},${cy-r}}const a=p2Math.PI-Math.PI/2;const x=cx+rMath.cos(a-Math.PI/2);const y=cy+rMath.sin(a-Math.PI/2);const lg=p>0.5?1:0;returnM${cx},${cy-r} A${r},${r} 0 ${lg},1 ${x},${y}};
+const isGlow=tPct>=100||wPct>=100||mPct>=100;
+return(
+
+{wPct}%
+{mPct}%
+{tPct}%
+{label}
+);}
+function CommentOverlay({comment:cm,onClose}){
+return(<div onClick={onClose} style={{position:'fixed',inset:0,background:'rgba(0,0,0,.85)',zIndex:100,display:'flex',alignItems:'center',justifyContent:'center',padding:20}}>
+
+e.stopPropagation()} style={{width:'100%',maxWidth:380}} className="fade-in"> {cm.type==='ptt'&&
+批踢踢實業坊看板 LifeTracker
+{cm.tp}{cm.user}:{cm.text}
+{[['推',Math.floor(Math.random()*30+5)],['噓',Math.floor(Math.random()*10)],['→',Math.floor(Math.random()*20)]].map(([t,n],i)=>{t} {n})}
+} {cm.type==='line'&&
+{cm.char.avatar}{cm.char.name}
+{cm.msgs.map((m,i)=>
+{m}
+)}
+{cm.time}已讀
+} {cm.type==='fin'&&
+LIFE FINANCIAL TIMES
+{cm.headline}
+{cm.body}
+
+}
+點任意處關閉
+
+)}
+function App(){
+const[data,setData]=useState(()=>load()||init());
+const[page,setPage]=useState('dashboard');
+const[comment,setComment]=useState(null);
+useEffect(()=>{save(data)},[data]);
+const up=useCallback(fn=>setData(p=>{const n={...p,categories:[...p.categories],records:[...p.records]};fn(n);return n}),[]);
+const trigCmt=useCallback((catIds)=>{if(data.categories.length===0)return;const c=genComment(data.categories,data.records,catIds);if(c)setComment(c)},[data]);
+if(!data.setupDone)return ;
+return(<div style={{maxWidth:430,margin:'0 auto',minHeight:'100vh',background:'#0a0a0a',fontFamily:"'Noto Sans TC',sans-serif",color:'#fff',paddingBottom:70}}>
+{page==='dashboard'&&}
+{page==='record'&&}
+{page==='settings'&&}
+{comment&&<CommentOverlay comment={comment} onClose={()=>setComment(null)}/>}
+
+{[['dashboard','📊','主頁'],['record','✏️','記錄'],['settings','⚙️','設定']].map(([id,ic,lb])=> setPage(id)} style={{flex:1,padding:'10px 0 8px',background:'none',border:'none',cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',gap:2}}> {ic}{lb})}
+)}
+function Setup({up}){
+const[cats,setCats]=useState([{name:'工作',h:20},{name:'運動',h:5},{name:'副業',h:10},{name:'股票研究',h:5},{name:'學習',h:5}]);
+const[nc,setNc]=useState('');
+const tot=cats.reduce((s,c)=>s+c.h,0);
+return(<div style={{maxWidth:430,margin:'0 auto',minHeight:'100vh',background:'#0a0a0a',padding:24,fontFamily:"'Noto Sans TC',sans-serif",color:'#fff'}}>
+
+YOU'RE ON
+數字不會說謊
+
+設定你的 categories 和每週目標時數：
+
+{cats.map((c,i)=>
+{c.name} setCats(cats.map((x,j)=>j===i?{...x,h:Math.max(1,x.h-1)}:x))} style={bSm}>− {c.h}h setCats(cats.map((x,j)=>j===i?{...x,h:x.h+1}:x))} style={bSm}>+ setCats(cats.filter((_,j)=>j!==i))}>×
+)}
+{nc}
+setNc(e.target.value)} placeholder="新增 category" onKeyDown={e=>{if(e.key==='Enter'&&nc.trim()){setCats([...cats,{name:nc.trim(),h:5}]);setNc('')}}} style={{flex:1,padding:'10px 14px',background:'#141414',border:'1px solid #222',borderRadius:8,color:'#fff',fontSize:14,outline:'none'}}/> {if(nc.trim()){setCats([...cats,{name:nc.trim(),h:5}]);setNc('')}}} style={{padding:'10px 16px',background:'#FF2D20',border:'none',borderRadius:8,color:'#fff',fontSize:14,cursor:'pointer'}}>新增
+每週總時數{tot}h
+{cats.map((c,i)=>
+{c.name}{tot>0?Math.round(c.h/tot*100):0}%
+)}
+up(d=>{d.categories=cats.map((c,i)=>({id:`c${Date.now()}_${i}`,name:c.name,weeklyGoalHours:c.h}));d.setupDone=true})} disabled={!cats.length} style={{width:'100%',padding:16,background:cats.length?'#FF2D20':'#555',border:'none',borderRadius:12,color:'#fff',fontSize:18,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:2,cursor:cats.length?'pointer':'default'}}>START TRACKING)}
+const bSm={width:32,height:32,background:'#141414',border:'1px solid #222',color:'#fff',borderRadius:8,fontSize:18,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'};
+
+function Dash({data}){
+const t=todayS(),wd=weekDates(t),md=monthDates(t);
+const dow=dayOfWeek(t),dom=dayOfMonth(t),dim_=daysInMonth(t);
+const twg=data.categories.reduce((s,c)=>s+c.weeklyGoalHours,0);
+const hrs=(cid,ds)=>data.records.filter(r=>r.categoryId===cid&&ds.includes(r.date)).reduce((s,r)=>s+r.hours,0);
+const allH=ds=>data.records.filter(r=>ds.includes(r.date)).reduce((s,r)=>s+r.hours,0);
+const tH=allH([t]),wH=allH(wd),mH=allH(md);
+const tP=twg>0?Math.round(tH/(twg/7)100):0;
+const wP=twg>0?Math.round(wH/twg100):0;
+const mP=twg>0?Math.round(mH/(twg/7*dim_)*100):0;
+const[sel,setSel]=useState(null);
+
+const catData=data.categories.map(cat=>{
+const tHrs=hrs(cat.id,[t]),wHrs=hrs(cat.id,wd),mHrs=hrs(cat.id,md);
+const tG=cat.weeklyGoalHours/7,wG=cat.weeklyGoalHours,mG=cat.weeklyGoalHours/7dim_;
+return{cat,tPct:tG>0?Math.round(tHrs/tG100):0,wPct:wG>0?Math.round(wHrs/wG100):0,mPct:mG>0?Math.round(mHrs/mG100):0,tHrs,wHrs,mHrs,tG,wG,mG}});
+
+const selData=sel!==null?catData.find(d=>d.cat.id===sel):null;
+
+return(<div style={{padding:'0 16px',height:'calc(100vh - 70px)',display:'flex',flexDirection:'column'}}>
+{/* Cinema Screen */}
+
+{/* Screen glow effect */}
+YOU'RE ON
+數字不會說謊
+
+{[['今日',tP,tH],['本週',wP,wH],['本月',mP,mH]].map(([l,p,h],i)=>
+{l}
+{p}%
+{Math.round(h*10)/10}h
+)}
+📅 第{dow}/7天 📅 第{dom}/{dim_}天
+{/* Audience silhouettes */}
+{[14,18,12,20,16,10,18,14,20,12,16,18,14,20,16,12,18,14,16,20,12].map((h,i)=>
+0?-2:0}}/>)}
+{/* Ring Legend */}
+
+{[['#FF2D20','月'],['#FF9F0A','週'],['#30D158','日']].map(([c,l],i)=>
+{l}
+)}
+{/* Category Rings */}
+
+{catData.map(d=>setSel(sel===d.cat.id?null:d.cat.id)}/>)}
+{/* Expanded Detail */}
+{selData&&<div className="fade-in" style={{background:'#141414',borderRadius:12,padding:14,margin:'6px 0',border:'1px solid #222'}}>
+
+{selData.cat.name} {selData.cat.weeklyGoalHours}h/wk
+{[['今日',selData.tPct,selData.tHrs,selData.tG,'#30D158'],['本週',selData.wPct,selData.wHrs,selData.wG,'#FF9F0A'],['本月',selData.mPct,selData.mHrs,selData.mG,'#FF2D20']].map(([l,p,h,g,c],i)=>
+{l} {p}%
+{Math.round(h*10)/10}/{Math.round(g*10)/10}h
+)}
+}
+{/* Actual vs Goal - compact */}
+{!selData&&<div style={{background:'#141414',borderRadius:12,padding:12,margin:'6px 0',border:'1px solid #222'}}>
+
+{['','目標','實際','差距'].map((h,i)=>{h})}
+{data.categories.map(cat=>{ const gP=twg>0?Math.round(cat.weeklyGoalHours/twg*100):0; const aH=data.records.filter(r=>r.categoryId===cat.id).reduce((s,r)=>s+r.hours,0); const totH=data.records.reduce((s,r)=>s+r.hours,0); const aP=totH>0?Math.round(aH/totH*100):0; const diff=aP-gP; return(
+{cat.name} {gP}% {aP}% =0?'#30D158':'#FF2D20'}}>{diff>0?'+':''}{diff}%
+)})}
+}
+)}
+function Rec({data,up,trig}){
+const[date,setDate]=useState(todayS());
+const[catId,setCatId]=useState(data.categories.length>0?data.categories[0].id:'');
+const[hrs,setHrs]=useState('');
+const[saved,setSaved]=useState(false);
+const[todayLog,setTodayLog]=useState([]);
+
+useEffect(()=>{
+const logs=[];
+data.categories.forEach(c=>{
+const h=data.records.filter(r=>r.categoryId===c.id&&r.date===date).reduce((s,r)=>s+r.hours,0);
+if(h>0)logs.push({name:c.name,hours:h})});
+setTodayLog(logs)},[data.records,date,data.categories]);
+
+const submit=()=>{
+const h=parseFloat(hrs);if(!h||h<=0||!catId)return;
+up(d=>{d.records.push({categoryId:catId,date,hours:h,ts:Date.now()})});
+const submittedId=catId;
+setHrs('');setSaved(true);
+setTimeout(()=>{setSaved(false);trig([submittedId])},600)};
+
+return(
+
+RECORD
+日期 
+ 年 /月/日
+setDate(e.target.value)} style={{width:'100%',padding:'10px 14px',background:'#141414',border:'1px solid #222',borderRadius:8,color:'#fff',fontSize:16,outline:'none',boxSizing:'border-box'}}/>
+Category
+
+{c.name} — 目標 {c.weeklyGoalHours}h/wk
+▼
+時數
+0
+setHrs(e.target.value)} style={{flex:1,padding:'14px',background:'#0f0f0f',border:'1px solid #222',borderRadius:8,color:'#fff',fontSize:28,fontFamily:"'Bebas Neue',sans-serif",outline:'none',textAlign:'center'}}/> 小時
+{[0.5,1,1.5,2,3,4].map(v=> setHrs(String(v))} style={{flex:1,padding:'8px 0',borderRadius:6,fontSize:14,fontFamily:"'Bebas Neue',sans-serif",cursor:'pointer',background:parseFloat(hrs)===v?'#FF2D20':'#1a1a1a',border:`1px solid ${parseFloat(hrs)===v?'#FF2D20':'#222'}`,color:parseFloat(hrs)===v?'#fff':'#888'}}> {v}h)}
+{todayLog.length>0&&<div style={{background:'#141414',borderRadius:12,padding:12,marginBottom:16,border:'1px solid #222'}}>
+
+{date===todayS()?'今日':'該日'}已記錄
+
+{todayLog.map((l,i)=>{l.name} {l.hours}h)}
+}
+<button onClick={submit}
+style={{width:'100%',padding:16,background:saved?'#30D158':'#FF2D20',border:'none',borderRadius:12,color:'#fff',fontSize:18,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:2,cursor:'pointer',transition:'background .3s'}}>
+{saved?'✓ SAVED':'SUBMIT'}
+
+)}
+function Settings({data,up}){
+const[nc,setNc]=useState('');
+const[nh,setNh]=useState(5);
+const twg=data.categories.reduce((s,c)=>s+c.weeklyGoalHours,0);
+return(
+
+SETTINGS
+ULTIMATE GOALS
+{data.categories.map(cat=>
+{cat.name} up(d=>{const c=d.categories.find(x=>x.id===cat.id);if(c)c.weeklyGoalHours=Math.max(1,c.weeklyGoalHours-1)})}>− {cat.weeklyGoalHours}h up(d=>{const c=d.categories.find(x=>x.id===cat.id);if(c)c.weeklyGoalHours++})}>+ {twg>0?Math.round(cat.weeklyGoalHours/twg*100):0}% {if(confirm('刪除 '+cat.name+'？'))up(d=>{d.categories=d.categories.filter(x=>x.id!==cat.id)})}} style={{background:'transparent',border:'none',color:'#FF2D20',fontSize:16,cursor:'pointer'}}>×
+)}
+新增 Category
+
+{nc}
+setNc(e.target.value)} placeholder="名稱" style={{flex:1,padding:'10px 12px',background:'#0f0f0f',border:'1px solid #222',borderRadius:8,color:'#fff',fontSize:14,outline:'none'}}/> setNh(Math.max(1,nh-1))}>− {nh}h setNh(nh+1)}>+ {if(nc.trim()){up(d=>{d.categories.push({id:`c${Date.now()}`,name:nc.trim(),weeklyGoalHours:nh})});setNc('');setNh(5)}}} style={{padding:'8px 14px',background:'#FF2D20',border:'none',borderRadius:8,color:'#fff',fontSize:13,cursor:'pointer'}}>加
+每週總時數{twg}h
+{data.categories.map(cat=>
+{cat.name} {twg>0?Math.round(cat.weeklyGoalHours/twg*100):0}%
+)}
+<button onClick={()=>{if(confirm('確定要清除所有資料重新開始？')){localStorage.removeItem(KEY);location.reload()}}}
+style={{width:'100%',padding:14,background:'transparent',border:'1px solid #FF2D20',borderRadius:12,color:'#FF2D20',fontSize:14,cursor:'pointer',marginTop:32}}>重置所有資料
+
+)}
+ReactDOM.createRoot(document.getElementById('root')).render();
