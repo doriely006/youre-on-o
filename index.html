@@ -1,3 +1,44 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>You're On</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}body{background:#0a0a0a;color:#fff;font-family:'Noto Sans TC',sans-serif;overflow-x:hidden;-webkit-tap-highlight-color:transparent}.ft{font-family:'Bebas Neue',sans-serif}input[type="date"]{color-scheme:dark}input[type="number"]{-moz-appearance:textfield}input[type="number"]::-webkit-inner-spin-button,input[type="number"]::-webkit-outer-spin-button{-webkit-appearance:none}select{-webkit-appearance:none;appearance:none}@keyframes glow{0%,100%{filter:drop-shadow(0 0 4px rgba(48,209,88,.4))}50%{filter:drop-shadow(0 0 10px rgba(48,209,88,.8))}}.ring-glow{animation:glow 2s ease-in-out infinite}@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}.fade-in{animation:fadeIn .3s ease-out}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"><\/script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"><\/script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"><\/script>
+<script type="text/babel">
+const{useState,useEffect,useMemo,useCallback}=React;
+const KEY='reality_v5';
+const load=()=>{try{return JSON.parse(localStorage.getItem(KEY))}catch{return null}};
+const save=d=>{try{localStorage.setItem(KEY,JSON.stringify(d))}catch{}};
+const init=()=>({categories:[],records:[],setupDone:false});
+const toS=d=>d.toISOString().slice(0,10);
+const todayS=()=>toS(new Date());
+const weekDates=s=>{const d=new Date(s),day=d.getDay()||7,m=new Date(d);m.setDate(d.getDate()-day+1);return Array.from({length:7},(_,i)=>{const x=new Date(m);x.setDate(m.getDate()+i);return toS(x)})};
+const monthDates=s=>{const d=new Date(s),y=d.getFullYear(),m=d.getMonth();return Array.from({length:new Date(y,m+1,0).getDate()},(_,i)=>toS(new Date(y,m,i+1)))};
+const dayOfWeek=s=>new Date(s).getDay()||7;
+const dayOfMonth=s=>new Date(s).getDate();
+const daysInMonth=s=>{const d=new Date(s);return new Date(d.getFullYear(),d.getMonth()+1,0).getDate()};
+const pctC=p=>p>=80?'#30D158':p>=50?'#FF9F0A':'#FF2D20';
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const tierN=p=>p>=100?5:p>=81?4:p>=61?3:p>=41?2:p>=21?1:0;
+const fill=(s,v)=>{let r=s;Object.entries(v).forEach(([k,val])=>{r=r.replace(new RegExp('\\{'+k+'\\}','g'),val)});return r};
+const pttPool=[
+['→|{cat}{pct}%，這帳號是殭屍帳號嗎','噓|本週{cat}{pct}%，我替你的目標感到不捨','推|{pct}%，有心了，就是心太小','→|{cat}{pct}%，你本週有出現，這是優點','噓|{cat}只有{pct}%，你的努力很含蓄','推|本週{cat}{hrs}小時？我午睡都比這長','→|本週{cat}{pct}%，觀眾看得很著急你很淡定'],
+['→|本週{cat}{pct}%，剛好讓人說不出哪裡好','推|{cat}{pct}%，觀眾沒睡著...吧？','噓|{cat}{pct}%，這個數字散發著佛系的氣質','→|{cat}{pct}%，不上不下，跟你的人生一樣','推|本週{cat}{pct}%，說你認真我信，說你有拚我存疑'],
+['推|{cat}{pct}%，半桶水的聲音最大','→|本週{cat}{pct}%，不好不壞，完美的平庸','噓|{cat}{pct}%，你的目標在哭但聲音很小','推|{cat}本週{hrs}小時，剛好夠寫進週報裡充數','→|{cat}{pct}%，你知道100%長什麼樣嗎'],
+['推|[爆卦] {cat}本週{pct}%，不錯，但目標是100%','→|{cat}{pct}%，可以了啦...如果你標準很低的話','推|{cat}本週做了{hrs}小時，觀眾開始坐直了','噓|{cat}{pct}%，再多一點就完美了，但你不會'],
+['推|{cat}本週{pct}%，可以說嘴，別說太久','推|{cat}{pct}%，觀眾都站起來要鼓掌了，結果你踩煞車','→|[爆卦] {cat}{pct}%，強到這裡就停了','推|{cat}{pct}%，幾乎完美，但還沒'],
+['推|[爆卦] {cat}本週100%，有沒有這種猛人的八卦','推|{cat}100%達成，懷疑外掛，已檢舉','噓|{cat}100%看得我不舒服，你在炫耀嗎','→|{cat}100%，傻眼，你是真人還是AI','推|{cat}100%，截圖存起來因為可能不會有下次']
+];
 const lineChars=[{name:'Andy',avatar:'😎',s:0},{name:'Anna',avatar:'🙂',s:1},{name:'Allan',avatar:'🧔',s:2},{name:'Amy',avatar:'👩',s:3}];
 const linePool={
 0:[[['欸你那個{cat}','本週{pct}%','你是在跟我開玩笑嗎']],[['親愛的','我看了你{cat}的數據','{pct}%','我是為你好才說的']],[['你的{cat}','本週{pct}%','這不是偷懶','這是放棄']],[['哎唷{cat}才{pct}%','你是不是都在滑手機','阿姨跟你說這樣不行']]],
@@ -7,7 +48,6 @@ const linePool={
 4:[[['你{cat}本週{pct}%','強','差那一點是在等什麼']],[['{cat}{pct}%','好厲害','差一點就滿了','雖然還是沒滿']],[['{cat}{pct}%','嗯','這個我認可','去收尾吧']],[['哎唷{cat}{pct}%了','阿姨都替你緊張','趕快去']]],
 5:[[['你{cat}本週100%','可以','終於','你做到了']],[['{cat}100%??','你認真的嗎','你終於長大了']],[['你{cat}100%','嗯','就是這樣','繼續']],[['哎唷{cat}100%！','阿姨的眼睛有問題嗎','真的耶！']]]
 };
-
 const finPool=[
 '「{cat}」本週重挫，僅收{pct}%|持有人投入{hrs}小時，市場質疑是否仍在營運',
 '「{cat}」低迷盤整，本週收{pct}%|技術面呈現死亡交叉，投資人信心疲弱',
@@ -17,226 +57,239 @@ const finPool=[
 '「{cat}」漲停鎖死！本週100%達成|全場鼓掌。惟市場擔心是否為一日行情'
 ];
 const pttUsers=['嘴砲王','厭世工程師','路過鄉民','酸民代表','深夜觀眾','鍵盤分析師','佛系青年','認真魔人'];
-
 const genComment=(cats,recs,submittedCatIds)=>{
 if(!submittedCatIds||submittedCatIds.length===0)return null;
-const catId=pick(submittedCatIds);
-const cat=cats.find(c=>c.id===catId);
-if(!cat)return null;
+const catId=pick(submittedCatIds);const cat=cats.find(c=>c.id===catId);if(!cat)return null;
 const t=todayS(),wd=weekDates(t);
 const hrs=recs.filter(r=>r.categoryId===catId&&wd.includes(r.date)).reduce((s,r)=>s+r.hours,0);
-const goal=cat.weeklyGoalHours;
-const pct=goal>0?Math.round(hrs/goal100):0;
-const ti=tierN(pct);
-const v={cat:cat.name,pct,hrs:Math.round(hrs10)/10,gap:Math.max(0,Math.round((goal-hrs)*10)/10)};
+const goal=cat.weeklyGoalHours;const pct=goal>0?Math.round(hrs/goal*100):0;const ti=tierN(pct);
+const v={cat:cat.name,pct:pct,hrs:Math.round(hrs*10)/10,gap:Math.max(0,Math.round((goal-hrs)*10)/10)};
 const rand=Math.random();
 if(rand<0.5){const raw=pick(pttPool[ti]);const idx=raw.indexOf('|');return{type:'ptt',tp:raw.slice(0,idx),text:fill(raw.slice(idx+1),v),user:pick(pttUsers)}}
-else if(rand<0.9){const ch=pick(lineChars);const msgs=pick(linePool[ti][ch.s]);return{type:'line',char:ch,msgs:msgs.map(m=>fill(m,v)),time:${8+Math.floor(Math.random()*14)}:${String(Math.floor(Math.random()*60)).padStart(2,'0')}}}
+else if(rand<0.9){const ch=pick(lineChars);const msgs=pick(linePool[ti][ch.s]);return{type:'line',char:ch,msgs:msgs.map(m=>fill(m,v)),time:(8+Math.floor(Math.random()*14))+':'+String(Math.floor(Math.random()*60)).padStart(2,'0')}}
 else{const raw=finPool[ti];const idx=raw.indexOf('|');return{type:'fin',headline:fill(raw.slice(0,idx),v),body:fill(raw.slice(idx+1),v)}}
 };
-
-// Ring Component
 function Ring({size,tPct,wPct,mPct,label,onClick,selected}){
-const r1=size/2-4,r2=size/2-12,r3=size/2-20;
-const cx=size/2,cy=size/2;
-const arc=(r,pct)=>{const p=Math.min(pct,100)/100;if(p<=0)return'';if(p>=1){returnM${cx},${cy-r} A${r},${r} 0 1,1 ${cx-0.01},${cy-r} A${r},${r} 0 1,1 ${cx},${cy-r}}const a=p2Math.PI-Math.PI/2;const x=cx+rMath.cos(a-Math.PI/2);const y=cy+rMath.sin(a-Math.PI/2);const lg=p>0.5?1:0;returnM${cx},${cy-r} A${r},${r} 0 ${lg},1 ${x},${y}};
+const r1=size/2-4,r2=size/2-12,r3=size/2-20,cx=size/2,cy=size/2;
+const arc=(r,pct)=>{const p=Math.min(pct,100)/100;if(p<=0)return'';if(p>=1)return'M'+cx+','+(cy-r)+' A'+r+','+r+' 0 1,1 '+(cx-0.01)+','+(cy-r)+' A'+r+','+r+' 0 1,1 '+cx+','+(cy-r);const a=p*2*Math.PI;const x=cx+r*Math.sin(a);const y=cy-r*Math.cos(a);const lg=p>0.5?1:0;return'M'+cx+','+(cy-r)+' A'+r+','+r+' 0 '+lg+',1 '+x+','+y};
 const isGlow=tPct>=100||wPct>=100||mPct>=100;
-return(
-
-{wPct}%
-{mPct}%
-{tPct}%
-{label}
-);}
+return React.createElement('div',{onClick:onClick,style:{cursor:'pointer',textAlign:'center',transition:'transform .2s',transform:selected?'scale(1.08)':'scale(1)'}},
+React.createElement('svg',{width:size,height:size,className:isGlow?'ring-glow':''},
+React.createElement('circle',{cx:cx,cy:cy,r:r1,fill:'none',stroke:'#222',strokeWidth:6}),
+React.createElement('circle',{cx:cx,cy:cy,r:r2,fill:'none',stroke:'#222',strokeWidth:6}),
+React.createElement('circle',{cx:cx,cy:cy,r:r3,fill:'none',stroke:'#222',strokeWidth:6}),
+mPct>0&&React.createElement('path',{d:arc(r1,mPct),fill:'none',stroke:'#FF2D20',strokeWidth:6,strokeLinecap:'round'}),
+wPct>0&&React.createElement('path',{d:arc(r2,wPct),fill:'none',stroke:'#FF9F0A',strokeWidth:6,strokeLinecap:'round'}),
+tPct>0&&React.createElement('path',{d:arc(r3,tPct),fill:'none',stroke:'#30D158',strokeWidth:6,strokeLinecap:'round'}),
+React.createElement('text',{x:cx,y:cy+1,textAnchor:'middle',dominantBaseline:'middle',fill:'#fff',fontSize:14,fontFamily:"'Bebas Neue',sans-serif"},wPct+'%'),
+React.createElement('text',{x:cx,y:cy-r1-1,textAnchor:'middle',fill:'#FF2D20',fontSize:8,fontFamily:"'Bebas Neue',sans-serif",opacity:0.8},mPct+'%'),
+React.createElement('text',{x:cx,y:cy+r3+4,textAnchor:'middle',fill:'#30D158',fontSize:8,fontFamily:"'Bebas Neue',sans-serif",opacity:0.8},tPct+'%')
+),
+React.createElement('div',{style:{fontSize:11,color:selected?'#fff':'#888',marginTop:2,fontWeight:selected?700:400}},label)
+)}
 function CommentOverlay({comment:cm,onClose}){
-return(<div onClick={onClose} style={{position:'fixed',inset:0,background:'rgba(0,0,0,.85)',zIndex:100,display:'flex',alignItems:'center',justifyContent:'center',padding:20}}>
-
-e.stopPropagation()} style={{width:'100%',maxWidth:380}} className="fade-in"> {cm.type==='ptt'&&
-批踢踢實業坊看板 LifeTracker
-{cm.tp}{cm.user}:{cm.text}
-{[['推',Math.floor(Math.random()*30+5)],['噓',Math.floor(Math.random()*10)],['→',Math.floor(Math.random()*20)]].map(([t,n],i)=>{t} {n})}
-} {cm.type==='line'&&
-{cm.char.avatar}{cm.char.name}
-{cm.msgs.map((m,i)=>
-{m}
-)}
-{cm.time}已讀
-} {cm.type==='fin'&&
-LIFE FINANCIAL TIMES
-{cm.headline}
-{cm.body}
-
-}
-點任意處關閉
-
-)}
+return React.createElement('div',{onClick:onClose,style:{position:'fixed',inset:0,background:'rgba(0,0,0,.85)',zIndex:100,display:'flex',alignItems:'center',justifyContent:'center',padding:20}},
+React.createElement('div',{onClick:function(e){e.stopPropagation()},style:{width:'100%',maxWidth:380},className:'fade-in'},
+cm.type==='ptt'&&React.createElement('div',{style:{background:'#0a1628',borderRadius:8,padding:16,fontFamily:'monospace',border:'1px solid #1a3050'}},
+React.createElement('div',{style:{borderBottom:'1px solid #1a3050',paddingBottom:8,marginBottom:12}},
+React.createElement('span',{style:{color:'#00ffff',fontSize:13}},'批踢踢實業坊'),
+React.createElement('span',{style:{color:'#666',fontSize:11,marginLeft:8}},'看板 LifeTracker')),
+React.createElement('div',{style:{display:'flex',gap:6}},
+React.createElement('span',{style:{color:cm.tp==='推'?'#ffff00':cm.tp==='噓'?'#ff6666':'#ccc',fontSize:14,fontWeight:'bold'}},cm.tp),
+React.createElement('span',{style:{color:'#aaaaff',fontSize:13}},cm.user+':'),
+React.createElement('span',{style:{color:'#e8e8e8',fontSize:13,lineHeight:1.6,flex:1}},cm.text)),
+React.createElement('div',{style:{marginTop:12,display:'flex',gap:12}},
+React.createElement('span',{style:{color:'#ffff00',fontSize:11}},'推 '+(Math.floor(Math.random()*30)+5)),
+React.createElement('span',{style:{color:'#ff6666',fontSize:11}},'噓 '+Math.floor(Math.random()*10)),
+React.createElement('span',{style:{color:'#ccc',fontSize:11}},'→ '+Math.floor(Math.random()*20)))),
+cm.type==='line'&&React.createElement('div',{style:{background:'#7494A7',borderRadius:12,padding:16}},
+React.createElement('div',{style:{display:'flex',alignItems:'center',gap:8,marginBottom:16,borderBottom:'1px solid rgba(255,255,255,.15)',paddingBottom:10}},
+React.createElement('span',{style:{fontSize:28}},cm.char.avatar),
+React.createElement('span',{style:{color:'#fff',fontSize:15,fontWeight:600}},cm.char.name)),
+React.createElement('div',{style:{display:'flex',flexDirection:'column',gap:4}},
+cm.msgs.map(function(m,i){return React.createElement('div',{key:i,style:{alignSelf:'flex-start',maxWidth:'80%'}},React.createElement('div',{style:{background:'#fff',color:'#333',padding:'8px 12px',borderRadius:i===0?'16px 16px 16px 4px':'4px 16px 16px 4px',fontSize:14,lineHeight:1.5}},m))})),
+React.createElement('div',{style:{display:'flex',justifyContent:'space-between',marginTop:12}},
+React.createElement('span',{style:{color:'rgba(255,255,255,.5)',fontSize:11}},cm.time),
+React.createElement('span',{style:{color:'rgba(255,255,255,.5)',fontSize:11}},'已讀'))),
+cm.type==='fin'&&React.createElement('div',{style:{background:'#f5f0e8',borderRadius:4,padding:24,border:'2px solid #222'}},
+React.createElement('div',{style:{borderBottom:'3px double #222',paddingBottom:8,marginBottom:16,textAlign:'center'}},
+React.createElement('div',{style:{fontSize:11,letterSpacing:6,color:'#666'}},'LIFE FINANCIAL TIMES')),
+React.createElement('h2',{style:{fontSize:17,color:'#111',lineHeight:1.4,margin:'0 0 12px',fontWeight:700}},cm.headline),
+React.createElement('p',{style:{fontSize:13,color:'#444',lineHeight:1.7,margin:0}},cm.body)),
+React.createElement('p',{style:{textAlign:'center',color:'#555',fontSize:12,marginTop:16}},'點任意處關閉')))}
 function App(){
-const[data,setData]=useState(()=>load()||init());
+const[data,setData]=useState(function(){return load()||init()});
 const[page,setPage]=useState('dashboard');
 const[comment,setComment]=useState(null);
-useEffect(()=>{save(data)},[data]);
-const up=useCallback(fn=>setData(p=>{const n={...p,categories:[...p.categories],records:[...p.records]};fn(n);return n}),[]);
-const trigCmt=useCallback((catIds)=>{if(data.categories.length===0)return;const c=genComment(data.categories,data.records,catIds);if(c)setComment(c)},[data]);
-if(!data.setupDone)return ;
-return(<div style={{maxWidth:430,margin:'0 auto',minHeight:'100vh',background:'#0a0a0a',fontFamily:"'Noto Sans TC',sans-serif",color:'#fff',paddingBottom:70}}>
-{page==='dashboard'&&}
-{page==='record'&&}
-{page==='settings'&&}
-{comment&&<CommentOverlay comment={comment} onClose={()=>setComment(null)}/>}
-
-{[['dashboard','📊','主頁'],['record','✏️','記錄'],['settings','⚙️','設定']].map(([id,ic,lb])=> setPage(id)} style={{flex:1,padding:'10px 0 8px',background:'none',border:'none',cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',gap:2}}> {ic}{lb})}
-)}
+useEffect(function(){save(data)},[data]);
+const up=useCallback(function(fn){setData(function(p){var n={...p,categories:[...p.categories],records:[...p.records]};fn(n);return n})},[]);
+const trigCmt=useCallback(function(catIds){if(data.categories.length===0)return;var c=genComment(data.categories,data.records,catIds);if(c)setComment(c)},[data]);
+if(!data.setupDone)return React.createElement(Setup,{up:up});
+var content=null;
+if(page==='dashboard')content=React.createElement(Dash,{data:data});
+if(page==='record')content=React.createElement(Rec,{data:data,up:up,trig:trigCmt});
+if(page==='settings')content=React.createElement(Settings,{data:data,up:up});
+var navItems=[['dashboard','📊','主頁'],['record','✏️','記錄'],['settings','⚙️','設定']];
+return React.createElement('div',{style:{maxWidth:430,margin:'0 auto',minHeight:'100vh',background:'#0a0a0a',fontFamily:"'Noto Sans TC',sans-serif",color:'#fff',paddingBottom:70}},
+content,
+comment&&React.createElement(CommentOverlay,{comment:comment,onClose:function(){setComment(null)}}),
+React.createElement('div',{style:{position:'fixed',bottom:0,left:'50%',transform:'translateX(-50%)',width:'100%',maxWidth:430,background:'#111',borderTop:'1px solid #222',display:'flex',zIndex:50}},
+navItems.map(function(item){return React.createElement('button',{key:item[0],onClick:function(){setPage(item[0])},style:{flex:1,padding:'10px 0 8px',background:'none',border:'none',cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',gap:2}},
+React.createElement('span',{style:{fontSize:20}},item[1]),
+React.createElement('span',{style:{fontSize:10,color:page===item[0]?'#FF2D20':'#666',fontWeight:page===item[0]?700:400}},item[2]))})))}
 function Setup({up}){
 const[cats,setCats]=useState([{name:'工作',h:20},{name:'運動',h:5},{name:'副業',h:10},{name:'股票研究',h:5},{name:'學習',h:5}]);
 const[nc,setNc]=useState('');
-const tot=cats.reduce((s,c)=>s+c.h,0);
-return(<div style={{maxWidth:430,margin:'0 auto',minHeight:'100vh',background:'#0a0a0a',padding:24,fontFamily:"'Noto Sans TC',sans-serif",color:'#fff'}}>
-
-YOU'RE ON
-數字不會說謊
-
-設定你的 categories 和每週目標時數：
-
-{cats.map((c,i)=>
-{c.name} setCats(cats.map((x,j)=>j===i?{...x,h:Math.max(1,x.h-1)}:x))} style={bSm}>− {c.h}h setCats(cats.map((x,j)=>j===i?{...x,h:x.h+1}:x))} style={bSm}>+ setCats(cats.filter((_,j)=>j!==i))}>×
-)}
-{nc}
-setNc(e.target.value)} placeholder="新增 category" onKeyDown={e=>{if(e.key==='Enter'&&nc.trim()){setCats([...cats,{name:nc.trim(),h:5}]);setNc('')}}} style={{flex:1,padding:'10px 14px',background:'#141414',border:'1px solid #222',borderRadius:8,color:'#fff',fontSize:14,outline:'none'}}/> {if(nc.trim()){setCats([...cats,{name:nc.trim(),h:5}]);setNc('')}}} style={{padding:'10px 16px',background:'#FF2D20',border:'none',borderRadius:8,color:'#fff',fontSize:14,cursor:'pointer'}}>新增
-每週總時數{tot}h
-{cats.map((c,i)=>
-{c.name}{tot>0?Math.round(c.h/tot*100):0}%
-)}
-up(d=>{d.categories=cats.map((c,i)=>({id:`c${Date.now()}_${i}`,name:c.name,weeklyGoalHours:c.h}));d.setupDone=true})} disabled={!cats.length} style={{width:'100%',padding:16,background:cats.length?'#FF2D20':'#555',border:'none',borderRadius:12,color:'#fff',fontSize:18,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:2,cursor:cats.length?'pointer':'default'}}>START TRACKING)}
-const bSm={width:32,height:32,background:'#141414',border:'1px solid #222',color:'#fff',borderRadius:8,fontSize:18,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'};
-
+const tot=cats.reduce(function(s,c){return s+c.h},0);
+return React.createElement('div',{style:{maxWidth:430,margin:'0 auto',minHeight:'100vh',background:'#0a0a0a',padding:24,color:'#fff'}},
+React.createElement('div',{style:{textAlign:'center',margin:'60px 0 40px'}},
+React.createElement('h1',{className:'ft',style:{fontSize:56,color:'#FF2D20',letterSpacing:2}},'YOU\'RE ON'),
+React.createElement('p',{style:{color:'#888',fontSize:14,letterSpacing:4,marginTop:4}},'數字不會說謊')),
+React.createElement('p',{style:{color:'#888',fontSize:14,marginBottom:24}},'設定你的 categories 和每週目標時數：'),
+cats.map(function(c,i){return React.createElement('div',{key:i,style:{display:'flex',alignItems:'center',marginBottom:12,gap:12}},
+React.createElement('span',{style:{flex:1,fontSize:16}},c.name),
+React.createElement('button',{onClick:function(){setCats(cats.map(function(x,j){return j===i?{...x,h:Math.max(1,x.h-1)}:x}))},style:{width:32,height:32,background:'#141414',border:'1px solid #222',color:'#fff',borderRadius:8,fontSize:18,cursor:'pointer'}},'−'),
+React.createElement('span',{className:'ft',style:{fontSize:24,width:40,textAlign:'center'}},c.h+'h'),
+React.createElement('button',{onClick:function(){setCats(cats.map(function(x,j){return j===i?{...x,h:x.h+1}:x}))},style:{width:32,height:32,background:'#141414',border:'1px solid #222',color:'#fff',borderRadius:8,fontSize:18,cursor:'pointer'}},'+'),
+React.createElement('button',{onClick:function(){setCats(cats.filter(function(_,j){return j!==i}))},style:{width:32,height:32,background:'transparent',border:'none',color:'#555',fontSize:18,cursor:'pointer'}},'×'))}),
+React.createElement('div',{style:{display:'flex',gap:8,margin:'16px 0 24px'}},
+React.createElement('input',{value:nc,onChange:function(e){setNc(e.target.value)},placeholder:'新增 category',onKeyDown:function(e){if(e.key==='Enter'&&nc.trim()){setCats([...cats,{name:nc.trim(),h:5}]);setNc('')}},style:{flex:1,padding:'10px 14px',background:'#141414',border:'1px solid #222',borderRadius:8,color:'#fff',fontSize:14,outline:'none'}}),
+React.createElement('button',{onClick:function(){if(nc.trim()){setCats([...cats,{name:nc.trim(),h:5}]);setNc('')}},style:{padding:'10px 16px',background:'#FF2D20',border:'none',borderRadius:8,color:'#fff',fontSize:14,cursor:'pointer'}},'新增')),
+React.createElement('div',{style:{background:'#141414',borderRadius:12,padding:16,marginBottom:32,border:'1px solid #222'}},
+React.createElement('div',{style:{display:'flex',justifyContent:'space-between',marginBottom:8}},
+React.createElement('span',{style:{color:'#888',fontSize:13}},'每週總時數'),
+React.createElement('span',{className:'ft',style:{fontSize:24}},tot+'h')),
+cats.map(function(c,i){return React.createElement('div',{key:i,style:{display:'flex',justifyContent:'space-between',padding:'4px 0'}},
+React.createElement('span',{style:{color:'#888',fontSize:13}},c.name),
+React.createElement('span',{className:'ft',style:{fontSize:16,color:'#FF9F0A'}},(tot>0?Math.round(c.h/tot*100):0)+'%'))})),
+React.createElement('button',{onClick:function(){up(function(d){d.categories=cats.map(function(c,i){return{id:'c'+Date.now()+'_'+i,name:c.name,weeklyGoalHours:c.h}});d.setupDone=true})},disabled:!cats.length,style:{width:'100%',padding:16,background:cats.length?'#FF2D20':'#555',border:'none',borderRadius:12,color:'#fff',fontSize:18,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:2,cursor:cats.length?'pointer':'default'}},'START TRACKING'))}
 function Dash({data}){
-const t=todayS(),wd=weekDates(t),md=monthDates(t);
-const dow=dayOfWeek(t),dom=dayOfMonth(t),dim_=daysInMonth(t);
-const twg=data.categories.reduce((s,c)=>s+c.weeklyGoalHours,0);
-const hrs=(cid,ds)=>data.records.filter(r=>r.categoryId===cid&&ds.includes(r.date)).reduce((s,r)=>s+r.hours,0);
-const allH=ds=>data.records.filter(r=>ds.includes(r.date)).reduce((s,r)=>s+r.hours,0);
-const tH=allH([t]),wH=allH(wd),mH=allH(md);
-const tP=twg>0?Math.round(tH/(twg/7)100):0;
-const wP=twg>0?Math.round(wH/twg100):0;
-const mP=twg>0?Math.round(mH/(twg/7*dim_)*100):0;
+var t=todayS(),wd=weekDates(t),md=monthDates(t);
+var dow=dayOfWeek(t),dom=dayOfMonth(t),dim_=daysInMonth(t);
+var twg=data.categories.reduce(function(s,c){return s+c.weeklyGoalHours},0);
+var hrs=function(cid,ds){return data.records.filter(function(r){return r.categoryId===cid&&ds.includes(r.date)}).reduce(function(s,r){return s+r.hours},0)};
+var allH=function(ds){return data.records.filter(function(r){return ds.includes(r.date)}).reduce(function(s,r){return s+r.hours},0)};
+var tH=allH([t]),wH=allH(wd),mH=allH(md);
+var tP=twg>0?Math.round(tH/(twg/7)*100):0;
+var wP=twg>0?Math.round(wH/twg*100):0;
+var mP=twg>0?Math.round(mH/(twg/7*dim_)*100):0;
 const[sel,setSel]=useState(null);
-
-const catData=data.categories.map(cat=>{
-const tHrs=hrs(cat.id,[t]),wHrs=hrs(cat.id,wd),mHrs=hrs(cat.id,md);
-const tG=cat.weeklyGoalHours/7,wG=cat.weeklyGoalHours,mG=cat.weeklyGoalHours/7dim_;
-return{cat,tPct:tG>0?Math.round(tHrs/tG100):0,wPct:wG>0?Math.round(wHrs/wG100):0,mPct:mG>0?Math.round(mHrs/mG100):0,tHrs,wHrs,mHrs,tG,wG,mG}});
-
-const selData=sel!==null?catData.find(d=>d.cat.id===sel):null;
-
-return(<div style={{padding:'0 16px',height:'calc(100vh - 70px)',display:'flex',flexDirection:'column'}}>
-{/* Cinema Screen */}
-
-{/* Screen glow effect */}
-YOU'RE ON
-數字不會說謊
-
-{[['今日',tP,tH],['本週',wP,wH],['本月',mP,mH]].map(([l,p,h],i)=>
-{l}
-{p}%
-{Math.round(h*10)/10}h
-)}
-📅 第{dow}/7天 📅 第{dom}/{dim_}天
-{/* Audience silhouettes */}
-{[14,18,12,20,16,10,18,14,20,12,16,18,14,20,16,12,18,14,16,20,12].map((h,i)=>
-0?-2:0}}/>)}
-{/* Ring Legend */}
-
-{[['#FF2D20','月'],['#FF9F0A','週'],['#30D158','日']].map(([c,l],i)=>
-{l}
-)}
-{/* Category Rings */}
-
-{catData.map(d=>setSel(sel===d.cat.id?null:d.cat.id)}/>)}
-{/* Expanded Detail */}
-{selData&&<div className="fade-in" style={{background:'#141414',borderRadius:12,padding:14,margin:'6px 0',border:'1px solid #222'}}>
-
-{selData.cat.name} {selData.cat.weeklyGoalHours}h/wk
-{[['今日',selData.tPct,selData.tHrs,selData.tG,'#30D158'],['本週',selData.wPct,selData.wHrs,selData.wG,'#FF9F0A'],['本月',selData.mPct,selData.mHrs,selData.mG,'#FF2D20']].map(([l,p,h,g,c],i)=>
-{l} {p}%
-{Math.round(h*10)/10}/{Math.round(g*10)/10}h
-)}
-}
-{/* Actual vs Goal - compact */}
-{!selData&&<div style={{background:'#141414',borderRadius:12,padding:12,margin:'6px 0',border:'1px solid #222'}}>
-
-{['','目標','實際','差距'].map((h,i)=>{h})}
-{data.categories.map(cat=>{ const gP=twg>0?Math.round(cat.weeklyGoalHours/twg*100):0; const aH=data.records.filter(r=>r.categoryId===cat.id).reduce((s,r)=>s+r.hours,0); const totH=data.records.reduce((s,r)=>s+r.hours,0); const aP=totH>0?Math.round(aH/totH*100):0; const diff=aP-gP; return(
-{cat.name} {gP}% {aP}% =0?'#30D158':'#FF2D20'}}>{diff>0?'+':''}{diff}%
-)})}
-}
-)}
+var catData=data.categories.map(function(cat){
+var tHrs=hrs(cat.id,[t]),wHrs=hrs(cat.id,wd),mHrs=hrs(cat.id,md);
+var tG=cat.weeklyGoalHours/7,wG=cat.weeklyGoalHours,mG=cat.weeklyGoalHours/7*dim_;
+return{cat:cat,tPct:tG>0?Math.round(tHrs/tG*100):0,wPct:wG>0?Math.round(wHrs/wG*100):0,mPct:mG>0?Math.round(mHrs/mG*100):0,tHrs:tHrs,wHrs:wHrs,mHrs:mHrs,tG:tG,wG:wG,mG:mG}});
+var selData=sel!==null?catData.find(function(d){return d.cat.id===sel}):null;
+var screenItems=[['今日',tP,tH],['本週',wP,wH],['本月',mP,mH]];
+var silhouettes=[14,18,12,20,16,10,18,14,20,12,16,18,14,20,16,12,18,14,16,20,12];
+var legend=[['#FF2D20','月'],['#FF9F0A','週'],['#30D158','日']];
+return React.createElement('div',{style:{padding:'0 16px',minHeight:'calc(100vh - 70px)',display:'flex',flexDirection:'column'}},
+React.createElement('div',{style:{background:'linear-gradient(180deg,#1a1a1a,#0f0f0f)',borderRadius:16,padding:'20px 16px 8px',marginTop:12,border:'1px solid #333',position:'relative',overflow:'hidden',boxShadow:'0 0 30px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.05)'}},
+React.createElement('div',{style:{position:'absolute',top:0,left:'10%',right:'10%',height:2,background:'linear-gradient(90deg,transparent,rgba(255,255,255,.1),transparent)'}}),
+React.createElement('div',{style:{textAlign:'center',marginBottom:4}},
+React.createElement('h1',{className:'ft',style:{fontSize:28,color:'#FF2D20',letterSpacing:3,margin:0}},'YOU\'RE ON'),
+React.createElement('p',{style:{color:'#555',fontSize:9,letterSpacing:3,margin:0}},'數字不會說謊')),
+React.createElement('div',{style:{display:'flex',justifyContent:'space-around',margin:'12px 0 8px'}},
+screenItems.map(function(item,i){return React.createElement('div',{key:i,style:{textAlign:'center'}},
+React.createElement('div',{style:{color:'#888',fontSize:10,letterSpacing:1}},item[0]),
+React.createElement('div',{className:'ft',style:{fontSize:36,color:pctC(item[1]),lineHeight:1,margin:'2px 0'}},item[1]+'%'),
+React.createElement('div',{style:{color:'#555',fontSize:10}},Math.round(item[2]*10)/10+'h'))})),
+React.createElement('div',{style:{display:'flex',justifyContent:'center',gap:12,marginBottom:6}},
+React.createElement('span',{style:{color:'#555',fontSize:10}},'📅 第'+dow+'/7天'),
+React.createElement('span',{style:{color:'#555',fontSize:10}},'📅 第'+dom+'/'+dim_+'天')),
+React.createElement('div',{style:{display:'flex',justifyContent:'center',alignItems:'flex-end',gap:0,height:20,marginTop:4}},
+silhouettes.map(function(h,i){return React.createElement('div',{key:i,style:{width:14,height:h,background:'#181818',borderRadius:'50% 50% 0 0',marginLeft:i>0?-2:0}})}))),
+React.createElement('div',{style:{display:'flex',justifyContent:'center',gap:16,margin:'10px 0 4px'}},
+legend.map(function(item,i){return React.createElement('div',{key:i,style:{display:'flex',alignItems:'center',gap:4}},
+React.createElement('div',{style:{width:8,height:8,borderRadius:4,background:item[0]}}),
+React.createElement('span',{style:{fontSize:10,color:'#888'}},item[1]))})),
+React.createElement('div',{style:{display:'flex',flexWrap:'wrap',justifyContent:'center',gap:8,margin:'4px 0'}},
+catData.map(function(d){return React.createElement(Ring,{key:d.cat.id,size:data.categories.length<=4?90:76,tPct:d.tPct,wPct:d.wPct,mPct:d.mPct,label:d.cat.name,selected:sel===d.cat.id,onClick:function(){setSel(sel===d.cat.id?null:d.cat.id)}})})),
+selData&&React.createElement('div',{className:'fade-in',style:{background:'#141414',borderRadius:12,padding:14,margin:'6px 0',border:'1px solid #222'}},
+React.createElement('div',{style:{display:'flex',justifyContent:'space-between',marginBottom:10}},
+React.createElement('span',{style:{fontSize:15,fontWeight:600}},selData.cat.name),
+React.createElement('span',{className:'ft',style:{fontSize:14,color:'#555'}},selData.cat.weeklyGoalHours+'h/wk')),
+[['今日',selData.tPct,selData.tHrs,selData.tG,'#30D158'],['本週',selData.wPct,selData.wHrs,selData.wG,'#FF9F0A'],['本月',selData.mPct,selData.mHrs,selData.mG,'#FF2D20']].map(function(item,i){return React.createElement('div',{key:i,style:{display:'flex',alignItems:'center',marginBottom:6,gap:8}},
+React.createElement('span',{style:{color:'#888',fontSize:12,width:36}},item[0]),
+React.createElement('span',{className:'ft',style:{fontSize:20,color:item[4],width:50}},item[1]+'%'),
+React.createElement('div',{style:{flex:1,height:4,background:'#222',borderRadius:2}},
+React.createElement('div',{style:{height:4,background:item[4],borderRadius:2,width:Math.min(item[1],100)+'%',transition:'width .5s'}})),
+React.createElement('span',{style:{color:'#888',fontSize:11,minWidth:70,textAlign:'right'}},Math.round(item[2]*10)/10+'/'+Math.round(item[3]*10)/10+'h'))})),
+!selData&&React.createElement('div',{style:{background:'#141414',borderRadius:12,padding:12,margin:'6px 0',border:'1px solid #222'}},
+React.createElement('div',{style:{display:'flex',padding:'2px 0',borderBottom:'1px solid #222',marginBottom:6}},
+['','目標','實際','差距'].map(function(h,i){return React.createElement('span',{key:i,style:{color:'#555',fontSize:10,flex:i===0?2:1,textAlign:i===0?'left':i===3?'right':'center'}},h)})),
+data.categories.map(function(cat){
+var gP=twg>0?Math.round(cat.weeklyGoalHours/twg*100):0;
+var aH=data.records.filter(function(r){return r.categoryId===cat.id}).reduce(function(s,r){return s+r.hours},0);
+var totH=data.records.reduce(function(s,r){return s+r.hours},0);
+var aP=totH>0?Math.round(aH/totH*100):0;var diff=aP-gP;
+return React.createElement('div',{key:cat.id,style:{display:'flex',padding:'4px 0'}},
+React.createElement('span',{style:{fontSize:12,flex:2}},cat.name),
+React.createElement('span',{className:'ft',style:{fontSize:14,flex:1,textAlign:'center',color:'#888'}},gP+'%'),
+React.createElement('span',{className:'ft',style:{fontSize:14,flex:1,textAlign:'center',color:'#FF9F0A'}},aP+'%'),
+React.createElement('span',{className:'ft',style:{fontSize:14,flex:1,textAlign:'right',color:diff>=0?'#30D158':'#FF2D20'}},(diff>0?'+':'')+diff+'%'))})))}
 function Rec({data,up,trig}){
 const[date,setDate]=useState(todayS());
 const[catId,setCatId]=useState(data.categories.length>0?data.categories[0].id:'');
 const[hrs,setHrs]=useState('');
 const[saved,setSaved]=useState(false);
 const[todayLog,setTodayLog]=useState([]);
-
-useEffect(()=>{
-const logs=[];
-data.categories.forEach(c=>{
-const h=data.records.filter(r=>r.categoryId===c.id&&r.date===date).reduce((s,r)=>s+r.hours,0);
-if(h>0)logs.push({name:c.name,hours:h})});
-setTodayLog(logs)},[data.records,date,data.categories]);
-
-const submit=()=>{
-const h=parseFloat(hrs);if(!h||h<=0||!catId)return;
-up(d=>{d.records.push({categoryId:catId,date,hours:h,ts:Date.now()})});
-const submittedId=catId;
-setHrs('');setSaved(true);
-setTimeout(()=>{setSaved(false);trig([submittedId])},600)};
-
-return(
-
-RECORD
-日期 
- 年 /月/日
-setDate(e.target.value)} style={{width:'100%',padding:'10px 14px',background:'#141414',border:'1px solid #222',borderRadius:8,color:'#fff',fontSize:16,outline:'none',boxSizing:'border-box'}}/>
-Category
-
-{c.name} — 目標 {c.weeklyGoalHours}h/wk
-▼
-時數
-0
-setHrs(e.target.value)} style={{flex:1,padding:'14px',background:'#0f0f0f',border:'1px solid #222',borderRadius:8,color:'#fff',fontSize:28,fontFamily:"'Bebas Neue',sans-serif",outline:'none',textAlign:'center'}}/> 小時
-{[0.5,1,1.5,2,3,4].map(v=> setHrs(String(v))} style={{flex:1,padding:'8px 0',borderRadius:6,fontSize:14,fontFamily:"'Bebas Neue',sans-serif",cursor:'pointer',background:parseFloat(hrs)===v?'#FF2D20':'#1a1a1a',border:`1px solid ${parseFloat(hrs)===v?'#FF2D20':'#222'}`,color:parseFloat(hrs)===v?'#fff':'#888'}}> {v}h)}
-{todayLog.length>0&&<div style={{background:'#141414',borderRadius:12,padding:12,marginBottom:16,border:'1px solid #222'}}>
-
-{date===todayS()?'今日':'該日'}已記錄
-
-{todayLog.map((l,i)=>{l.name} {l.hours}h)}
-}
-<button onClick={submit}
-style={{width:'100%',padding:16,background:saved?'#30D158':'#FF2D20',border:'none',borderRadius:12,color:'#fff',fontSize:18,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:2,cursor:'pointer',transition:'background .3s'}}>
-{saved?'✓ SAVED':'SUBMIT'}
-
-)}
+useEffect(function(){var logs=[];data.categories.forEach(function(c){var h=data.records.filter(function(r){return r.categoryId===c.id&&r.date===date}).reduce(function(s,r){return s+r.hours},0);if(h>0)logs.push({name:c.name,hours:h})});setTodayLog(logs)},[data.records,date,data.categories]);
+var submit=function(){var h=parseFloat(hrs);if(!h||h<=0||!catId)return;
+up(function(d){d.records.push({categoryId:catId,date:date,hours:h,ts:Date.now()})});
+var submittedId=catId;setHrs('');setSaved(true);setTimeout(function(){setSaved(false);trig([submittedId])},600)};
+return React.createElement('div',{style:{padding:16}},
+React.createElement('h1',{className:'ft',style:{fontSize:28,letterSpacing:2,margin:'16px 0'}},'RECORD'),
+React.createElement('div',{style:{marginBottom:16}},
+React.createElement('label',{style:{color:'#888',fontSize:12,display:'block',marginBottom:6}},'日期'),
+React.createElement('input',{type:'date',value:date,onChange:function(e){setDate(e.target.value)},style:{width:'100%',padding:'10px 14px',background:'#141414',border:'1px solid #222',borderRadius:8,color:'#fff',fontSize:16,outline:'none',boxSizing:'border-box'}})),
+React.createElement('div',{style:{marginBottom:16}},
+React.createElement('label',{style:{color:'#888',fontSize:12,display:'block',marginBottom:6}},'Category'),
+React.createElement('select',{value:catId,onChange:function(e){setCatId(e.target.value)},style:{width:'100%',padding:'12px 14px',background:'#141414',border:'1px solid #222',borderRadius:8,color:'#fff',fontSize:16,outline:'none',cursor:'pointer'}},
+data.categories.map(function(c){return React.createElement('option',{key:c.id,value:c.id},c.name+' — 目標 '+c.weeklyGoalHours+'h/wk')}))),
+React.createElement('div',{style:{marginBottom:12}},
+React.createElement('label',{style:{color:'#888',fontSize:12,display:'block',marginBottom:6}},'時數'),
+React.createElement('div',{style:{display:'flex',alignItems:'center',gap:12}},
+React.createElement('input',{type:'number',step:'0.1',min:'0',placeholder:'0',value:hrs,onChange:function(e){setHrs(e.target.value)},style:{flex:1,padding:14,background:'#0f0f0f',border:'1px solid #222',borderRadius:8,color:'#fff',fontSize:28,fontFamily:"'Bebas Neue',sans-serif",outline:'none',textAlign:'center'}}),
+React.createElement('span',{style:{color:'#555',fontSize:16}},'小時'))),
+React.createElement('div',{style:{display:'flex',gap:6,marginBottom:20}},
+[0.5,1,1.5,2,3,4].map(function(v){return React.createElement('button',{key:v,onClick:function(){setHrs(String(v))},style:{flex:1,padding:'8px 0',borderRadius:6,fontSize:14,fontFamily:"'Bebas Neue',sans-serif",cursor:'pointer',background:parseFloat(hrs)===v?'#FF2D20':'#1a1a1a',border:'1px solid '+(parseFloat(hrs)===v?'#FF2D20':'#222'),color:parseFloat(hrs)===v?'#fff':'#888'}},v+'h')})),
+todayLog.length>0&&React.createElement('div',{style:{background:'#141414',borderRadius:12,padding:12,marginBottom:16,border:'1px solid #222'}},
+React.createElement('p',{style:{color:'#555',fontSize:11,marginBottom:8}},date===todayS()?'今日已記錄':'該日已記錄'),
+React.createElement('div',{style:{display:'flex',flexWrap:'wrap',gap:8}},
+todayLog.map(function(l,i){return React.createElement('span',{key:i,style:{background:'#1a1a1a',padding:'4px 10px',borderRadius:6,fontSize:13,color:'#888'}},l.name+' ',React.createElement('span',{className:'ft',style:{color:'#FF9F0A'}},l.hours+'h'))}))),
+React.createElement('button',{onClick:submit,style:{width:'100%',padding:16,background:saved?'#30D158':'#FF2D20',border:'none',borderRadius:12,color:'#fff',fontSize:18,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:2,cursor:'pointer',transition:'background .3s'}},saved?'✓ SAVED':'SUBMIT'))}
 function Settings({data,up}){
 const[nc,setNc]=useState('');
 const[nh,setNh]=useState(5);
-const twg=data.categories.reduce((s,c)=>s+c.weeklyGoalHours,0);
-return(
-
-SETTINGS
-ULTIMATE GOALS
-{data.categories.map(cat=>
-{cat.name} up(d=>{const c=d.categories.find(x=>x.id===cat.id);if(c)c.weeklyGoalHours=Math.max(1,c.weeklyGoalHours-1)})}>− {cat.weeklyGoalHours}h up(d=>{const c=d.categories.find(x=>x.id===cat.id);if(c)c.weeklyGoalHours++})}>+ {twg>0?Math.round(cat.weeklyGoalHours/twg*100):0}% {if(confirm('刪除 '+cat.name+'？'))up(d=>{d.categories=d.categories.filter(x=>x.id!==cat.id)})}} style={{background:'transparent',border:'none',color:'#FF2D20',fontSize:16,cursor:'pointer'}}>×
-)}
-新增 Category
-
-{nc}
-setNc(e.target.value)} placeholder="名稱" style={{flex:1,padding:'10px 12px',background:'#0f0f0f',border:'1px solid #222',borderRadius:8,color:'#fff',fontSize:14,outline:'none'}}/> setNh(Math.max(1,nh-1))}>− {nh}h setNh(nh+1)}>+ {if(nc.trim()){up(d=>{d.categories.push({id:`c${Date.now()}`,name:nc.trim(),weeklyGoalHours:nh})});setNc('');setNh(5)}}} style={{padding:'8px 14px',background:'#FF2D20',border:'none',borderRadius:8,color:'#fff',fontSize:13,cursor:'pointer'}}>加
-每週總時數{twg}h
-{data.categories.map(cat=>
-{cat.name} {twg>0?Math.round(cat.weeklyGoalHours/twg*100):0}%
-)}
-<button onClick={()=>{if(confirm('確定要清除所有資料重新開始？')){localStorage.removeItem(KEY);location.reload()}}}
-style={{width:'100%',padding:14,background:'transparent',border:'1px solid #FF2D20',borderRadius:12,color:'#FF2D20',fontSize:14,cursor:'pointer',marginTop:32}}>重置所有資料
-
-)}
-ReactDOM.createRoot(document.getElementById('root')).render();
+var twg=data.categories.reduce(function(s,c){return s+c.weeklyGoalHours},0);
+var bSm={width:32,height:32,background:'#141414',border:'1px solid #222',color:'#fff',borderRadius:8,fontSize:18,cursor:'pointer'};
+return React.createElement('div',{style:{padding:16}},
+React.createElement('h1',{className:'ft',style:{fontSize:28,letterSpacing:2,margin:'16px 0'}},'SETTINGS'),
+React.createElement('h2',{className:'ft',style:{fontSize:18,color:'#888',letterSpacing:2,margin:'24px 0 12px'}},'ULTIMATE GOALS'),
+data.categories.map(function(cat){return React.createElement('div',{key:cat.id,style:{background:'#141414',borderRadius:12,padding:14,marginBottom:8,border:'1px solid #222',display:'flex',alignItems:'center',gap:10}},
+React.createElement('span',{style:{flex:1,fontSize:15}},cat.name),
+React.createElement('button',{style:bSm,onClick:function(){up(function(d){var c=d.categories.find(function(x){return x.id===cat.id});if(c)c.weeklyGoalHours=Math.max(1,c.weeklyGoalHours-1)})}},'−'),
+React.createElement('span',{className:'ft',style:{fontSize:22,width:40,textAlign:'center'}},cat.weeklyGoalHours+'h'),
+React.createElement('button',{style:bSm,onClick:function(){up(function(d){var c=d.categories.find(function(x){return x.id===cat.id});if(c)c.weeklyGoalHours++})}},'+'),
+React.createElement('span',{className:'ft',style:{fontSize:14,color:'#FF9F0A',width:36,textAlign:'right'}},(twg>0?Math.round(cat.weeklyGoalHours/twg*100):0)+'%'),
+React.createElement('button',{onClick:function(){if(confirm('刪除 '+cat.name+'？'))up(function(d){d.categories=d.categories.filter(function(x){return x.id!==cat.id})})},style:{background:'transparent',border:'none',color:'#FF2D20',fontSize:16,cursor:'pointer'}},'×'))}),
+React.createElement('div',{style:{background:'#141414',borderRadius:12,padding:14,marginTop:16,border:'1px solid #222'}},
+React.createElement('p',{style:{color:'#888',fontSize:13,marginBottom:10}},'新增 Category'),
+React.createElement('div',{style:{display:'flex',gap:8,alignItems:'center'}},
+React.createElement('input',{value:nc,onChange:function(e){setNc(e.target.value)},placeholder:'名稱',style:{flex:1,padding:'10px 12px',background:'#0f0f0f',border:'1px solid #222',borderRadius:8,color:'#fff',fontSize:14,outline:'none'}}),
+React.createElement('button',{style:bSm,onClick:function(){setNh(Math.max(1,nh-1))}},'−'),
+React.createElement('span',{className:'ft',style:{fontSize:20,width:32,textAlign:'center'}},nh+'h'),
+React.createElement('button',{style:bSm,onClick:function(){setNh(nh+1)}},'+'),
+React.createElement('button',{onClick:function(){if(nc.trim()){up(function(d){d.categories.push({id:'c'+Date.now(),name:nc.trim(),weeklyGoalHours:nh})});setNc('');setNh(5)}},style:{padding:'8px 14px',background:'#FF2D20',border:'none',borderRadius:8,color:'#fff',fontSize:13,cursor:'pointer'}},'加'))),
+React.createElement('div',{style:{background:'#141414',borderRadius:12,padding:16,marginTop:24,border:'1px solid #222'}},
+React.createElement('div',{style:{display:'flex',justifyContent:'space-between',marginBottom:8}},
+React.createElement('span',{style:{color:'#888',fontSize:13}},'每週總時數'),
+React.createElement('span',{className:'ft',style:{fontSize:22}},twg+'h')),
+data.categories.map(function(cat){return React.createElement('div',{key:cat.id,style:{display:'flex',justifyContent:'space-between',padding:'3px 0'}},
+React.createElement('span',{style:{color:'#888',fontSize:13}},cat.name),
+React.createElement('span',{className:'ft',style:{fontSize:15,color:'#FF9F0A'}},(twg>0?Math.round(cat.weeklyGoalHours/twg*100):0)+'%'))})),
+React.createElement('button',{onClick:function(){if(confirm('確定要清除所有資料重新開始？')){localStorage.removeItem(KEY);location.reload()}},style:{width:'100%',padding:14,background:'transparent',border:'1px solid #FF2D20',borderRadius:12,color:'#FF2D20',fontSize:14,cursor:'pointer',marginTop:32}},'重置所有資料'))}
+ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(App));
+</script>
+</body>
+</html>
