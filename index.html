@@ -99,108 +99,116 @@ if(rand<0.5){const raw=pick(pttPool[ti]);const idx=raw.indexOf('|');return{type:
 else if(rand<0.9){const ch=pick(lineChars);const msgs=pick(linePool[ti][ch.s]);return{type:'line',char:ch,msgs:msgs.map(m=>fill(m,v)),time:(8+Math.floor(Math.random()*14))+':'+String(Math.floor(Math.random()*60)).padStart(2,'0'),progressNote:progressNote}}
 else{const raw=finPool[ti];const idx=raw.indexOf('|');return{type:'fin',headline:fill(raw.slice(0,idx),v),body:fill(raw.slice(idx+1),v),progressNote:progressNote}}
 };
- <!DOCTYPE html>
-<html lang="zh-TW">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
-<title>You're On</title>
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
-<style>
-*{box-sizing:border-box;margin:0;padding:0}body{background:#0a0a0a;color:#fff;font-family:'Noto Sans TC',sans-serif;overflow-x:hidden;-webkit-tap-highlight-color:transparent}.ft{font-family:'Bebas Neue',sans-serif}input[type="date"]{color-scheme:dark}input[type="number"]{-moz-appearance:textfield}input[type="number"]::-webkit-inner-spin-button,input[type="number"]::-webkit-outer-spin-button{-webkit-appearance:none}select{-webkit-appearance:none;appearance:none}@keyframes glow{0%,100%{filter:drop-shadow(0 0 4px rgba(48,209,88,.4))}50%{filter:drop-shadow(0 0 10px rgba(48,209,88,.8))}}.ring-glow{animation:glow 2s ease-in-out infinite}@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}.fade-in{animation:fadeIn .3s ease-out}@keyframes scanline{0%{transform:translateY(-100%)}100%{transform:translateY(100%)}}.screen-wrap{position:relative}.screen-inner{position:relative;overflow:hidden}.screen-inner::after{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(255,255,255,.01) 2px,rgba(255,255,255,.01) 4px);pointer-events:none}
-</style>
-</head>
-<body>
-<div id="root"></div>
-<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-<script type="text/babel">
-const{useState,useEffect,useMemo,useCallback}=React;
-const KEY='reality_v5';
-const load=()=>{try{return JSON.parse(localStorage.getItem(KEY))}catch{return null}};
-const save=d=>{try{localStorage.setItem(KEY,JSON.stringify(d))}catch{}};
-const init=()=>({categories:[],records:[],setupDone:false,lastSettledWeek:null,gaps:{}});
-const toS=d=>d.toISOString().slice(0,10);
-const todayS=()=>toS(new Date());
-const getWeekId=s=>{const d=new Date(s),day=d.getDay()||7,m=new Date(d);m.setDate(d.getDate()-day+1);return toS(m)};
-const weekDates=s=>{const d=new Date(s),day=d.getDay()||7,m=new Date(d);m.setDate(d.getDate()-day+1);return Array.from({length:7},(_,i)=>{const x=new Date(m);x.setDate(m.getDate()+i);return toS(x)})};
-const monthDates=s=>{const d=new Date(s),y=d.getFullYear(),m=d.getMonth();return Array.from({length:new Date(y,m+1,0).getDate()},(_,i)=>toS(new Date(y,m,i+1)))};
-const dayOfWeek=s=>new Date(s).getDay()||7;
-const dayOfMonth=s=>new Date(s).getDate();
-const daysInMonth=s=>{const d=new Date(s);return new Date(d.getFullYear(),d.getMonth()+1,0).getDate()};
-const pctC=p=>p>=80?'#30D158':p>=50?'#FF9F0A':'#FF2D20';
-const pick=a=>a[Math.floor(Math.random()*a.length)];
-const tierN=p=>p>=100?5:p>=81?4:p>=61?3:p>=41?2:p>=21?1:0;
-const fill=(s,v)=>{let r=s;Object.entries(v).forEach(([k,val])=>{r=r.replace(new RegExp('\\{'+k+'\\}','g'),val)});return r};
-const weekDayNames=['\u4E00','\u4E8C','\u4E09','\u56DB','\u4E94','\u516D','\u65E5'];
-const getProgressNote=(pct,dow)=>{var expected=Math.round(dow/7*100);var diff=pct-expected;if(dow<=2){if(diff>=0)return'\uD83D\uDCC5 \u9031'+weekDayNames[dow-1]+'\uFF0C\u624D\u525B\u958B\u59CB\uFF0C\u4E0D\u6025';return'\uD83D\uDCC5 \u9031'+weekDayNames[dow-1]+'\uFF0C\u525B\u958B\u59CB\u800C\u5DF2'}if(diff>=20)return'\uD83D\uDD25 \u8D85\u524D\u9032\u5EA6\uFF0C\u7E7C\u7E8C';if(diff>=-10)return'\uD83D\uDCC5 \u9032\u5EA6\u6B63\u5E38';if(diff>=-30)return'\u26A0\uFE0F \u7A0D\u5FAE\u843D\u5F8C\uFF0C\u9084\u4F86\u5F97\u53CA';return'\u26A0\uFE0F \u9031'+weekDayNames[dow-1]+'\u4E86\uFF0C\u53EA\u5269'+(7-dow)+'\u5929'};
-const settleWeekGaps=(data)=>{
-const today=todayS();
-const currentWeekId=getWeekId(today);
-if(data.lastSettledWeek===currentWeekId)return data;
-if(!data.lastSettledWeek){data.lastSettledWeek=currentWeekId;if(!data.gaps)data.gaps={};return data}
-const prevWeekId=data.lastSettledWeek;
-const prevWd=weekDates(prevWeekId);
-if(!data.gaps)data.gaps={};
-data.categories.forEach(cat=>{
-const adj=(cat.weeklyAdjust||0);
-const effectiveGoal=cat.weeklyGoalHours+adj;
-const actual=data.records.filter(r=>r.categoryId===cat.id&&prevWd.includes(r.date)).reduce((s,r)=>s+r.hours,0);
-const gap=Math.max(0,Math.round((effectiveGoal-actual)*10)/10);
-const prevGap=data.gaps[cat.id]||0;
-data.gaps[cat.id]=Math.round((prevGap+gap)*10)/10;
-cat.weeklyAdjust=0;
-});
-data.lastSettledWeek=currentWeekId;
-return data;
-};
-const getEffectiveWeeklyGoal=(cat,gaps)=>{
-const base=cat.weeklyGoalHours;
-const adj=cat.weeklyAdjust||0;
-const gap=(gaps&&gaps[cat.id])||0;
-return Math.round((base+adj+gap)*10)/10;
-};
-const pttPool=[
-['\u2192|{cat}{pct}%\uFF0C\u9019\u5E33\u865F\u662F\u6BAD\u5C4D\u5E33\u865F\u55CE','\u5653|\u672C\u9031{cat}{pct}%\uFF0C\u6211\u66FF\u4F60\u7684\u76EE\u6A19\u611F\u5230\u4E0D\u6368','\u63A8|{pct}%\uFF0C\u6709\u5FC3\u4E86\uFF0C\u5C31\u662F\u5FC3\u592A\u5C0F','\u2192|{cat}{pct}%\uFF0C\u4F60\u672C\u9031\u6709\u51FA\u73FE\uFF0C\u9019\u662F\u512A\u9EDE','\u5653|{cat}\u53EA\u6709{pct}%\uFF0C\u4F60\u7684\u52AA\u529B\u5F88\u542B\u84C4','\u63A8|\u672C\u9031{cat}{hrs}\u5C0F\u6642\uFF1F\u6211\u5348\u7761\u90FD\u6BD4\u9019\u9577','\u2192|\u672C\u9031{cat}{pct}%\uFF0C\u89C0\u773E\u770B\u5F97\u5F88\u8457\u6025\u4F60\u5F88\u6DE1\u5B9A'],
-['\u2192|\u672C\u9031{cat}{pct}%\uFF0C\u525B\u597D\u8B93\u4EBA\u8AAA\u4E0D\u51FA\u54EA\u88E1\u597D','\u63A8|{cat}{pct}%\uFF0C\u89C0\u773E\u6C92\u7761\u8457...\u5427\uFF1F','\u5653|{cat}{pct}%\uFF0C\u9019\u500B\u6578\u5B57\u6563\u767C\u8457\u4F5B\u7CFB\u7684\u6C23\u8CEA','\u2192|{cat}{pct}%\uFF0C\u4E0D\u4E0A\u4E0D\u4E0B\uFF0C\u8DDF\u4F60\u7684\u4EBA\u751F\u4E00\u6A23','\u63A8|\u672C\u9031{cat}{pct}%\uFF0C\u8AAA\u4F60\u8A8D\u771F\u6211\u4FE1\uFF0C\u8AAA\u4F60\u6709\u62DA\u6211\u5B58\u7591'],
-['\u63A8|{cat}{pct}%\uFF0C\u534A\u6876\u6C34\u7684\u8072\u97F3\u6700\u5927','\u2192|\u672C\u9031{cat}{pct}%\uFF0C\u4E0D\u597D\u4E0D\u58DE\uFF0C\u5B8C\u7F8E\u7684\u5E73\u5EB8','\u5653|{cat}{pct}%\uFF0C\u4F60\u7684\u76EE\u6A19\u5728\u54ED\u4F46\u8072\u97F3\u5F88\u5C0F','\u63A8|{cat}\u672C\u9031{hrs}\u5C0F\u6642\uFF0C\u525B\u597D\u5920\u5BEB\u9032\u9031\u5831\u88E1\u5145\u6578','\u2192|{cat}{pct}%\uFF0C\u4F60\u77E5\u9053100%\u9577\u4EC0\u9EBC\u6A23\u55CE'],
-['\u63A8|[\u7206\u5366] {cat}\u672C\u9031{pct}%\uFF0C\u4E0D\u932F\uFF0C\u4F46\u76EE\u6A19\u662F100%','\u2192|{cat}{pct}%\uFF0C\u53EF\u4EE5\u4E86\u5566...\u5982\u679C\u4F60\u6A19\u6E96\u5F88\u4F4E\u7684\u8A71','\u63A8|{cat}\u672C\u9031\u505A\u4E86{hrs}\u5C0F\u6642\uFF0C\u89C0\u773E\u958B\u59CB\u5750\u76F4\u4E86','\u5653|{cat}{pct}%\uFF0C\u518D\u591A\u4E00\u9EDE\u5C31\u5B8C\u7F8E\u4E86\uFF0C\u4F46\u4F60\u4E0D\u6703'],
-['\u63A8|{cat}\u672C\u9031{pct}%\uFF0C\u53EF\u4EE5\u8AAA\u5634\uFF0C\u5225\u8AAA\u592A\u4E45','\u63A8|{cat}{pct}%\uFF0C\u89C0\u773E\u90FD\u7AD9\u8D77\u4F86\u8981\u9F13\u638C\u4E86\uFF0C\u7D50\u679C\u4F60\u8E29\u715E\u8ECA','\u2192|[\u7206\u5366] {cat}{pct}%\uFF0C\u5F37\u5230\u9019\u88E1\u5C31\u505C\u4E86','\u63A8|{cat}{pct}%\uFF0C\u5E7E\u4E4E\u5B8C\u7F8E\uFF0C\u4F46\u9084\u6C92'],
-['\u63A8|[\u7206\u5366] {cat}\u672C\u9031100%\uFF0C\u6709\u6C92\u6709\u9019\u7A2E\u731B\u4EBA\u7684\u516B\u5366','\u63A8|{cat}100%\u9054\u6210\uFF0C\u61F7\u7591\u5916\u639B\uFF0C\u5DF2\u6AA2\u8209','\u5653|{cat}100%\u770B\u5F97\u6211\u4E0D\u8212\u670D\uFF0C\u4F60\u5728\u7095\u8000\u55CE','\u2192|{cat}100%\uFF0C\u50BB\u773C\uFF0C\u4F60\u662F\u771F\u4EBA\u9084\u662FAI','\u63A8|{cat}100%\uFF0C\u622A\u5716\u5B58\u8D77\u4F86\u56E0\u70BA\u53EF\u80FD\u4E0D\u6703\u6709\u4E0B\u6B21']
-];
-const lineChars=[{name:'\u670B\u53CB',avatar:'\uD83D\uDE0E',s:0},{name:'\u540C\u4E8B',avatar:'\uD83D\uDE42',s:1},{name:'\u8001\u95C6',avatar:'\uD83D\uDE10',s:2},{name:'\u96A8\u58C1\u963F\u59E8',avatar:'\uD83D\uDC69',s:3},{name:'\u524D\u4EFB',avatar:'\uD83D\uDC94',s:4}];
-const linePool={
-0:[[['欸你{cat}本週{pct}%','你是不是忘記自己有在追蹤這個進度']],[['欸我看到你{cat}的進度了','沒事，我不會跟別人說的']],[['{cat} {pct}%','等等來我辦公室一趟']],[['哎唷你最近怎麼啦','{cat}才{pct}%，是不是感情不順，說出來阿姨給你建議']],[['聽說你在追蹤{cat}的進度','{pct}%，果然還得是你']]],
-1:[[['你{cat}有在做喔','騙人的吧，在哪?']],[['你{cat}的進度還好嗎','{pct}%...我是說你這個人，還好嗎']],[['{cat}的進度我看了','你自己覺得OK嗎，我是不覺得']],[['欸你說什麼','怎麼{cat} {pct}%，我們家幼稚園妹妹都比你多']],[['我沒有在關心你喔','只是剛好滑到，{cat} {pct}%是認真的嗎']]],
-2:[[['{cat} {pct}%，剛好一半','你做事都做一半的齁，你意外嗎，我不意外']],[['{cat} {pct}%，你有在進行耶','比老闆交辦給你的專案還快']],[['{cat} {pct}%，我知道了','還不走是要我讚美你嗎']],[['你有在認真喔不錯不錯','{cat} {pct}%，比我減肥的進度還快']],[['你{cat}有在做喔?','我追蹤你就是為了看你不行，再努力我就得退追了']]],
-3:[[['欸{cat}有{pct}%耶','可以了啦，反正你也不是會堅持到底的人']],[['你{cat}做得不錯欸','我的意思是比你平常好，不是真的不錯']],[['{cat}的進度有進步','就只是有進步']],[['阿姨有幫你跟大家說你好棒','{cat} {pct}%，他們說還好而已']],[['欸你{cat}最近有進步耶','可惜，當初你對我們的感情也這麼認真就好了']]],
-4:[[['{cat} {pct}%，差一點就達成了','什麼? 達成了請你吃飯? 關我屁事']],[['{cat} {pct}%，好認真喔','這樣下去搞不好能力會跟上你的職稱呢，我沒說你的能力配不上你的職稱啦']],[['{cat} {pct}%，還行','沒有100%都不要跟我說']],[['{cat} {pct}%！阿姨就知道你可以','隔壁那個好像喜歡你，要不要阿姨幫你們安排']],[['{cat} {pct}%，差一點就滿了','你什麼都差一點，我已經習慣了']]],
-5:[[['{cat} 100%？','截圖起來，可能沒有下次了']],[['{cat} 100%！恭喜你耶','你要不要寫進年度考核，反正你其他也沒什麼好寫的']],[['{cat} 100%，嗯','話說我交辦給你的其他任務做完了嗎?']],[['{cat} 100%！你好棒餒','阿姨就知道你可以，他們都說不可以只有我說你可以']],[['你{cat} 進度100%喔','你變這麼好也沒用，我又不會回來']]]
-};
-const finPool=[
-'\u300C{cat}\u300D\u672C\u9031\u91CD\u632B\uFF0C\u50C5\u6536{pct}%|\u6301\u6709\u4EBA\u6295\u5165{hrs}\u5C0F\u6642\uFF0C\u5E02\u5834\u8CEA\u7591\u662F\u5426\u4ECD\u5728\u71DF\u904B',
-'\u300C{cat}\u300D\u4F4E\u8FF7\u76E4\u6574\uFF0C\u672C\u9031\u6536{pct}%|\u6280\u8853\u9762\u5448\u73FE\u6B7B\u4EA1\u4EA4\u53C9\uFF0C\u6295\u8CC7\u4EBA\u4FE1\u5FC3\u7592\u5F31',
-'\u300C{cat}\u300D\u5E73\u76E4\u9707\u76EA\uFF0C\u672C\u9031{pct}%\u4E4F\u5584\u53EF\u9673|\u4E0D\u4E0A\u4E0D\u4E0B\u8B93\u5206\u6790\u5E2B\u9677\u5165\u6C89\u9ED8',
-'\u300C{cat}\u300D\u7A69\u6B65\u8D70\u9AD8\uFF0C\u672C\u9031\u6536{pct}%|\u6295\u8CC7\u4EBA\u4FE1\u5FC3\u56DE\u6EAB\uFF0C\u60DF\u4ECD\u672A\u89F8\u53CA\u524D\u9AD8',
-'\u300C{cat}\u300D\u5F37\u52E2\u653B\u9802{pct}%\uFF0C\u8DDD\u6B77\u53F2\u9AD8\u9EDE\u50C5\u4E00\u6B65|\u5168\u5E02\u5834\u5C4F\u606F\u4EE5\u5F85',
-'\u300C{cat}\u300D\u6F32\u505C\u9396\u6B7B\uFF01\u672C\u9031100%\u9054\u6210|\u5168\u5834\u9F13\u638C\u3002\u60DF\u5E02\u5834\u64D4\u5FC3\u662F\u5426\u70BA\u4E00\u65E5\u884C\u60C5'
-];
-const pttUsers=['\u5634\u780D\u738B','\u53AD\u4E16\u5DE5\u7A0B\u5E2B','\u8DEF\u904E\u9109\u6C11','\u9178\u6C11\u4EE3\u8868','\u6DF1\u591C\u89C0\u773E','\u9375\u76E4\u5206\u6790\u5E2B','\u4F5B\u7CFB\u9752\u5E74','\u8A8D\u771F\u9B54\u4EBA'];
-const genComment=(cats,recs,submittedCatIds,gaps)=>{
-if(!submittedCatIds||submittedCatIds.length===0)return null;
-const catId=pick(submittedCatIds);const cat=cats.find(c=>c.id===catId);if(!cat)return null;
-const t=todayS(),wd=weekDates(t),dow=dayOfWeek(t);
-const hrs=recs.filter(r=>r.categoryId===catId&&wd.includes(r.date)).reduce((s,r)=>s+r.hours,0);
-const goal=getEffectiveWeeklyGoal(cat,gaps);const pct=goal>0?Math.round(hrs/goal*100):0;const ti=tierN(pct);
-const v={cat:cat.name,pct:pct,hrs:Math.round(hrs*10)/10,gap:Math.max(0,Math.round((goal-hrs)*10)/10)};
-const progressNote=getProgressNote(pct,dow);
-const rand=Math.random();
-if(rand<0.5){const raw=pick(pttPool[ti]);const idx=raw.indexOf('|');return{type:'ptt',tp:raw.slice(0,idx),text:fill(raw.slice(idx+1),v),user:pick(pttUsers),progressNote:progressNote}}
-else if(rand<0.9){const ch=pick(lineChars);const msgs=pick(linePool[ti][ch.s]);return{type:'line',char:ch,msgs:msgs.map(m=>fill(m,v)),time:(8+Math.floor(Math.random()*14))+':'+String(Math.floor(Math.random()*60)).padStart(2,'0'),progressNote:progressNote}}
-else{const raw=finPool[ti];const idx=raw.indexOf('|');return{type:'fin',headline:fill(raw.slice(0,idx),v),body:fill(raw.slice(idx+1),v),progressNote:progressNote}}
-};
-function Dash({data}){
+ function Ring({size,tPct,wPct,mPct,label,onClick,selected}){
+var r1=size/2-4,r2=size/2-12,r3=size/2-20,cx=size/2,cy=size/2;
+var arc=function(r,pct){var p=Math.min(pct,100)/100;if(p<=0)return'';if(p>=1)return'M'+cx+','+(cy-r)+' A'+r+','+r+' 0 1,1 '+(cx-0.01)+','+(cy-r)+' A'+r+','+r+' 0 1,1 '+cx+','+(cy-r);var a=p*2*Math.PI;var x=cx+r*Math.sin(a);var y=cy-r*Math.cos(a);var lg=p>0.5?1:0;return'M'+cx+','+(cy-r)+' A'+r+','+r+' 0 '+lg+',1 '+x+','+y};
+var isGlow=tPct>=100||wPct>=100||mPct>=100;
+return React.createElement('div',{onClick:onClick,style:{cursor:'pointer',textAlign:'center',transition:'transform .2s',transform:selected?'scale(1.08)':'scale(1)'}},
+React.createElement('svg',{width:size,height:size,className:isGlow?'ring-glow':''},
+React.createElement('circle',{cx:cx,cy:cy,r:r1,fill:'none',stroke:'#222',strokeWidth:6}),
+React.createElement('circle',{cx:cx,cy:cy,r:r2,fill:'none',stroke:'#222',strokeWidth:6}),
+React.createElement('circle',{cx:cx,cy:cy,r:r3,fill:'none',stroke:'#222',strokeWidth:6}),
+mPct>0&&React.createElement('path',{d:arc(r1,mPct),fill:'none',stroke:'#FF2D20',strokeWidth:6,strokeLinecap:'round'}),
+wPct>0&&React.createElement('path',{d:arc(r2,wPct),fill:'none',stroke:'#FF9F0A',strokeWidth:6,strokeLinecap:'round'}),
+tPct>0&&React.createElement('path',{d:arc(r3,tPct),fill:'none',stroke:'#30D158',strokeWidth:6,strokeLinecap:'round'}),
+React.createElement('text',{x:cx,y:cy+1,textAnchor:'middle',dominantBaseline:'middle',fill:'#fff',fontSize:14,fontFamily:"'Bebas Neue',sans-serif"},wPct+'%'),
+React.createElement('text',{x:cx,y:cy-r1-1,textAnchor:'middle',fill:'#FF2D20',fontSize:8,fontFamily:"'Bebas Neue',sans-serif",opacity:0.8},mPct+'%'),
+React.createElement('text',{x:cx,y:cy+r3+4,textAnchor:'middle',fill:'#30D158',fontSize:8,fontFamily:"'Bebas Neue',sans-serif",opacity:0.8},tPct+'%')
+),
+React.createElement('div',{style:{fontSize:11,color:selected?'#fff':'#888',marginTop:2,fontWeight:selected?700:400}},label)
+)}
+function CommentOverlay({comment:cm,onClose}){
+var lineEl=null;
+if(cm.type==='line'){
+var bubbles=cm.msgs.map(function(m,i){
+return React.createElement('div',{key:'m'+i,style:{display:'flex',alignItems:'flex-end',marginBottom:6}},
+i===0?React.createElement('div',{style:{width:36,height:36,borderRadius:18,background:'#ddd',display:'flex',alignItems:'center',justifyContent:'center',fontSize:20,flexShrink:0,marginRight:8}},cm.char.avatar):React.createElement('div',{style:{width:36,marginRight:8,flexShrink:0}}),
+React.createElement('div',{style:{position:'relative'}},
+i===0&&React.createElement('div',{style:{position:'absolute',left:-6,top:8,width:0,height:0,borderTop:'6px solid transparent',borderBottom:'6px solid transparent',borderRight:'6px solid #fff'}}),
+React.createElement('div',{style:{background:'#fff',color:'#333',padding:'8px 12px',borderRadius:i===0?'2px 18px 18px 18px':'18px 18px 18px 18px',fontSize:14,lineHeight:1.5,maxWidth:'100%'}},m)),
+React.createElement('span',{style:{fontSize:9,color:'rgba(255,255,255,.45)',marginLeft:4,marginBottom:2,flexShrink:0,whiteSpace:'nowrap'}},cm.time))});
+var userReply=React.createElement('div',{key:'reply',style:{display:'flex',justifyContent:'flex-end',alignItems:'flex-end',marginTop:8}},
+React.createElement('span',{style:{fontSize:9,color:'rgba(255,255,255,.45)',marginRight:4,marginBottom:2}},'\u5DF2\u8B80'),
+React.createElement('div',{style:{position:'relative'}},
+React.createElement('div',{style:{position:'absolute',right:-6,top:8,width:0,height:0,borderTop:'6px solid transparent',borderBottom:'6px solid transparent',borderLeft:'6px solid #5AC463'}}),
+React.createElement('div',{style:{background:'#5AC463',color:'#fff',padding:'8px 12px',borderRadius:'18px 2px 18px 18px',fontSize:14}},'\u22EF')));
+lineEl=React.createElement('div',{style:{background:'#7494A7',borderRadius:12,overflow:'hidden'}},
+React.createElement('div',{style:{background:'#6B8FA8',padding:'10px 14px',display:'flex',alignItems:'center',gap:8}},
+React.createElement('span',{style:{color:'rgba(255,255,255,.7)',fontSize:14}},'\u25C0'),
+React.createElement('span',{style:{fontSize:24}},cm.char.avatar),
+React.createElement('span',{style:{color:'#fff',fontSize:15,fontWeight:600}},cm.char.name)),
+React.createElement('div',{style:{padding:'14px 14px 14px 10px'}},bubbles,userReply));}
+var noteEl=cm.progressNote?React.createElement('p',{style:{textAlign:'center',color:'#888',fontSize:12,marginTop:12,padding:'6px 12px',background:'rgba(255,255,255,.05)',borderRadius:8}},cm.progressNote):null;
+return React.createElement('div',{onClick:onClose,style:{position:'fixed',inset:0,background:'rgba(0,0,0,.85)',zIndex:100,display:'flex',alignItems:'center',justifyContent:'center',padding:20}},
+React.createElement('div',{onClick:function(e){e.stopPropagation()},style:{width:'100%',maxWidth:380},className:'fade-in'},
+cm.type==='ptt'&&React.createElement('div',{style:{background:'#0a1628',borderRadius:8,padding:16,fontFamily:'monospace',border:'1px solid #1a3050'}},
+React.createElement('div',{style:{borderBottom:'1px solid #1a3050',paddingBottom:8,marginBottom:12}},
+React.createElement('span',{style:{color:'#00ffff',fontSize:13}},'\u6279\u8E22\u8E22\u5BE6\u696D\u574A'),
+React.createElement('span',{style:{color:'#666',fontSize:11,marginLeft:8}},'\u770B\u677F LifeTracker')),
+React.createElement('div',{style:{display:'flex',gap:6}},
+React.createElement('span',{style:{color:cm.tp==='\u63A8'?'#ffff00':cm.tp==='\u5653'?'#ff6666':'#ccc',fontSize:14,fontWeight:'bold'}},cm.tp),
+React.createElement('span',{style:{color:'#aaaaff',fontSize:13}},cm.user+':'),
+React.createElement('span',{style:{color:'#e8e8e8',fontSize:13,lineHeight:1.6,flex:1}},cm.text)),
+React.createElement('div',{style:{marginTop:12,display:'flex',gap:12}},
+React.createElement('span',{style:{color:'#ffff00',fontSize:11}},'\u63A8 '+(Math.floor(Math.random()*30)+5)),
+React.createElement('span',{style:{color:'#ff6666',fontSize:11}},'\u5653 '+Math.floor(Math.random()*10)),
+React.createElement('span',{style:{color:'#ccc',fontSize:11}},'\u2192 '+Math.floor(Math.random()*20)))),
+lineEl,
+cm.type==='fin'&&React.createElement('div',{style:{background:'#f5f0e8',borderRadius:4,padding:24,border:'2px solid #222'}},
+React.createElement('div',{style:{borderBottom:'3px double #222',paddingBottom:8,marginBottom:16,textAlign:'center'}},
+React.createElement('div',{style:{fontSize:11,letterSpacing:6,color:'#666'}},'LIFE FINANCIAL TIMES')),
+React.createElement('h2',{style:{fontSize:17,color:'#111',lineHeight:1.4,margin:'0 0 12px',fontWeight:700}},cm.headline),
+React.createElement('p',{style:{fontSize:13,color:'#444',lineHeight:1.7,margin:0}},cm.body)),
+noteEl,
+React.createElement('p',{style:{textAlign:'center',color:'#555',fontSize:12,marginTop:8}},'\u9EDE\u4EFB\u610F\u8655\u95DC\u9589')))}
+function App(){
+var[data,setData]=useState(function(){var d=load()||init();d=settleWeekGaps(d);if(!d.gaps)d.gaps={};if(!d.lastSettledWeek)d.lastSettledWeek=getWeekId(todayS());save(d);return d});
+var[page,setPage]=useState('dashboard');
+var[comment,setComment]=useState(null);
+useEffect(function(){save(data)},[data]);
+var up=useCallback(function(fn){setData(function(p){var n={...p,categories:p.categories.map(function(c){return{...c}}),records:[...p.records],gaps:{...p.gaps}};fn(n);return n})},[]);
+var trigCmt=useCallback(function(catIds){if(data.categories.length===0)return;var c=genComment(data.categories,data.records,catIds,data.gaps);if(c)setComment(c)},[data]);
+if(!data.setupDone)return React.createElement(Setup,{up:up});
+var content=null;
+if(page==='dashboard')content=React.createElement(Dash,{data:data});
+if(page==='record')content=React.createElement(Rec,{data:data,up:up,trig:trigCmt});
+if(page==='settings')content=React.createElement(Settings,{data:data,up:up});
+var navItems=[['dashboard','\uD83D\uDCCA','\u4E3B\u9801'],['record','\u270F\uFE0F','\u8A18\u9304'],['settings','\u2699\uFE0F','\u8A2D\u5B9A']];
+return React.createElement('div',{style:{maxWidth:430,margin:'0 auto',minHeight:'100vh',background:'#0a0a0a',fontFamily:"'Noto Sans TC',sans-serif",color:'#fff',paddingBottom:70}},
+content,
+comment&&React.createElement(CommentOverlay,{comment:comment,onClose:function(){setComment(null)}}),
+React.createElement('div',{style:{position:'fixed',bottom:0,left:'50%',transform:'translateX(-50%)',width:'100%',maxWidth:430,background:'#111',borderTop:'1px solid #222',display:'flex',zIndex:50}},
+navItems.map(function(item){return React.createElement('button',{key:item[0],onClick:function(){setPage(item[0])},style:{flex:1,padding:'10px 0 8px',background:'none',border:'none',cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',gap:2}},
+React.createElement('span',{style:{fontSize:20}},item[1]),
+React.createElement('span',{style:{fontSize:10,color:page===item[0]?'#FF2D20':'#666',fontWeight:page===item[0]?700:400}},item[2]))})))}
+function Setup({up}){
+var[cats,setCats]=useState([]);
+var[nc,setNc]=useState('');
+var tot=cats.reduce(function(s,c){return s+c.h},0);
+return React.createElement('div',{style:{maxWidth:430,margin:'0 auto',minHeight:'100vh',background:'#0a0a0a',padding:24,color:'#fff'}},
+React.createElement('div',{style:{textAlign:'center',margin:'60px 0 40px'}},
+React.createElement('h1',{className:'ft',style:{fontSize:56,color:'#FF2D20',letterSpacing:2}},"YOU'RE ON"),
+React.createElement('p',{style:{color:'#888',fontSize:14,letterSpacing:4,marginTop:4}},'\u6578\u5B57\u4E0D\u6703\u8AAA\u8B0A')),
+React.createElement('p',{style:{color:'#888',fontSize:14,marginBottom:24}},'\u65B0\u589E\u4F60\u7684 categories \u4E26\u8A2D\u5B9A\u6BCF\u9031\u76EE\u6A19\u6642\u6578\uFF1A'),
+cats.length===0&&React.createElement('div',{style:{textAlign:'center',padding:'32px 0',color:'#555',fontSize:14}},'\u9084\u6C92\u6709\u4EFB\u4F55 category\uFF0C\u5F9E\u4E0B\u65B9\u65B0\u589E\u4F60\u7684\u7B2C\u4E00\u500B\u5427\uFF01'),
+cats.map(function(c,i){return React.createElement('div',{key:i,style:{display:'flex',alignItems:'center',marginBottom:12,gap:12}},
+React.createElement('span',{style:{flex:1,fontSize:16}},c.name),
+React.createElement('button',{onClick:function(){setCats(cats.map(function(x,j){return j===i?{...x,h:Math.max(0,x.h-1)}:x}))},style:{width:32,height:32,background:'#141414',border:'1px solid #222',color:'#fff',borderRadius:8,fontSize:18,cursor:'pointer'}},'\u2212'),
+React.createElement('span',{className:'ft',style:{fontSize:24,width:40,textAlign:'center'}},c.h+'h'),
+React.createElement('button',{onClick:function(){setCats(cats.map(function(x,j){return j===i?{...x,h:x.h+1}:x}))},style:{width:32,height:32,background:'#141414',border:'1px solid #222',color:'#fff',borderRadius:8,fontSize:18,cursor:'pointer'}},'+'),
+React.createElement('button',{onClick:function(){setCats(cats.filter(function(_,j){return j!==i}))},style:{width:32,height:32,background:'transparent',border:'none',color:'#555',fontSize:18,cursor:'pointer'}},'\u00D7'))}),
+React.createElement('div',{style:{display:'flex',gap:8,margin:'16px 0 24px'}},
+React.createElement('input',{value:nc,onChange:function(e){setNc(e.target.value)},placeholder:'\u8F38\u5165 category \u540D\u7A31',onKeyDown:function(e){if(e.key==='Enter'&&nc.trim()&&cats.length<8){setCats([...cats,{name:nc.trim(),h:0}]);setNc('')}},style:{flex:1,padding:'10px 14px',background:'#141414',border:'1px solid #222',borderRadius:8,color:'#fff',fontSize:14,outline:'none'}}),
+React.createElement('button',{onClick:function(){if(nc.trim()&&cats.length<8){setCats([...cats,{name:nc.trim(),h:0}]);setNc('')}},disabled:cats.length>=8,style:{padding:'10px 16px',background:cats.length>=8?'#555':'#FF2D20',border:'none',borderRadius:8,color:'#fff',fontSize:14,cursor:cats.length>=8?'default':'pointer'}},(cats.length>=8?'\u4E0A\u9650 8 \u500B':'\u65B0\u589E'))),
+cats.length>0&&React.createElement('div',{style:{background:'#141414',borderRadius:12,padding:16,marginBottom:32,border:'1px solid #222'}},
+React.createElement('div',{style:{display:'flex',justifyContent:'space-between',marginBottom:8}},
+React.createElement('span',{style:{color:'#888',fontSize:13}},'\u6BCF\u9031\u7E3D\u6642\u6578'),
+React.createElement('span',{className:'ft',style:{fontSize:24}},tot+'h')),
+cats.map(function(c,i){return React.createElement('div',{key:i,style:{display:'flex',justifyContent:'space-between',padding:'4px 0'}},
+React.createElement('span',{style:{color:'#888',fontSize:13}},c.name),
+React.createElement('span',{className:'ft',style:{fontSize:16,color:'#FF9F0A'}},(tot>0?Math.round(c.h/tot*100):0)+'%'))})),
+React.createElement('button',{onClick:function(){var total=cats.reduce(function(s,c){return s+c.h},0);if(cats.length===0){alert('\u8ACB\u81F3\u5C11\u65B0\u589E\u4E00\u500B category');return}if(total===0){alert('\u8ACB\u81F3\u5C11\u8A2D\u5B9A\u4E00\u500B category \u7684\u76EE\u6A19\u6642\u6578');return}up(function(d){d.categories=cats.map(function(c,i){return{id:'c'+Date.now()+'_'+i,name:c.name,weeklyGoalHours:c.h,weeklyAdjust:0}});d.setupDone=true;d.gaps={};d.lastSettledWeek=getWeekId(todayS())})},disabled:!cats.length,style:{width:'100%',padding:16,background:cats.length&&tot>0?'#FF2D20':'#555',border:'none',borderRadius:12,color:'#fff',fontSize:18,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:2,cursor:cats.length&&tot>0?'pointer':'default'}},'START TRACKING'))}
+ function Dash({data}){
 var t=todayS(),wd=weekDates(t),md=monthDates(t);
 var dow=dayOfWeek(t),dom=dayOfMonth(t),dim_=daysInMonth(t);
 var hrs=function(cid,ds){return data.records.filter(function(r){return r.categoryId===cid&&ds.includes(r.date)}).reduce(function(s,r){return s+r.hours},0)};
@@ -305,7 +313,7 @@ React.createElement('span',{style:{fontSize:12,flex:2}},cat.name),
 React.createElement('span',{className:'ft',style:{fontSize:14,flex:1,textAlign:'center',color:'#888'}},gP+'%'),
 React.createElement('span',{className:'ft',style:{fontSize:14,flex:1,textAlign:'center',color:'#FF9F0A'}},aP+'%'),
 React.createElement('span',{className:'ft',style:{fontSize:14,flex:1,textAlign:'right',color:diff>=0?'#30D158':'#FF2D20'}},(diff>0?'+':'')+diff+'%'))})))}
-  function Rec({data,up,trig}){
+ function Rec({data,up,trig}){
 var[date,setDate]=useState(todayS());
 var[catId,setCatId]=useState(data.categories.length>0?data.categories[0].id:'');
 var[hrs,setHrs]=useState('');
