@@ -98,8 +98,7 @@ const rand=Math.random();
 if(rand<0.5){const raw=pick(pttPool[ti]);const idx=raw.indexOf('|');return{type:'ptt',tp:raw.slice(0,idx),text:fill(raw.slice(idx+1),v),user:pick(pttUsers),progressNote:progressNote}}
 else if(rand<0.9){const ch=pick(lineChars);const msgs=pick(linePool[ti][ch.s]);return{type:'line',char:ch,msgs:msgs.map(m=>fill(m,v)),time:(8+Math.floor(Math.random()*14))+':'+String(Math.floor(Math.random()*60)).padStart(2,'0'),progressNote:progressNote}}
 else{const raw=finPool[ti];const idx=raw.indexOf('|');return{type:'fin',headline:fill(raw.slice(0,idx),v),body:fill(raw.slice(idx+1),v),progressNote:progressNote}}
-};
- function Ring({size,tPct,wPct,mPct,label,onClick,selected}){
+};function Ring({size,tPct,wPct,mPct,label,onClick,selected}){
 var r1=size/2-4,r2=size/2-12,r3=size/2-20,cx=size/2,cy=size/2;
 var arc=function(r,pct){var p=Math.min(pct,100)/100;if(p<=0)return'';if(p>=1)return'M'+cx+','+(cy-r)+' A'+r+','+r+' 0 1,1 '+(cx-0.01)+','+(cy-r)+' A'+r+','+r+' 0 1,1 '+cx+','+(cy-r);var a=p*2*Math.PI;var x=cx+r*Math.sin(a);var y=cy-r*Math.cos(a);var lg=p>0.5?1:0;return'M'+cx+','+(cy-r)+' A'+r+','+r+' 0 '+lg+',1 '+x+','+y};
 var isGlow=tPct>=100||wPct>=100||mPct>=100;
@@ -207,8 +206,7 @@ React.createElement('span',{className:'ft',style:{fontSize:24}},tot+'h')),
 cats.map(function(c,i){return React.createElement('div',{key:i,style:{display:'flex',justifyContent:'space-between',padding:'4px 0'}},
 React.createElement('span',{style:{color:'#888',fontSize:13}},c.name),
 React.createElement('span',{className:'ft',style:{fontSize:16,color:'#FF9F0A'}},(tot>0?Math.round(c.h/tot*100):0)+'%'))})),
-React.createElement('button',{onClick:function(){var total=cats.reduce(function(s,c){return s+c.h},0);if(cats.length===0){alert('\u8ACB\u81F3\u5C11\u65B0\u589E\u4E00\u500B category');return}if(total===0){alert('\u8ACB\u81F3\u5C11\u8A2D\u5B9A\u4E00\u500B category \u7684\u76EE\u6A19\u6642\u6578');return}up(function(d){d.categories=cats.map(function(c,i){return{id:'c'+Date.now()+'_'+i,name:c.name,weeklyGoalHours:c.h,weeklyAdjust:0}});d.setupDone=true;d.gaps={};d.lastSettledWeek=getWeekId(todayS())})},disabled:!cats.length,style:{width:'100%',padding:16,background:cats.length&&tot>0?'#FF2D20':'#555',border:'none',borderRadius:12,color:'#fff',fontSize:18,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:2,cursor:cats.length&&tot>0?'pointer':'default'}},'START TRACKING'))}
- function Dash({data}){
+React.createElement('button',{onClick:function(){var total=cats.reduce(function(s,c){return s+c.h},0);if(cats.length===0){alert('\u8ACB\u81F3\u5C11\u65B0\u589E\u4E00\u500B category');return}if(total===0){alert('\u8ACB\u81F3\u5C11\u8A2D\u5B9A\u4E00\u500B category \u7684\u76EE\u6A19\u6642\u6578');return}up(function(d){d.categories=cats.map(function(c,i){return{id:'c'+Date.now()+'_'+i,name:c.name,weeklyGoalHours:c.h,weeklyAdjust:0}});d.setupDone=true;d.gaps={};d.lastSettledWeek=getWeekId(todayS())})},disabled:!cats.length,style:{width:'100%',padding:16,background:cats.length&&tot>0?'#FF2D20':'#555',border:'none',borderRadius:12,color:'#fff',fontSize:18,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:2,cursor:cats.length&&tot>0?'pointer':'default'}},'START TRACKING'))}function Dash({data}){
 var t=todayS(),wd=weekDates(t),md=monthDates(t);
 var dow=dayOfWeek(t),dom=dayOfMonth(t),dim_=daysInMonth(t);
 var hrs=function(cid,ds){return data.records.filter(function(r){return r.categoryId===cid&&ds.includes(r.date)}).reduce(function(s,r){return s+r.hours},0)};
@@ -312,8 +310,7 @@ return React.createElement('div',{key:cat.id,style:{display:'flex',padding:'4px 
 React.createElement('span',{style:{fontSize:12,flex:2}},cat.name),
 React.createElement('span',{className:'ft',style:{fontSize:14,flex:1,textAlign:'center',color:'#888'}},gP+'%'),
 React.createElement('span',{className:'ft',style:{fontSize:14,flex:1,textAlign:'center',color:'#FF9F0A'}},aP+'%'),
-React.createElement('span',{className:'ft',style:{fontSize:14,flex:1,textAlign:'right',color:diff>=0?'#30D158':'#FF2D20'}},(diff>0?'+':'')+diff+'%'))})))}
- function Rec({data,up,trig}){
+React.createElement('span',{className:'ft',style:{fontSize:14,flex:1,textAlign:'right',color:diff>=0?'#30D158':'#FF2D20'}},(diff>0?'+':'')+diff+'%'))})))}function Rec({data,up,trig}){
 var[date,setDate]=useState(todayS());
 var[catId,setCatId]=useState(data.categories.length>0?data.categories[0].id:'');
 var[hrs,setHrs]=useState('');
