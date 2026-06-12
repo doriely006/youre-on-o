@@ -38,7 +38,7 @@ const{useState,useEffect,useMemo,useCallback}=React;
 const KEY='reality_v6';const OLDKEY='reality_v5';
 const init=()=>({categories:[],records:[],setupDone:false,
 audience:100,lapseLoss:0,audienceDay:null,lastAirDate:null,audienceLog:[],lastSettledWeek:null,
-declaration:{text:'',date:null,history:[]},charMemory:{},monthlyReviews:[],goalEditLog:[]});
+declaration:{text:'',date:null,history:[]},charMemory:{},milestones:{},monthlyReviews:[],goalEditLog:[]});
 const migrateV5=old=>{const d=init();
 d.setupDone=!!old.setupDone;
 d.records=(old.records||[]).map(r=>({...r}));
@@ -55,7 +55,7 @@ if(!d){const old=JSON.parse(localStorage.getItem(OLDKEY));if(old)d=migrateV5(old
 if(!d)return null;
 if(d.audience==null)d.audience=100;if(d.lapseLoss==null)d.lapseLoss=0;
 if(!d.audienceLog)d.audienceLog=[];if(!d.declaration)d.declaration={text:'',date:null,history:[]};
-if(!d.charMemory)d.charMemory={};if(!d.monthlyReviews)d.monthlyReviews=[];if(!d.goalEditLog)d.goalEditLog=[];
+if(!d.charMemory)d.charMemory={};if(!d.milestones)d.milestones={};if(!d.monthlyReviews)d.monthlyReviews=[];if(!d.goalEditLog)d.goalEditLog=[];
 return d}catch{return null}};
 const save=d=>{try{localStorage.setItem(KEY,JSON.stringify(d))}catch{}};
 const toS=d=>d.toISOString().slice(0,10);
@@ -243,9 +243,135 @@ const finPool=[
 const pttUsers=['\u5634\u780D\u738B','\u53AD\u4E16\u5DE5\u7A0B\u5E2B','\u8DEF\u904E\u9109\u6C11','\u9178\u6C11\u4EE3\u8868','\u6DF1\u591C\u89C0\u773E','\u9375\u76E4\u5206\u6790\u5E2B','\u4F5B\u7CFB\u9752\u5E74','\u8A8D\u771F\u9B54\u4EBA'];
 const dimList=['今日','本週','本月','整體'];
 const editRoasts=['👁 順帶一提，你的終極目標已經改過 {n} 次了','👁 目標修改第 {n} 次，數字不會說謊，但目標會','👁 觀眾備註：此人目標已調整 {n} 次，僅供參考'];
-const genComment=(cats,recs,goalEdits)=>{
+// ---- 評論系統 v2：事件 > 錯位 > tier，角色有記憶 ----
+const rndTime=()=>(8+Math.floor(Math.random()*14))+':'+String(Math.floor(Math.random()*60)).padStart(2,'0');
+// entry 格式：['ptt','推|文字'] / ['line',角色idx,[訊息...]] / ['fin','標題|內文']
+const renderEntry=(e,v)=>{
+if(e[0]==='ptt'){const raw=fill(e[1],v);const i=raw.indexOf('|');return{type:'ptt',tp:raw.slice(0,i),text:raw.slice(i+1),user:pick(pttUsers)}}
+if(e[0]==='line'){const ch=lineChars[e[1]];return{type:'line',char:ch,msgs:e[2].map(s=>fill(s,v)),time:rndTime()}}
+const raw=fill(e[1],v);const i=raw.indexOf('|');return{type:'fin',headline:raw.slice(0,i),body:raw.slice(i+1)}};
+// 錯位評論：宣言/目標比例 vs 實際累計分配（總表同源），落差 >15pp
+const misPool=[
+['ptt','噓|你設定{cat}要佔{goalPct}%，實際{actPct}%。你不是做不到，你是其實不想，差別很大喔'],
+['ptt','→|宣言寫「{declaration}」，{cat}實際只分到{actPct}%，劇本跟演出是兩部片'],
+['ptt','噓|{cat}目標{goalPct}%、實際{actPct}%，嘴上的人生跟過的人生差了{gapPp}個百分點'],
+['ptt','→|看了一下時間分配，{cat}說好{goalPct}%給到{actPct}%，這節目的預告片跟正片不是同一部'],
+['line',4,['你說{cat}要佔{goalPct}%','實際{actPct}%。你對我也是這樣，說一套做一套，我就不意外']],
+['line',2,['{cat}：規劃{goalPct}%，實際{actPct}%','這如果是專案計畫書，我已經退件了']],
+['line',0,['欸我幫你算了一下','{cat}你說要{goalPct}%，結果{actPct}%，你到底是想還是不想啊']],
+['line',3,['阿姨看不懂你們那個百分比','但你說「{declaration}」的時候眼睛有光，現在呢？']],
+['fin','「{cat}」資源錯配警報：承諾{goalPct}%、實際{actPct}%|管理層宣言「{declaration}」遭市場質疑僅供參考，法人：問題不在能力，在意願'],
+['fin','「{cat}」實際投入{actPct}%，與目標{goalPct}%漸行漸遠|分析師指出：說好的轉型故事，目前只存在簡報裡']];
+// 角色記憶 callback（附加在 LINE 對話後）
+const memLines=[
+'上次{mdate}你{mcat}也是{mpct}%，你那時候也是這樣說的',
+'我記得{mdate}那次也差不多，你很一致，這點我給過',
+'{mdate}、{mcat}、{mpct}%。我有做紀錄的習慣，你知道的'];
+// 事件評論池（step 6 會擴量）
+const evTags={comeback:'回歸特輯',goalEdit:'目標修改・公開事件',audDrop:'觀眾流失警報',week100:'里程碑・首次單週100%',streak7:'里程碑・連播7集',m100h:'里程碑・累積100小時',aud1000:'里程碑・觀眾破千'};
+const evPools={
+comeback:[
+['ptt','推|欸他回來了！停播{days}天還敢回來，我就喜歡這種不要臉的精神'],
+['ptt','推|[爆卦] 消失{days}天的節目突然復播，前排朝聖，晚了就只能站著看'],
+['ptt','推|停播{days}天回歸，比我追的番復活得還快，給推'],
+['line',3,['你終於回來了！阿姨擔心死了','停播{days}天，阿姨幫你留著位子，快坐']],
+['line',0,['哇靠你復活了','{days}天欸，我以為這節目涼了。歡迎回來，這次演久一點']],
+['fin','「本節目」無預警復播，觀眾回流{back}人|停牌{days}日後重新掛牌，市場情緒意外熱絡，法人：流浪的觀眾還是想回家']],
+goalEdit:[
+['ptt','噓|目標當場改掉，{cat}從{from}h變{to}h，觀眾都看到了喔'],
+['ptt','→|第{edits}次調整目標，這節目的企劃比演員還忙'],
+['ptt','噓|改目標不犯法啦，但第{edits}次了，編劇要不要出來面對'],
+['line',2,['你把{cat}的目標改成{to}h了','好，我只看數字。下週見真章']],
+['line',4,['聽說你又改目標了','第{edits}次。當年你說要為我改變也是講得這麼順']],
+['fin','「{cat}」目標調整至{to}h|管理層第{edits}次修改財測，公信力指標續跌，惟公司稱「敏捷式人生」']],
+audDrop:[
+['ptt','噓|觀眾跌破{thr}，製作單位開始討論時段調整了'],
+['ptt','→|收視跌破{thr}，再這樣下去要被換成購物台了'],
+['line',2,['收視數字我看到了，跌破{thr}','下週再這樣，我們就要談一談了']],
+['line',3,['阿姨聽說人變少了','沒關係，阿姨在。阿姨哪裡都不去']],
+['fin','「本節目」收視跌破{thr}關卡|廣告主重新評估檔期，製作費恐遭調整，僅剩死忠戶持有']],
+week100:[
+['ptt','推|[爆卦] 單週100%全達成，當週觀眾+50，演唱會等級的場面'],
+['ptt','推|首次週全達成！我就說這節目可以養，套牢三週終於解套'],
+['line',1,['你那週100%是怎麼辦到的','教一下，我想騙我老闆說我也可以']],
+['fin','「本節目」首度單週全目標達成，漲停鎖死|觀眾單日湧入+50，下週能否續攻成市場焦點']],
+streak7:[
+['ptt','推|連播7集無斷檔，這毅力拿去經營感情早就結婚了'],
+['line',4,['聽說你連播7集了','果然分手對你是好事，恭喜，我是說恭喜你']],
+['line',0,['連七天欸你','你高中交作業都沒這麼準時，我有點感動']],
+['fin','「本節目」連續7日播出創開台紀錄|穩定供片能力獲市場肯定，惟分析師觀望：能撐多久']],
+m100h:[
+['ptt','推|累積100小時達成。量變產生質變，大概啦，理論上啦'],
+['line',3,['阿姨算了一下，你做滿100小時了','要不要來吃雞湯，阿姨燉好了，慶祝用的']],
+['fin','「本節目」累計投入突破100小時|長期主義敘事成形，投資人開始相信這不是一日行情']],
+aud1000:[
+['ptt','推|[爆卦] 觀眾破千！這節目居然真的做起來了'],
+['line',0,['欸你觀眾破1000了','我可以開始跟別人說我認識你嗎']],
+['fin','「本節目」收視突破1,000人|從地下節目到千人時段，法人全面上調評等']]};
+// LINE 角色出場權重：前任挑你達標時、阿姨看你停播多久、老闆恆常在
+const pickChar=(pct,days,streak)=>{
+const w=lineChars.map(c=>{
+if(c.s===4)return(streak>=3||pct>=81)?4:0.5;
+if(c.s===3)return 1+Math.min(3,days);
+if(c.s===2)return 1.5;
+return 1});
+let tot=w.reduce((a,b)=>a+b,0),r=Math.random()*tot;
+for(let i=0;i<w.length;i++){r-=w[i];if(r<=0)return lineChars[i]}
+return lineChars[0]};
+// snap = data snapshot（records 已含本次新記錄）；ev = airToday 事件或 {goalEdit:{...}}
+const genComment=(snap,ev)=>{
+const cats=snap.categories;
 if(!cats||cats.length===0)return null;
-const t=todayS(),wd=weekDates(t),md=monthDates(t),dow=dayOfWeek(t);
+const recs=snap.records,t=todayS(),wd=weekDates(t),md=monthDates(t),dow=dayOfWeek(t);
+const m=snap.milestones||{};
+const marks={};
+const la=recs.length?recs.reduce((mx,r)=>r.date>mx?r.date:mx,'0000-00-00'):null;
+const streak=calcStreak(recs,la);
+const days=ev&&ev.offDays?ev.offDays:0;
+const edits=(snap.goalEditLog||[]).length;
+const totH=recs.reduce((s,r)=>s+r.hours,0);
+const aud=snap.audience;
+const baseV={aud:aud,streak:streak,declaration:(snap.declaration&&snap.declaration.text)||'（沒寫宣言）',edits:edits,days:days};
+const mkPersist=charUpd=>d=>{d.milestones=Object.assign({},d.milestones,marks);if(charUpd)d.charMemory=Object.assign({},d.charMemory,{[charUpd.name]:charUpd.rec})};
+// 1. 目標修改：當場評論
+if(ev&&ev.goalEdit){
+const v={...baseV,cat:ev.goalEdit.cat,from:ev.goalEdit.from,to:ev.goalEdit.to,edits:ev.goalEdit.n};
+const cm=renderEntry(pick(evPools.goalEdit),v);cm.eventTag=evTags.goalEdit;
+return{cm:cm,persist:mkPersist(null)}}
+// 2. 回歸特輯：最重要的時刻，蓋過一切
+if(ev&&ev.comeback){
+const v={...baseV,back:ev.refund||0};
+const cm=renderEntry(pick(evPools.comeback),v);cm.eventTag=evTags.comeback;
+return{cm:cm,persist:mkPersist(null)}}
+// 3. 事件掃描：觀眾跌破關卡（負面優先）→ 里程碑
+const cands=[];
+[500,200,50].forEach(thr=>{
+if(aud>=thr){if(!m['ab'+thr])marks['ab'+thr]=true;if(m['dr'+thr])marks['dr'+thr]=false}
+else if(m['ab'+thr]&&!m['dr'+thr])cands.push(['audDrop',{thr:thr},{['dr'+thr]:true,['ab'+thr]:false}])});
+if(!m.week100&&(snap.audienceLog||[]).some(e=>e.reason==='week100'))cands.push(['week100',{},{week100:true}]);
+if(!m.streak7&&streak>=7)cands.push(['streak7',{},{streak7:true}]);
+if(!m.h100&&totH>=100)cands.push(['m100h',{},{h100:true}]);
+if(!m.aud1000&&aud>=1000)cands.push(['aud1000',{},{aud1000:true}]);
+if(cands.length>0){
+const c=cands[0];Object.assign(marks,c[2]);
+const v={...baseV,...c[1]};
+const cm=renderEntry(pick(evPools[c[0]]),v);cm.eventTag=evTags[c[0]];
+return{cm:cm,persist:mkPersist(null)}}
+// 4. 錯位評論：實際累計分配 vs 目標比例，落差 >15pp（累計滿 7h 才開始算，50% 機率讓路給日常評論）
+const totGoal=cats.reduce((s,c)=>s+c.weeklyGoalHours,0);
+if(totH>=7&&totGoal>0){
+let worstMis=null;
+cats.forEach(c=>{
+const gP=Math.round(c.weeklyGoalHours/totGoal*100);
+const aH=recs.filter(r=>r.categoryId===c.id).reduce((s,r)=>s+r.hours,0);
+const aP=Math.round(aH/totH*100);
+const gap=gP-aP;
+if(gap>15&&(!worstMis||gap>worstMis.gap))worstMis={c:c,gP:gP,aP:aP,gap:gap}});
+if(worstMis&&Math.random()<0.5){
+const v={...baseV,cat:worstMis.c.name,goalPct:worstMis.gP,actPct:worstMis.aP,gapPp:worstMis.gap};
+const cm=renderEntry(pick(misPool),v);cm.eventTag='錯位評論・宣言 vs 實際';
+return{cm:cm,persist:mkPersist(null)}}}
+// 5. 日常 tier 評論（角色有記憶）
 const dim=pick(dimList);
 const calc=cat=>{
 const gw=cat.weeklyGoalHours;
@@ -254,19 +380,24 @@ let hrs=0,goal=gw;
 if(dim==='今日'){hrs=cr.filter(r=>r.date===t).reduce((s,r)=>s+r.hours,0);goal=gw/7}
 else if(dim==='本週'){hrs=cr.filter(r=>wd.includes(r.date)).reduce((s,r)=>s+r.hours,0);goal=gw}
 else if(dim==='本月'){hrs=cr.filter(r=>md.includes(r.date)).reduce((s,r)=>s+r.hours,0);goal=gw/7*daysInMonth(t)}
-else{hrs=cr.reduce((s,r)=>s+r.hours,0);const first=cr.length?cr.reduce((m,r)=>r.date<m?r.date:m,t):t;const weeks=Math.max(1,Math.round((new Date(getWeekId(t))-new Date(getWeekId(first)))/(7*864e5))+1);goal=gw*weeks}
+else{hrs=cr.reduce((s,r)=>s+r.hours,0);const first=cr.length?cr.reduce((mm,r)=>r.date<mm?r.date:mm,t):t;const weeks=Math.max(1,Math.round((new Date(getWeekId(t))-new Date(getWeekId(first)))/(7*864e5))+1);goal=gw*weeks}
 return{hrs:hrs,goal:goal,pct:goal>0?Math.round(hrs/goal*100):0}};
 let worst=null,wv=null;
 cats.forEach(c=>{const r=calc(c);if(!wv||r.pct<wv.pct){worst=c;wv=r}});
 const pct=wv.pct,ti=tierN(pct);
-const v={dim:dim,cat:worst.name,pct:pct,hrs:Math.round(wv.hrs*10)/10,gap:Math.max(0,Math.round((wv.goal-wv.hrs)*10)/10)};
+const v={...baseV,dim:dim,cat:worst.name,pct:pct,hrs:Math.round(wv.hrs*10)/10,gap:Math.max(0,Math.round((wv.goal-wv.hrs)*10)/10)};
 const T=s=>fill(s,v).split('本週').join(dim);
 const progressNote=dim==='本週'?getProgressNote(pct,dow):'📺 評論維度：'+dim;
-const editNote=(goalEdits>0&&Math.random()<0.35)?pick(editRoasts).split('{n}').join(goalEdits):null;
+const editNote=(edits>0&&Math.random()<0.35)?pick(editRoasts).split('{n}').join(edits):null;
 const rand=Math.random();
-if(rand<0.5){const raw=pick(pttPool[ti]);const idx=raw.indexOf('|');return{type:'ptt',tp:raw.slice(0,idx),text:T(raw.slice(idx+1)),user:pick(pttUsers),progressNote:progressNote,editNote:editNote}}
-else if(rand<0.9){const ch=pick(lineChars);const msgs=pick(linePool[ti][ch.s]);return{type:'line',char:ch,msgs:msgs.map(T),time:(8+Math.floor(Math.random()*14))+':'+String(Math.floor(Math.random()*60)).padStart(2,'0'),progressNote:progressNote,editNote:editNote}}
-else{const raw=finPool[ti];const idx=raw.indexOf('|');return{type:'fin',headline:T(raw.slice(0,idx)),body:T(raw.slice(idx+1)),progressNote:progressNote,editNote:editNote}}
+if(rand<0.5){const raw=pick(pttPool[ti]);const idx=raw.indexOf('|');return{cm:{type:'ptt',tp:raw.slice(0,idx),text:T(raw.slice(idx+1)),user:pick(pttUsers),progressNote:progressNote,editNote:editNote},persist:mkPersist(null)}}
+else if(rand<0.9){
+const ch=pickChar(pct,days,streak);
+const msgs=pick(linePool[ti][ch.s]).map(T);
+const mem=(snap.charMemory||{})[ch.name];
+if(mem&&Math.random()<0.45)msgs.push(fill(pick(memLines),{mdate:mem.date,mcat:mem.cat,mpct:mem.pct}));
+return{cm:{type:'line',char:ch,msgs:msgs,time:rndTime(),progressNote:progressNote,editNote:editNote},persist:mkPersist({name:ch.name,rec:{date:t,cat:worst.name,pct:pct}})}}
+else{const raw=finPool[ti];const idx=raw.indexOf('|');return{cm:{type:'fin',headline:T(raw.slice(0,idx)),body:T(raw.slice(idx+1)),progressNote:progressNote,editNote:editNote},persist:mkPersist(null)}}
 };function Ring({size,tPct,wPct,label,onClick,selected}){
 var r1=size/2-5,r2=size/2-14,cx=size/2,cy=size/2;
 var arc=function(r,pct){var p=Math.min(pct,100)/100;if(p<=0)return'';if(p>=1)return'M'+cx+','+(cy-r)+' A'+r+','+r+' 0 1,1 '+(cx-0.01)+','+(cy-r)+' A'+r+','+r+' 0 1,1 '+cx+','+(cy-r);var a=p*2*Math.PI;var x=cx+r*Math.sin(a);var y=cy-r*Math.cos(a);var lg=p>0.5?1:0;return'M'+cx+','+(cy-r)+' A'+r+','+r+' 0 '+lg+',1 '+x+','+y};
@@ -311,6 +442,7 @@ var noteEl=cm.progressNote?React.createElement('p',{style:{textAlign:'center',co
 var editEl=cm.editNote?React.createElement('p',{style:{textAlign:'center',color:'#C9A86A',fontSize:11,marginTop:6,padding:'5px 12px',background:'rgba(201,168,106,.08)',borderRadius:8}},cm.editNote):null;
 return React.createElement('div',{onClick:onClose,style:{position:'fixed',inset:0,background:'rgba(0,0,0,.85)',zIndex:100,display:'flex',alignItems:'center',justifyContent:'center',padding:20}},
 React.createElement('div',{onClick:function(e){e.stopPropagation()},style:{width:'100%',maxWidth:380},className:'fade-in'},
+cm.eventTag&&React.createElement('p',{style:{textAlign:'center',color:'#C9A86A',fontSize:10,letterSpacing:3,marginBottom:10}},'★ '+cm.eventTag+' ★'),
 cm.type==='ptt'&&React.createElement('div',{style:{background:'#0a1628',borderRadius:8,padding:16,fontFamily:'monospace',border:'1px solid #1a3050'}},
 React.createElement('div',{style:{borderBottom:'1px solid #1a3050',paddingBottom:8,marginBottom:12}},
 React.createElement('span',{style:{color:'#00ffff',fontSize:13}},'\u6279\u8E22\u8E22\u5BE6\u696D\u574A'),
@@ -338,8 +470,12 @@ var[data,setData]=useState(function(){var d=load()||init();d=settleAll(d);save(d
 var[page,setPage]=useState('dashboard');
 var[comment,setComment]=useState(null);
 useEffect(function(){save(data)},[data]);
-var up=useCallback(function(fn){setData(function(p){var n={...p,categories:p.categories.map(function(c){return{...c}}),records:[...p.records],audienceLog:[...(p.audienceLog||[])],goalEditLog:[...(p.goalEditLog||[])],declaration:{...(p.declaration||{}),history:[...((p.declaration||{}).history||[])]}};fn(n);return settleAll(n)})},[]);
-var trigCmt=useCallback(function(newRecs,ev){if(data.categories.length===0)return;var c=genComment(data.categories,data.records.concat(newRecs||[]),(data.goalEditLog||[]).length);if(c){if(ev)c.air=ev;setComment(c)}},[data]);
+var up=useCallback(function(fn){setData(function(p){var n={...p,categories:p.categories.map(function(c){return{...c}}),records:[...p.records],audienceLog:[...(p.audienceLog||[])],goalEditLog:[...(p.goalEditLog||[])],charMemory:{...(p.charMemory||{})},milestones:{...(p.milestones||{})},monthlyReviews:[...(p.monthlyReviews||[])],declaration:{...(p.declaration||{}),history:[...((p.declaration||{}).history||[])]}};fn(n);return settleAll(n)})},[]);
+var trigCmt=useCallback(function(newRecs,ev){
+if(data.categories.length===0)return;
+var snap={...data,records:data.records.concat(newRecs||[])};
+var out=genComment(snap,ev);
+if(out){if(ev&&!ev.goalEdit)out.cm.air=ev;if(out.persist)up(out.persist);setComment(out.cm)}},[data,up]);
 var[intro,setIntro]=useState(function(){return!!data.setupDone});
 useEffect(function(){var id=setTimeout(function(){setIntro(false)},2300);return function(){clearTimeout(id)}},[]);
 var[modal,setModal]=useState(null);
@@ -348,7 +484,7 @@ if(!data.setupDone)return React.createElement(Setup,{up:up});
 var content=null;
 if(page==='dashboard')content=React.createElement(Dash,{data:data});
 if(page==='record')content=React.createElement(Rec,{data:data,up:up,trig:trigCmt});
-if(page==='settings')content=React.createElement(Settings,{data:data,up:up,ask:ask});
+if(page==='settings')content=React.createElement(Settings,{data:data,up:up,ask:ask,trig:trigCmt});
 var navItems=[['dashboard','home','HOME'],['record','record','RECORD'],['settings','settings','SETTINGS']];
 return React.createElement('div',{style:{maxWidth:430,margin:'0 auto',minHeight:'100vh',background:'transparent',fontFamily:"'Noto Sans TC',sans-serif",color:'#fff',paddingBottom:74}},
 content,
@@ -538,7 +674,7 @@ React.createElement('p',{className:'tag',style:{marginBottom:8}},date===todayS()
 React.createElement('div',{style:{display:'flex',flexWrap:'wrap',gap:8}},
 dayLog.map(function(l,i){return React.createElement('span',{key:i,style:{padding:'4px 10px',borderRadius:6,fontSize:13,color:'var(--t60)',background:'rgba(255,255,255,.04)'}},l.name+' ',React.createElement('span',{className:'ft',style:{color:'#C9A86A'}},l.hours+'h'))}))),
 React.createElement('button',{onClick:submit,style:{width:'100%',padding:16,marginTop:8,background:saved?'#C9A86A':total>0?'#C9A86A':'rgba(255,255,255,.06)',border:'none',borderRadius:12,color:saved||total>0?'#0a0a0a':'var(--t35)',fontSize:19,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:3,cursor:total>0?'pointer':'default'}},saved?'\u2713 ON AIR':'\u64ad\u51fa\u672c\u96c6'))}
-function Settings({data,up,ask}){
+function Settings({data,up,ask,trig}){
 var[nc,setNc]=useState('');
 var[nh,setNh]=useState(5);
 var[drafts,setDrafts]=useState({});
@@ -583,7 +719,7 @@ React.createElement('span',{className:'ft',style:{fontSize:14,color:'var(--t35)'
 React.createElement('button',{onClick:function(){ask({title:'\u522A\u9664\u300C'+cat.name+'\u300D\uFF1F',body:'\u9019\u500B category \u548C\u5B83\u7684\u76EE\u6A19\u6703\u6D88\u5931\uFF0C\u5DF2\u8A18\u9304\u7684\u6642\u6578\u6703\u4FDD\u7559\u5728\u6B77\u53F2\u88E1\u3002',confirmText:'\u522A\u9664',danger:true,onConfirm:function(){up(function(d){d.categories=d.categories.filter(function(x){return x.id!==cat.id})})}})},style:{background:'transparent',border:'none',color:'var(--t35)',cursor:'pointer',padding:4,display:'flex'}},React.createElement(Icon,{name:'x',size:15}))),
 dirty&&React.createElement('div',{style:{display:'flex',alignItems:'center',gap:8,marginTop:8,padding:'6px 8px',background:'rgba(201,168,106,.07)',borderRadius:8}},
 React.createElement('span',{style:{fontSize:11,color:'#C9A86A',flex:1}},cat.weeklyGoalHours+'h \u2192 '+draft+'h\uFF0C\u7ACB\u5373\u751F\u6548'),
-React.createElement('button',{onClick:function(){var v=draft,from=cat.weeklyGoalHours;up(function(d){var c=d.categories.find(function(x){return x.id===cat.id});if(c){c.weeklyGoalHours=v;d.goalEditLog.push({date:todayS(),catId:cat.id,from:from,to:v})}});setDraft(cat.id,null)},style:{padding:'4px 10px',background:'#FF2D20',border:'none',borderRadius:6,color:'#fff',fontSize:11,cursor:'pointer'}},'\u78BA\u8A8D\u4FEE\u6539'),
+React.createElement('button',{onClick:function(){var v=draft,from=cat.weeklyGoalHours;up(function(d){var c=d.categories.find(function(x){return x.id===cat.id});if(c){c.weeklyGoalHours=v;d.goalEditLog.push({date:todayS(),catId:cat.id,from:from,to:v})}});setDraft(cat.id,null);setTimeout(function(){trig(null,{goalEdit:{cat:cat.name,from:from,to:v,n:(data.goalEditLog||[]).length+1}})},400)},style:{padding:'4px 10px',background:'#FF2D20',border:'none',borderRadius:6,color:'#fff',fontSize:11,cursor:'pointer'}},'\u78BA\u8A8D\u4FEE\u6539'),
 React.createElement('button',{onClick:function(){setDraft(cat.id,null)},style:{padding:'4px 10px',background:'transparent',border:'1px solid #333',borderRadius:6,color:'#888',fontSize:11,cursor:'pointer'}},'\u9084\u539F')))}),
 React.createElement('h2',{className:'tag',style:{margin:'26px 0 10px'}},'NEW CATEGORY'),
 React.createElement('div',{style:{display:'flex',gap:8,alignItems:'center'}},
