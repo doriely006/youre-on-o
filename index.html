@@ -840,7 +840,14 @@ React.createElement('span',{className:'ft',style:{fontSize:26}},twg+'h')),
 data.categories.map(function(cat){return React.createElement('div',{key:cat.id,style:{display:'flex',justifyContent:'space-between',padding:'3px 0'}},
 React.createElement('span',{style:{color:'var(--t60)',fontSize:13}},cat.name),
 React.createElement('span',{className:'ft',style:{fontSize:15,color:'#C9A86A'}},(twg>0?Math.round(cat.weeklyGoalHours/twg*100):0)+'%'))})),
-React.createElement('button',{onClick:function(){ask({title:'\u91CD\u7F6E\u6240\u6709\u8CC7\u6599\uFF1F',body:'\u7BC0\u76EE\u505C\u64AD\uFF0C\u5168\u90E8\u89C0\u773E\u56DE\u5BB6\uFF0C\u8A18\u9304\u6B78\u96F6\u3002\u6B64\u64CD\u4F5C\u7121\u6CD5\u5FA9\u539F\u3002',confirmText:'\u5168\u90E8\u6E05\u9664',danger:true,onConfirm:function(){localStorage.removeItem(KEY);localStorage.removeItem(OLDKEY);location.reload()}})},style:{width:'100%',padding:14,background:'transparent',border:'1px solid rgba(255,45,32,.5)',borderRadius:12,color:'#FF2D20',fontSize:14,cursor:'pointer',marginTop:36}},'\u91CD\u7F6E\u6240\u6709\u8CC7\u6599'))}
+React.createElement('h2',{className:'tag',style:{margin:'26px 0 8px'}},'DATA'),
+React.createElement('button',{onClick:function(){
+var payload={app:"You're On",exportedAt:new Date().toISOString(),storageKey:KEY,data:data};
+var blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+var url=URL.createObjectURL(blob);
+var a=document.createElement('a');a.href=url;a.download='youre-on-backup-'+todayS()+'.json';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url)},style:{width:'100%',padding:14,background:'transparent',border:'1px solid rgba(201,168,106,.5)',borderRadius:12,color:'#C9A86A',fontSize:14,cursor:'pointer'}},'\u532F\u51FA JSON \u5099\u4EFD'),
+React.createElement('p',{style:{color:'var(--t35)',fontSize:10,marginTop:6,textAlign:'center'}},'localStorage \u662F\u5B9A\u6642\u70B8\u5F48\uFF0C\u5076\u723E\u5099\u4EFD\u4E00\u4E0B'),
+React.createElement('button',{onClick:function(){ask({title:'\u91CD\u7F6E\u6240\u6709\u8CC7\u6599\uFF1F',body:'\u7BC0\u76EE\u505C\u64AD\uFF0C\u5168\u90E8\u89C0\u773E\u56DE\u5BB6\uFF0C\u8A18\u9304\u6B78\u96F6\u3002\u6B64\u64CD\u4F5C\u7121\u6CD5\u5FA9\u539F\u3002',confirmText:'\u5168\u90E8\u6E05\u9664',danger:true,onConfirm:function(){localStorage.removeItem(KEY);localStorage.removeItem(OLDKEY);location.reload()}})},style:{width:'100%',padding:14,background:'transparent',border:'1px solid rgba(255,45,32,.5)',borderRadius:12,color:'#FF2D20',fontSize:14,cursor:'pointer',marginTop:14}},'\u91CD\u7F6E\u6240\u6709\u8CC7\u6599'))}
 ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(App));
 </script>
 </body>
