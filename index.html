@@ -267,21 +267,18 @@ const rand=Math.random();
 if(rand<0.5){const raw=pick(pttPool[ti]);const idx=raw.indexOf('|');return{type:'ptt',tp:raw.slice(0,idx),text:T(raw.slice(idx+1)),user:pick(pttUsers),progressNote:progressNote,editNote:editNote}}
 else if(rand<0.9){const ch=pick(lineChars);const msgs=pick(linePool[ti][ch.s]);return{type:'line',char:ch,msgs:msgs.map(T),time:(8+Math.floor(Math.random()*14))+':'+String(Math.floor(Math.random()*60)).padStart(2,'0'),progressNote:progressNote,editNote:editNote}}
 else{const raw=finPool[ti];const idx=raw.indexOf('|');return{type:'fin',headline:T(raw.slice(0,idx)),body:T(raw.slice(idx+1)),progressNote:progressNote,editNote:editNote}}
-};function Ring({size,tPct,wPct,mPct,label,onClick,selected}){
-var r1=size/2-4,r2=size/2-12,r3=size/2-20,cx=size/2,cy=size/2;
+};function Ring({size,tPct,wPct,label,onClick,selected}){
+var r1=size/2-5,r2=size/2-14,cx=size/2,cy=size/2;
 var arc=function(r,pct){var p=Math.min(pct,100)/100;if(p<=0)return'';if(p>=1)return'M'+cx+','+(cy-r)+' A'+r+','+r+' 0 1,1 '+(cx-0.01)+','+(cy-r)+' A'+r+','+r+' 0 1,1 '+cx+','+(cy-r);var a=p*2*Math.PI;var x=cx+r*Math.sin(a);var y=cy-r*Math.cos(a);var lg=p>0.5?1:0;return'M'+cx+','+(cy-r)+' A'+r+','+r+' 0 '+lg+',1 '+x+','+y};
-var isGlow=tPct>=100||wPct>=100||mPct>=100;
+var isGlow=tPct>=100||wPct>=100;
 return React.createElement('div',{onClick:onClick,style:{cursor:'pointer',textAlign:'center',transition:'transform .2s',transform:selected?'scale(1.08)':'scale(1)'}},
 React.createElement('svg',{width:size,height:size,className:isGlow?'ring-glow':''},
 React.createElement('circle',{cx:cx,cy:cy,r:r1,fill:'none',stroke:'rgba(255,255,255,.06)',strokeWidth:6}),
 React.createElement('circle',{cx:cx,cy:cy,r:r2,fill:'none',stroke:'rgba(255,255,255,.06)',strokeWidth:6}),
-React.createElement('circle',{cx:cx,cy:cy,r:r3,fill:'none',stroke:'rgba(255,255,255,.06)',strokeWidth:6}),
-mPct>0&&React.createElement('path',{d:arc(r1,mPct),fill:'none',stroke:'rgba(255,255,255,.30)',strokeWidth:6,strokeLinecap:'round'}),
-wPct>0&&React.createElement('path',{d:arc(r2,wPct),fill:'none',stroke:'#C9A86A',strokeWidth:6,strokeLinecap:'round'}),
-tPct>0&&React.createElement('path',{d:arc(r3,tPct),fill:'none',stroke:'rgba(255,255,255,.85)',strokeWidth:6,strokeLinecap:'round'}),
-React.createElement('text',{x:cx,y:cy+1,textAnchor:'middle',dominantBaseline:'middle',fill:'#fff',fontSize:14,fontFamily:"'Bebas Neue',sans-serif"},wPct+'%'),
-React.createElement('text',{x:cx,y:cy-r1-1,textAnchor:'middle',fill:'rgba(255,255,255,.35)',fontSize:8,fontFamily:"'Bebas Neue',sans-serif"},mPct+'%'),
-React.createElement('text',{x:cx,y:cy+r3+4,textAnchor:'middle',fill:'rgba(255,255,255,.6)',fontSize:8,fontFamily:"'Bebas Neue',sans-serif"},tPct+'%')
+wPct>0&&React.createElement('path',{d:arc(r1,wPct),fill:'none',stroke:'#C9A86A',strokeWidth:6,strokeLinecap:'round'}),
+tPct>0&&React.createElement('path',{d:arc(r2,tPct),fill:'none',stroke:'rgba(255,255,255,.85)',strokeWidth:6,strokeLinecap:'round'}),
+React.createElement('text',{x:cx,y:cy+1,textAnchor:'middle',dominantBaseline:'middle',fill:'#fff',fontSize:15,fontFamily:"'Bebas Neue',sans-serif"},wPct+'%'),
+React.createElement('text',{x:cx,y:cy+r2+5,textAnchor:'middle',fill:'rgba(255,255,255,.6)',fontSize:8,fontFamily:"'Bebas Neue',sans-serif"},tPct+'%')
 ),
 React.createElement('div',{style:{fontSize:11,color:selected?'#fff':'var(--t35)',marginTop:2,fontWeight:selected?500:300}},label)
 )}
@@ -369,7 +366,9 @@ React.createElement('span',{style:{fontSize:8,letterSpacing:3,fontWeight:act?500
 function Setup({up}){
 var[cats,setCats]=useState([]);
 var[nc,setNc]=useState('');
+var[decl,setDecl]=useState('');
 var tot=cats.reduce(function(s,c){return s+c.h},0);
+var ready=cats.length>0&&tot>0&&decl.trim().length>0;
 return React.createElement('div',{style:{maxWidth:430,margin:'0 auto',minHeight:'100vh',background:'transparent',padding:24,color:'#fff'}},
 React.createElement('div',{className:'spot',style:{textAlign:'center',margin:'64px 0 44px'}},
 React.createElement('h1',{className:'ft',style:{fontSize:58,color:'#FF2D20',letterSpacing:1,lineHeight:1}},"YOU'RE ON"),
@@ -392,18 +391,22 @@ React.createElement('span',{className:'ft',style:{fontSize:26}},tot+'h')),
 cats.map(function(c,i){return React.createElement('div',{key:i,style:{display:'flex',justifyContent:'space-between',padding:'4px 0'}},
 React.createElement('span',{style:{color:'var(--t60)',fontSize:13}},c.name),
 React.createElement('span',{className:'ft',style:{fontSize:16,color:'#C9A86A'}},(tot>0?Math.round(c.h/tot*100):0)+'%'))})),
+React.createElement('h2',{className:'tag',style:{margin:'4px 0 6px'}},'OPENING DECLARATION'),
+React.createElement('p',{style:{color:'var(--t60)',fontSize:14,marginBottom:8}},'\u4F60\u70BA\u4EC0\u9EBC\u958B\u9019\u500B\u7BC0\u76EE\uFF1F\uFF08\u4E00\u53E5\u8A71\uFF0C\u89C0\u773E\u6703\u8A18\u4F4F\uFF09'),
+React.createElement('input',{value:decl,onChange:function(e){setDecl(e.target.value)},placeholder:'\u4F8B\uFF1A\u5E74\u5E95\u524D\u8F49\u8077\u6210\u529F',maxLength:60,style:{width:'100%',padding:'12px 14px',background:'#0d0d0d',border:'1px solid '+(decl.trim()?'rgba(201,168,106,.4)':'var(--line)'),borderRadius:8,color:'#fff',fontSize:15,outline:'none',boxSizing:'border-box',marginBottom:20}}),
 tot===0&&cats.length>0&&React.createElement('p',{style:{color:'var(--t35)',fontSize:11,textAlign:'center',marginBottom:10}},'\u81F3\u5C11\u7D66\u4E00\u500B category \u76EE\u6A19\u6642\u6578\u624D\u80FD\u958B\u64AD'),
-React.createElement('button',{onClick:function(){if(cats.length===0||tot===0)return;up(function(d){d.categories=cats.map(function(c,i){return{id:'c'+Date.now()+'_'+i,name:c.name,weeklyGoalHours:c.h}});d.setupDone=true})},disabled:!cats.length||tot===0,style:{width:'100%',padding:16,background:cats.length&&tot>0?'#C9A86A':'rgba(255,255,255,.06)',border:'none',borderRadius:12,color:cats.length&&tot>0?'#0a0a0a':'var(--t35)',fontSize:19,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:3,cursor:cats.length&&tot>0?'pointer':'default'}},'START THE SHOW'))}function Dash({data}){
-var t=todayS(),wd=weekDates(t),md=monthDates(t);
-var dow=dayOfWeek(t),dom=dayOfMonth(t),dim_=daysInMonth(t);
+cats.length>0&&tot>0&&!decl.trim()&&React.createElement('p',{style:{color:'var(--t35)',fontSize:11,textAlign:'center',marginBottom:10}},'\u5BEB\u4E0B\u5BA3\u8A00\u624D\u80FD\u958B\u64AD\u2014\u2014\u6C92\u6709\u524D\u63D0\u7684\u7BC0\u76EE\u6C92\u4EBA\u770B'),
+React.createElement('button',{onClick:function(){if(!ready)return;var dText=decl.trim();up(function(d){d.categories=cats.map(function(c,i){return{id:'c'+Date.now()+'_'+i,name:c.name,weeklyGoalHours:c.h}});d.declaration={text:dText,date:todayS(),history:[]};d.setupDone=true})},disabled:!ready,style:{width:'100%',padding:16,background:ready?'#C9A86A':'rgba(255,255,255,.06)',border:'none',borderRadius:12,color:ready?'#0a0a0a':'var(--t35)',fontSize:19,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:3,cursor:ready?'pointer':'default'}},'START THE SHOW'))}function Dash({data}){
+var t=todayS(),wd=weekDates(t);
+var dow=dayOfWeek(t);
 var hrs=function(cid,ds){return data.records.filter(function(r){return r.categoryId===cid&&ds.includes(r.date)}).reduce(function(s,r){return s+r.hours},0)};
 var allH=function(ds){return data.records.filter(function(r){return ds.includes(r.date)}).reduce(function(s,r){return s+r.hours},0)};
-var tH=allH([t]),wH=allH(wd),mH=allH(md);
+var tH=allH([t]),wH=allH(wd);
 var[sel,setSel]=useState(null);
 var catData=data.categories.map(function(cat){
-var tHrs=hrs(cat.id,[t]),wHrs=hrs(cat.id,wd),mHrs=hrs(cat.id,md);
-var wG=cat.weeklyGoalHours,tG=wG/7,mG=wG/7*dim_;
-return{cat:cat,tPct:tG>0?Math.round(tHrs/tG*100):0,wPct:wG>0?Math.round(wHrs/wG*100):0,mPct:mG>0?Math.round(mHrs/mG*100):0,tHrs:tHrs,wHrs:wHrs,mHrs:mHrs,tG:tG,wG:wG,mG:mG}});
+var tHrs=hrs(cat.id,[t]),wHrs=hrs(cat.id,wd);
+var wG=cat.weeklyGoalHours,tG=wG/7;
+return{cat:cat,tPct:tG>0?Math.round(tHrs/tG*100):0,wPct:wG>0?Math.round(wHrs/wG*100):0,tHrs:tHrs,wHrs:wHrs,tG:tG,wG:wG}});
 var streak=calcStreak(data.records,data.lastAirDate);
 var airedToday=hasRecOn(data.records,t);
 var offDays=data.lastAirDate?Math.max(0,diffDays(data.lastAirDate,t)-1):0;
@@ -413,7 +416,6 @@ var epN=Object.keys(data.records.reduce(function(m,r){m[r.date]=1;return m},{}))
 var avg=function(a){return a.length?Math.round(a.reduce(function(s,x){return s+x},0)/a.length):0};
 var tP=avg(catData.map(function(d){return d.tPct}));
 var wP=avg(catData.map(function(d){return d.wPct}));
-var mP=avg(catData.map(function(d){return d.mPct}));
 var selData=sel!==null?catData.find(function(d){return d.cat.id===sel}):null;
 var screenItems=[['\u4ECA\u65E5',tP,tH],['\u672C\u9031',wP,wH]];
 var legend=[['#C9A86A','\u9031'],['rgba(255,255,255,.85)','\u65E5']];
@@ -470,14 +472,14 @@ React.createElement('div',{style:{width:8,height:8,borderRadius:4,background:ite
 React.createElement('span',{style:{fontSize:10,color:'var(--t35)'}},item[1]))})),
 React.createElement('div',{style:{display:'flex',flexDirection:'column',alignItems:'center',gap:8,margin:'4px 0'}},
 React.createElement('div',{style:{display:'flex',justifyContent:'center',gap:8}},
-topRow.map(function(d){return React.createElement(Ring,{key:d.cat.id,size:ringSize,tPct:d.tPct,wPct:d.wPct,mPct:d.mPct,label:d.cat.name,selected:sel===d.cat.id,onClick:function(){setSel(sel===d.cat.id?null:d.cat.id)}})})),
+topRow.map(function(d){return React.createElement(Ring,{key:d.cat.id,size:ringSize,tPct:d.tPct,wPct:d.wPct,label:d.cat.name,selected:sel===d.cat.id,onClick:function(){setSel(sel===d.cat.id?null:d.cat.id)}})})),
 bottomRow.length>0&&React.createElement('div',{style:{display:'flex',justifyContent:'center',gap:8}},
-bottomRow.map(function(d){return React.createElement(Ring,{key:d.cat.id,size:ringSize,tPct:d.tPct,wPct:d.wPct,mPct:d.mPct,label:d.cat.name,selected:sel===d.cat.id,onClick:function(){setSel(sel===d.cat.id?null:d.cat.id)}})}))),
+bottomRow.map(function(d){return React.createElement(Ring,{key:d.cat.id,size:ringSize,tPct:d.tPct,wPct:d.wPct,label:d.cat.name,selected:sel===d.cat.id,onClick:function(){setSel(sel===d.cat.id?null:d.cat.id)}})}))),
 selData&&React.createElement('div',{className:'fade-in',style:{background:'rgba(255,255,255,.025)',borderRadius:12,padding:'14px 16px',margin:'6px 0'}},
 React.createElement('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:8}},
 React.createElement('span',{style:{fontSize:15,fontWeight:500}},selData.cat.name),
 React.createElement('span',{className:'ft',style:{fontSize:14,color:'var(--t35)'}},selData.cat.weeklyGoalHours+'h/wk')),
-[['\u4ECA\u65E5',selData.tPct,selData.tHrs,selData.tG,'rgba(255,255,255,.85)'],['\u672C\u9031',selData.wPct,selData.wHrs,selData.wG,'#C9A86A'],['\u672C\u6708',selData.mPct,selData.mHrs,selData.mG,'rgba(255,255,255,.30)']].map(function(item,i){return React.createElement('div',{key:i,style:{display:'flex',alignItems:'center',marginBottom:6,gap:8}},
+[['\u4ECA\u65E5',selData.tPct,selData.tHrs,selData.tG,'rgba(255,255,255,.85)'],['\u672C\u9031',selData.wPct,selData.wHrs,selData.wG,'#C9A86A']].map(function(item,i){return React.createElement('div',{key:i,style:{display:'flex',alignItems:'center',marginBottom:6,gap:8}},
 React.createElement('span',{style:{color:'var(--t60)',fontSize:12,width:36}},item[0]),
 React.createElement('span',{className:'ft',style:{fontSize:20,color:item[4],width:50}},item[1]+'%'),
 React.createElement('div',{style:{flex:1,height:3,background:'rgba(255,255,255,.07)',borderRadius:2}},
@@ -540,6 +542,9 @@ function Settings({data,up,ask}){
 var[nc,setNc]=useState('');
 var[nh,setNh]=useState(5);
 var[drafts,setDrafts]=useState({});
+var[dEdit,setDEdit]=useState(false);
+var[dText,setDText]=useState('');
+var decl=data.declaration||{text:'',date:null,history:[]};
 var twg=data.categories.reduce(function(s,c){return s+c.weeklyGoalHours},0);
 var bSm={width:32,height:32,background:'transparent',border:'1px solid rgba(255,255,255,.14)',color:'var(--t60)',borderRadius:8,fontSize:18,cursor:'pointer'};
 var setDraft=function(id,v){setDrafts(function(p){var n={...p};if(v==null)delete n[id];else n[id]=v;return n})};
@@ -548,6 +553,21 @@ React.createElement('div',{style:{margin:'18px 0 14px'}},
 React.createElement('h1',{className:'ft',style:{fontSize:30,letterSpacing:1,margin:0}},'SETTINGS'),
 React.createElement('p',{className:'tag'},'\u88FD\u4F5C\u55AE\u4F4D\u5F8C\u53F0')),
 (data.goalEditLog||[]).length>0&&React.createElement('p',{style:{color:'#C9A86A',fontSize:11,marginBottom:2,display:'flex',alignItems:'center',gap:5}},React.createElement(Icon,{name:'eye',size:13,color:'#C9A86A'}),'\u76EE\u6A19\u5DF2\u4FEE\u6539 '+data.goalEditLog.length+' \u6B21\uFF0C\u89C0\u773E\u90FD\u8A18\u5F97'),
+React.createElement('h2',{className:'tag',style:{margin:'22px 0 6px'}},'OPENING DECLARATION'),
+!dEdit&&React.createElement('div',{style:{padding:'2px 2px 4px'}},
+decl.text
+?React.createElement('p',{style:{fontSize:14,color:'rgba(255,255,255,.85)',fontStyle:'italic',lineHeight:1.6,marginBottom:4}},'「'+decl.text+'」')
+:React.createElement('p',{style:{fontSize:13,color:'var(--t35)',marginBottom:4}},'尚未寫下宣言'),
+React.createElement('div',{style:{display:'flex',alignItems:'center',gap:10,marginTop:2}},
+decl.date&&React.createElement('span',{style:{fontSize:10,color:'var(--t35)'}},decl.date+' 立下'),
+(decl.history||[]).length>0&&React.createElement('span',{style:{fontSize:10,color:'#C9A86A',display:'flex',alignItems:'center',gap:4}},React.createElement(Icon,{name:'eye',size:12,color:'#C9A86A'}),'宣言已改過 '+decl.history.length+' 次，觀眾記得'),
+React.createElement('button',{onClick:function(){setDText(decl.text);setDEdit(true)},style:{marginLeft:'auto',padding:'4px 12px',background:'transparent',border:'1px solid rgba(255,255,255,.14)',borderRadius:6,color:'var(--t60)',fontSize:11,cursor:'pointer'}},decl.text?'修改':'寫下宣言'))),
+dEdit&&React.createElement('div',{style:{padding:'2px 2px 4px'}},
+React.createElement('input',{value:dText,onChange:function(e){setDText(e.target.value)},placeholder:'你為什麼開這個節目？',maxLength:60,style:{width:'100%',padding:'10px 12px',background:'#0d0d0d',border:'1px solid rgba(201,168,106,.4)',borderRadius:8,color:'#fff',fontSize:14,outline:'none',boxSizing:'border-box',marginBottom:8}}),
+decl.text&&React.createElement('p',{style:{fontSize:10,color:'var(--t35)',marginBottom:8}},'修改宣言是公開事件——舊宣言會留在歷史，觀眾會引用它'),
+React.createElement('div',{style:{display:'flex',gap:8}},
+React.createElement('button',{onClick:function(){var nv=dText.trim();if(!nv){setDEdit(false);return}up(function(d){if(!d.declaration)d.declaration={text:'',date:null,history:[]};if(d.declaration.text&&d.declaration.text!==nv)d.declaration.history.push({text:d.declaration.text,date:d.declaration.date,changedAt:todayS()});if(d.declaration.text!==nv){d.declaration.text=nv;d.declaration.date=todayS()}});setDEdit(false)},style:{padding:'6px 16px',background:'#C9A86A',border:'none',borderRadius:6,color:'#0a0a0a',fontSize:12,fontWeight:500,cursor:'pointer'}},'確認'),
+React.createElement('button',{onClick:function(){setDEdit(false)},style:{padding:'6px 16px',background:'transparent',border:'1px solid rgba(255,255,255,.14)',borderRadius:6,color:'var(--t60)',fontSize:12,cursor:'pointer'}},'取消'))),
 React.createElement('h2',{className:'tag',style:{margin:'22px 0 4px'}},'WEEKLY GOALS'),
 React.createElement('p',{style:{color:'var(--t35)',fontSize:10,marginBottom:8}},'\u76EE\u6A19\u96A8\u6642\u53EF\u6539\u3001\u7ACB\u5373\u751F\u6548\uFF1B\u4F46\u6BCF\u6B21\u4FEE\u6539\u90FD\u6703\u7559\u4E0B\u7D00\u9304\uFF0C\u89C0\u773E\u8A18\u5F97\uFF0C\u800C\u4E14\u6703\u7FFB\u820A\u5E33'),
 data.categories.map(function(cat){
