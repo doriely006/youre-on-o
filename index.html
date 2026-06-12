@@ -415,8 +415,8 @@ var tP=avg(catData.map(function(d){return d.tPct}));
 var wP=avg(catData.map(function(d){return d.wPct}));
 var mP=avg(catData.map(function(d){return d.mPct}));
 var selData=sel!==null?catData.find(function(d){return d.cat.id===sel}):null;
-var screenItems=[['\u4ECA\u65E5',tP,tH],['\u672C\u9031',wP,wH],['\u672C\u6708',mP,mH]];
-var legend=[['rgba(255,255,255,.30)','\u6708'],['#C9A86A','\u9031'],['rgba(255,255,255,.85)','\u65E5']];
+var screenItems=[['\u4ECA\u65E5',tP,tH],['\u672C\u9031',wP,wH]];
+var legend=[['#C9A86A','\u9031'],['rgba(255,255,255,.85)','\u65E5']];
 var n=catData.length;
 var ringSize=n<=1?110:n<=4?100:n<=6?85:76;
 var topCount=n<=1?n:Math.ceil(n/2);
@@ -425,17 +425,20 @@ var bottomRow=catData.slice(topCount);
 var backSeats=Array.from({length:14},function(_,i){return{x:2+i*31,hx:2+i*31+13+((i%3)-1)*2}});
 var frontSeats=Array.from({length:12},function(_,i){return{x:-6+i*38,hx:-6+i*38+17+((i*2)%3-1)*2.5}});
 return React.createElement('div',{style:{padding:'0 16px',minHeight:'calc(100vh - 70px)',display:'flex',flexDirection:'column'}},
-React.createElement('div',{style:{position:'relative',margin:'0 -16px',height:332,overflow:'hidden'}},
+React.createElement('div',{style:{position:'relative',margin:'0 -16px',height:354,overflow:'hidden'}},
 React.createElement(Auditorium,null),
 React.createElement('div',{style:{position:'absolute',top:14,left:96,right:96,display:'flex',justifyContent:'space-between',alignItems:'center',zIndex:3}},
 React.createElement('div',{style:{display:'flex',alignItems:'center',gap:5}},
 React.createElement('span',{className:airedToday?'onair-dot':'',style:{width:6,height:6,borderRadius:3,background:airedToday?'#FF2D20':'rgba(255,255,255,.18)',boxShadow:airedToday?'0 0 8px rgba(255,45,32,.8)':'none'}}),
 React.createElement('span',{style:{fontSize:8,letterSpacing:2,color:airedToday?'#FF2D20':'var(--t35)'}},airedToday?'ON AIR':'OFF AIR')),
 React.createElement('span',{className:'ft',style:{fontSize:13,color:'var(--t60)',letterSpacing:1}},'EP.'+(epN+(airedToday?0:1)))),
-React.createElement('div',{style:{position:'absolute',top:32,left:90,right:90,textAlign:'center',zIndex:3}},
-React.createElement('h1',{className:'ft',style:{fontSize:24,color:'#FF2D20',letterSpacing:3,margin:0,textShadow:'0 0 16px rgba(255,45,32,.35)'}},"YOU'RE ON"),
-React.createElement('p',{className:'tag',style:{fontSize:8,marginTop:1}},'\u6578\u5B57\u4E0D\u6703\u8AAA\u8B0A')),
-React.createElement('div',{className:'screen-inner screen-lit screen-glow',style:{position:'absolute',left:86,right:86,top:86,height:178,borderRadius:3,zIndex:2,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center'}},
+React.createElement('div',{style:{position:'absolute',top:30,left:90,right:90,textAlign:'center',zIndex:3}},
+React.createElement('h1',{className:'ft',style:{fontSize:22,color:'#FF2D20',letterSpacing:3,margin:0,textShadow:'0 0 16px rgba(255,45,32,.35)'}},"YOU'RE ON")),
+React.createElement('div',{style:{position:'absolute',top:64,left:96,right:96,textAlign:'center',zIndex:3}},
+(data.declaration&&data.declaration.text)
+?React.createElement('p',{style:{fontSize:11,color:'rgba(255,255,255,.58)',fontWeight:300,lineHeight:1.35,margin:0,fontStyle:'italic',overflow:'hidden',textOverflow:'ellipsis',display:'-webkit-box',WebkitLineClamp:2,WebkitBoxOrient:'vertical'}},'\u300C'+data.declaration.text+'\u300D')
+:React.createElement('p',{style:{fontSize:10,color:'var(--t35)',margin:0,letterSpacing:1}},'\u2014 \u5C1A\u672A\u5BEB\u4E0B\u958B\u5834\u5BA3\u8A00 \u2014')),
+React.createElement('div',{className:'screen-inner screen-lit screen-glow',style:{position:'absolute',left:86,right:86,top:104,height:178,borderRadius:3,zIndex:2,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center'}},
 React.createElement('div',{style:{fontSize:9,letterSpacing:3,color:'rgba(45,33,16,.55)'}},'\u76EE\u524D\u6536\u770B\u4EBA\u6578'),
 React.createElement('div',{style:{display:'flex',alignItems:'baseline',justifyContent:'center',gap:10}},
 React.createElement(CountUp,{value:data.audience,className:'ft',style:{fontSize:72,color:'#241c10',lineHeight:1.05,letterSpacing:1,textShadow:'0 0 8px rgba(45,33,16,.18)'}}),
@@ -460,8 +463,7 @@ React.createElement('div',{className:'tag'},item[0]),
 React.createElement('div',{className:'ft',style:{fontSize:32,color:pctC(item[1]),lineHeight:1,margin:'3px 0 2px'}},item[1]+'%'),
 React.createElement('div',{style:{color:'var(--t35)',fontSize:10}},Math.round(item[2]*10)/10+'h'))})),
 React.createElement('div',{style:{display:'flex',justifyContent:'center',gap:16,margin:'4px 0 2px'}},
-React.createElement('span',{style:{color:'var(--t35)',fontSize:10,letterSpacing:1}},'週'+weekDayNames[dow-1]+' '+dow+'/7'),
-React.createElement('span',{style:{color:'var(--t35)',fontSize:10,letterSpacing:1}},dom+'/'+dim_+'日')),
+React.createElement('span',{style:{color:'var(--t35)',fontSize:10,letterSpacing:1}},'週'+weekDayNames[dow-1]+' '+dow+'/7')),
 React.createElement('div',{style:{display:'flex',justifyContent:'center',gap:16,margin:'10px 0 4px'}},
 legend.map(function(item,i){return React.createElement('div',{key:i,style:{display:'flex',alignItems:'center',gap:4}},
 React.createElement('div',{style:{width:8,height:8,borderRadius:4,background:item[0]}}),
