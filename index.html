@@ -6,7 +6,25 @@
 <title>You're On</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
 <style>
-*{box-sizing:border-box;margin:0;padding:0}body{background:#0a0a0a;background-image:radial-gradient(ellipse 130% 90% at 50% -10%,rgba(125,32,26,.16),transparent 62%),radial-gradient(ellipse 90% 55% at 50% 112%,rgba(125,32,26,.08),transparent 70%);background-attachment:fixed;color:#fff;font-family:'Noto Sans TC',sans-serif;overflow-x:hidden;-webkit-tap-highlight-color:transparent}.ft{font-family:'Bebas Neue',sans-serif}input[type="date"]{color-scheme:dark}input[type="number"]{-moz-appearance:textfield}input[type="number"]::-webkit-inner-spin-button,input[type="number"]::-webkit-outer-spin-button{-webkit-appearance:none}select{-webkit-appearance:none;appearance:none}@keyframes glow{0%,100%{filter:drop-shadow(0 0 4px rgba(48,209,88,.4))}50%{filter:drop-shadow(0 0 10px rgba(48,209,88,.8))}}.ring-glow{animation:glow 2s ease-in-out infinite}@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}.fade-in{animation:fadeIn .3s ease-out}@keyframes scanline{0%{transform:translateY(-100%)}100%{transform:translateY(100%)}}.screen-wrap{position:relative}.screen-inner{position:relative;overflow:hidden}.screen-inner::after{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(255,255,255,.01) 2px,rgba(255,255,255,.01) 4px);pointer-events:none}.screen-glow{box-shadow:0 0 22px rgba(140,180,255,.12),0 0 70px rgba(140,180,255,.08),0 18px 70px -12px rgba(140,180,255,.10)}.curtain{background:repeating-linear-gradient(90deg,#4a0b0b 0,#7e1713 12px,#a8221b 22px,#6b120f 34px,#4a0b0b 46px);box-shadow:inset 0 0 40px rgba(0,0,0,.55)}.valance{background:repeating-linear-gradient(90deg,#5c0f0d 0,#8e1c16 14px,#5c0f0d 28px);border-radius:3px 3px 0 0;position:relative;box-shadow:0 3px 8px rgba(0,0,0,.5)}.valance::after{content:'';position:absolute;left:0;right:0;bottom:-7px;height:7px;background:radial-gradient(circle at 7px 0,#71140f 6px,transparent 7px);background-size:14px 7px;background-repeat:repeat-x}@keyframes partL{0%,20%{transform:translateX(0)}100%{transform:translateX(-101%)}}@keyframes partR{0%,20%{transform:translateX(0)}100%{transform:translateX(101%)}}.curtain-l{animation:partL 1.9s cubic-bezier(.7,0,.3,1) forwards}.curtain-r{animation:partR 1.9s cubic-bezier(.7,0,.3,1) forwards}
+:root{--bg:#050505;--red:#FF2D20;--gold:#C9A86A;--green:#30D158;--t100:rgba(255,255,255,1);--t60:rgba(255,255,255,.6);--t35:rgba(255,255,255,.35);--line:rgba(255,255,255,.07)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#050505;background-image:radial-gradient(ellipse 120% 65% at 50% -8%,rgba(110,28,22,.13),transparent 60%),radial-gradient(ellipse 75% 38% at 50% 26%,rgba(140,180,255,.045),transparent 65%);background-attachment:fixed;color:#fff;font-family:'Noto Sans TC',sans-serif;font-weight:300;overflow-x:hidden;-webkit-tap-highlight-color:transparent}
+.ft{font-family:'Bebas Neue',sans-serif}
+button{font-family:'Noto Sans TC',sans-serif;transition:background .18s ease-out,color .18s ease-out,border-color .18s ease-out,opacity .18s ease-out}
+input[type="date"]{color-scheme:dark}input[type="number"]{-moz-appearance:textfield}input[type="number"]::-webkit-inner-spin-button,input[type="number"]::-webkit-outer-spin-button{-webkit-appearance:none}select{-webkit-appearance:none;appearance:none}
+.vignette{position:fixed;inset:0;pointer-events:none;z-index:998;background:radial-gradient(ellipse 100% 92% at 50% 44%,transparent 52%,rgba(0,0,0,.5) 100%)}
+.grain{position:fixed;inset:0;pointer-events:none;z-index:999;opacity:.035;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='180' height='180' filter='url(%23n)'/></svg>")}
+.tag{font-size:9px;letter-spacing:3px;color:var(--t35);text-transform:uppercase}
+.spot{position:relative}.spot::before{content:'';position:absolute;left:-40px;right:-40px;top:-26px;bottom:-26px;background:radial-gradient(ellipse 58% 62% at 50% 50%,rgba(255,255,255,.055),transparent 72%);pointer-events:none}
+@keyframes glow{0%,100%{filter:drop-shadow(0 0 4px rgba(201,168,106,.35))}50%{filter:drop-shadow(0 0 10px rgba(201,168,106,.7))}}.ring-glow{animation:glow 2s ease-in-out infinite}
+@keyframes onair{0%,100%{opacity:1}50%{opacity:.35}}.onair-dot{animation:onair 2.4s ease-in-out infinite}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}.fade-in{animation:fadeIn .25s ease-out}
+@keyframes floatUp{0%{opacity:0;transform:translateY(6px)}25%{opacity:1}100%{opacity:0;transform:translateY(-14px)}}.float-up{animation:floatUp 1.8s ease-out forwards}
+.screen-wrap{position:relative}
+.screen-inner{position:relative;overflow:hidden}
+.screen-inner::after{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(255,255,255,.01) 2px,rgba(255,255,255,.01) 4px);pointer-events:none}
+.screen-glow{box-shadow:0 0 16px rgba(140,180,255,.18),0 0 70px rgba(140,180,255,.10),0 34px 130px -14px rgba(140,180,255,.16)}
+@keyframes partL{0%,20%{transform:translateX(0)}100%{transform:translateX(-101%)}}@keyframes partR{0%,20%{transform:translateX(0)}100%{transform:translateX(101%)}}.curtain-l{animation:partL 1.9s cubic-bezier(.7,0,.3,1) forwards}.curtain-r{animation:partR 1.9s cubic-bezier(.7,0,.3,1) forwards}
 </style>
 </head>
 <body>
@@ -47,7 +65,7 @@ const monthDates=s=>{const d=new Date(s),y=d.getFullYear(),m=d.getMonth();return
 const dayOfWeek=s=>new Date(s).getDay()||7;
 const dayOfMonth=s=>new Date(s).getDate();
 const daysInMonth=s=>{const d=new Date(s);return new Date(d.getFullYear(),d.getMonth()+1,0).getDate()};
-const pctC=p=>p>=80?'#30D158':p>=50?'#FF9F0A':'#FF2D20';
+const pctC=p=>p>=100?'#C9A86A':'rgba(255,255,255,.92)';
 const pick=a=>a[Math.floor(Math.random()*a.length)];
 const tierN=p=>p>=100?5:p>=81?4:p>=61?3:p>=41?2:p>=21?1:0;
 const fill=(s,v)=>{let r=s;Object.entries(v).forEach(([k,val])=>{r=r.replace(new RegExp('\\{'+k+'\\}','g'),val)});return r};
@@ -115,6 +133,77 @@ if(la!==t&&la!==addDays(t,-1))return 0;
 let n=0,day=la;
 while(n<999&&hasRecOn(recs,day)){n++;day=addDays(day,-1)}
 return n};
+// ---- v2 視覺基底元件 ----
+const IconPaths={
+home:'M3 11.5L12 4l9 7.5M5.5 9.5V20h13V9.5',
+record:'M4 20h16M14.7 4.3l5 5L9 20H4v-5L14.7 4.3z',
+settings:'M12 8.5a3.5 3.5 0 110 7 3.5 3.5 0 010-7zM12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.2 2.2M16.9 16.9l2.2 2.2M19.1 4.9L16.9 7.1M7.1 16.9l-2.2 2.2',
+eye:'M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12zM12 9.5a2.5 2.5 0 110 5 2.5 2.5 0 010-5z',
+x:'M6 6l12 12M18 6L6 18'};
+function Icon({name,size,color,style}){return React.createElement('svg',{width:size||24,height:size||24,viewBox:'0 0 24 24',fill:'none',stroke:color||'currentColor',strokeWidth:1.5,strokeLinecap:'round',strokeLinejoin:'round',style:style},React.createElement('path',{d:IconPaths[name]}))}
+function Valance(){
+var scallops=Array.from({length:20},function(_,i){return React.createElement('path',{key:i,d:'M'+(i*20)+' 12 q10 11 20 0 l0 -12 l-20 0 z',fill:i%2?'#71140f':'#5c0f0d'})});
+return React.createElement('svg',{viewBox:'0 0 400 24',preserveAspectRatio:'none',style:{position:'absolute',top:-10,left:-8,width:'calc(100% + 16px)',height:22,zIndex:3}},
+React.createElement('defs',null,React.createElement('linearGradient',{id:'vlg',x1:0,y1:0,x2:20,y2:0,gradientUnits:'userSpaceOnUse',spreadMethod:'repeat'},
+React.createElement('stop',{offset:'0',stopColor:'#3a0907'}),
+React.createElement('stop',{offset:'.42',stopColor:'#8e1c16'}),
+React.createElement('stop',{offset:'.55',stopColor:'#a8261d'}),
+React.createElement('stop',{offset:'.7',stopColor:'#6b120f'}),
+React.createElement('stop',{offset:'1',stopColor:'#3a0907'}))),
+scallops,
+React.createElement('rect',{x:0,y:0,width:400,height:13,fill:'url(#vlg)'}),
+React.createElement('rect',{x:0,y:0,width:400,height:1.4,fill:'rgba(255,255,255,.10)'}))}
+function SideDrape({side}){
+var id='sd'+side,mirror=side==='r';
+var edge='M24 0 C19 18 25 36 20 54 C16 72 25 90 20 108 C16 126 24 144 20 162 C17 178 26 192 25 200';
+return React.createElement('svg',{viewBox:'0 0 26 200',preserveAspectRatio:'none',style:Object.assign({position:'absolute',top:-4,bottom:40,width:24,zIndex:2},mirror?{right:-8}:{left:-8})},
+React.createElement('defs',null,React.createElement('linearGradient',{id:id,x1:0,y1:0,x2:12,y2:0,gradientUnits:'userSpaceOnUse',spreadMethod:'repeat'},
+React.createElement('stop',{offset:'0',stopColor:'#330806'}),
+React.createElement('stop',{offset:'.4',stopColor:'#8e1c16'}),
+React.createElement('stop',{offset:'.55',stopColor:'#a8261d'}),
+React.createElement('stop',{offset:'.72',stopColor:'#6b120f'}),
+React.createElement('stop',{offset:'1',stopColor:'#330806'}))),
+React.createElement('g',{transform:mirror?'translate(26,0) scale(-1,1)':undefined},
+React.createElement('path',{d:'M0 0 H24 C19 18 25 36 20 54 C16 72 25 90 20 108 C16 126 24 144 20 162 C17 178 26 192 25 200 H0 Z',fill:'url(#'+id+')'}),
+React.createElement('path',{d:edge,fill:'none',stroke:'rgba(150,190,255,.22)',strokeWidth:1}),
+React.createElement('rect',{x:0,y:0,width:5,height:200,fill:'rgba(0,0,0,.4)'})))}
+function IntroPanel({side}){
+var id='ip'+side;
+return React.createElement('svg',{viewBox:'0 0 215 430',preserveAspectRatio:'none',style:{width:'100%',height:'100%',display:'block'}},
+React.createElement('defs',null,React.createElement('linearGradient',{id:id,x1:0,y1:0,x2:26,y2:0,gradientUnits:'userSpaceOnUse',spreadMethod:'repeat'},
+React.createElement('stop',{offset:'0',stopColor:'#2e0706'}),
+React.createElement('stop',{offset:'.4',stopColor:'#8e1c16'}),
+React.createElement('stop',{offset:'.55',stopColor:'#a8261d'}),
+React.createElement('stop',{offset:'.72',stopColor:'#5c0f0d'}),
+React.createElement('stop',{offset:'1',stopColor:'#2e0706'})),
+React.createElement('linearGradient',{id:id+'v',x1:0,y1:0,x2:0,y2:1},
+React.createElement('stop',{offset:'0',stopColor:'rgba(255,255,255,.07)'}),
+React.createElement('stop',{offset:'.25',stopColor:'rgba(255,255,255,0)'}),
+React.createElement('stop',{offset:'.85',stopColor:'rgba(0,0,0,.25)'}),
+React.createElement('stop',{offset:'1',stopColor:'rgba(0,0,0,.5)'}))),
+React.createElement('rect',{x:0,y:0,width:215,height:430,fill:'url(#'+id+')'}),
+React.createElement('rect',{x:0,y:0,width:215,height:430,fill:'url(#'+id+'v)'}),
+React.createElement('path',{d:'M0 430 L0 408 Q27 426 54 410 T108 410 T162 410 T216 410 L216 430 Z',fill:'rgba(0,0,0,.4)'}))}
+function Modal({title,body,confirmText,danger,onConfirm,onClose}){
+return React.createElement('div',{onClick:onClose,style:{position:'fixed',inset:0,background:'rgba(0,0,0,.86)',zIndex:300,display:'flex',alignItems:'center',justifyContent:'center',padding:28}},
+React.createElement('div',{onClick:function(e){e.stopPropagation()},className:'fade-in',style:{width:'100%',maxWidth:340,background:'#0a0a0a',borderRadius:12,padding:'26px 24px 20px',boxShadow:'0 24px 80px rgba(0,0,0,.7)'}},
+React.createElement('div',{className:'tag',style:{color:danger?'#FF2D20':'#C9A86A',marginBottom:10}},danger?'WARNING':'CONFIRM'),
+React.createElement('h3',{style:{fontSize:17,fontWeight:500,marginBottom:8,letterSpacing:.5}},title),
+body&&React.createElement('p',{style:{fontSize:13,color:'var(--t60)',lineHeight:1.7,marginBottom:20}},body),
+React.createElement('div',{style:{display:'flex',gap:10,marginTop:body?0:20}},
+React.createElement('button',{onClick:onClose,style:{flex:1,padding:'11px 0',background:'transparent',border:'1px solid rgba(255,255,255,.14)',borderRadius:8,color:'var(--t60)',fontSize:13,cursor:'pointer'}},'取消'),
+React.createElement('button',{onClick:function(){onConfirm();onClose()},style:{flex:1,padding:'11px 0',background:danger?'#FF2D20':'#C9A86A',border:'none',borderRadius:8,color:danger?'#fff':'#0a0a0a',fontSize:13,fontWeight:500,cursor:'pointer'}},confirmText||'確定'))))}
+function CountUp({value,style,className}){
+var[disp,setDisp]=useState(value);
+var ref=React.useRef(value);
+useEffect(function(){
+var from=ref.current,to=value;
+if(from===to)return;
+var t0=performance.now(),dur=700,id;
+var step=function(now){var p=Math.min(1,(now-t0)/dur);var e=1-Math.pow(1-p,3);var v=Math.round(from+(to-from)*e);setDisp(v);ref.current=v;if(p<1)id=requestAnimationFrame(step)};
+id=requestAnimationFrame(step);
+return function(){cancelAnimationFrame(id)}},[value]);
+return React.createElement('span',{className:className,style:style},disp.toLocaleString())}
 const pttPool=[
 ['\u2192|{cat}{pct}%\uFF0C\u9019\u5E33\u865F\u662F\u6BAD\u5C4D\u5E33\u865F\u55CE','\u5653|\u672C\u9031{cat}{pct}%\uFF0C\u6211\u66FF\u4F60\u7684\u76EE\u6A19\u611F\u5230\u4E0D\u6368','\u63A8|{pct}%\uFF0C\u6709\u5FC3\u4E86\uFF0C\u5C31\u662F\u5FC3\u592A\u5C0F','\u2192|{cat}{pct}%\uFF0C\u4F60\u672C\u9031\u6709\u51FA\u73FE\uFF0C\u9019\u662F\u512A\u9EDE','\u5653|{cat}\u53EA\u6709{pct}%\uFF0C\u4F60\u7684\u52AA\u529B\u5F88\u542B\u84C4','\u63A8|\u672C\u9031{cat}{hrs}\u5C0F\u6642\uFF1F\u6211\u5348\u7761\u90FD\u6BD4\u9019\u9577','\u2192|\u672C\u9031{cat}{pct}%\uFF0C\u89C0\u773E\u770B\u5F97\u5F88\u8457\u6025\u4F60\u5F88\u6DE1\u5B9A'],
 ['\u2192|\u672C\u9031{cat}{pct}%\uFF0C\u525B\u597D\u8B93\u4EBA\u8AAA\u4E0D\u51FA\u54EA\u88E1\u597D','\u63A8|{cat}{pct}%\uFF0C\u89C0\u773E\u6C92\u7761\u8457...\u5427\uFF1F','\u5653|{cat}{pct}%\uFF0C\u9019\u500B\u6578\u5B57\u6563\u767C\u8457\u4F5B\u7CFB\u7684\u6C23\u8CEA','\u2192|{cat}{pct}%\uFF0C\u4E0D\u4E0A\u4E0D\u4E0B\uFF0C\u8DDF\u4F60\u7684\u4EBA\u751F\u4E00\u6A23','\u63A8|\u672C\u9031{cat}{pct}%\uFF0C\u8AAA\u4F60\u8A8D\u771F\u6211\u4FE1\uFF0C\u8AAA\u4F60\u6709\u62DA\u6211\u5B58\u7591'],
@@ -173,17 +262,17 @@ var arc=function(r,pct){var p=Math.min(pct,100)/100;if(p<=0)return'';if(p>=1)ret
 var isGlow=tPct>=100||wPct>=100||mPct>=100;
 return React.createElement('div',{onClick:onClick,style:{cursor:'pointer',textAlign:'center',transition:'transform .2s',transform:selected?'scale(1.08)':'scale(1)'}},
 React.createElement('svg',{width:size,height:size,className:isGlow?'ring-glow':''},
-React.createElement('circle',{cx:cx,cy:cy,r:r1,fill:'none',stroke:'#222',strokeWidth:6}),
-React.createElement('circle',{cx:cx,cy:cy,r:r2,fill:'none',stroke:'#222',strokeWidth:6}),
-React.createElement('circle',{cx:cx,cy:cy,r:r3,fill:'none',stroke:'#222',strokeWidth:6}),
-mPct>0&&React.createElement('path',{d:arc(r1,mPct),fill:'none',stroke:'#FF2D20',strokeWidth:6,strokeLinecap:'round'}),
-wPct>0&&React.createElement('path',{d:arc(r2,wPct),fill:'none',stroke:'#FF9F0A',strokeWidth:6,strokeLinecap:'round'}),
-tPct>0&&React.createElement('path',{d:arc(r3,tPct),fill:'none',stroke:'#30D158',strokeWidth:6,strokeLinecap:'round'}),
+React.createElement('circle',{cx:cx,cy:cy,r:r1,fill:'none',stroke:'rgba(255,255,255,.06)',strokeWidth:6}),
+React.createElement('circle',{cx:cx,cy:cy,r:r2,fill:'none',stroke:'rgba(255,255,255,.06)',strokeWidth:6}),
+React.createElement('circle',{cx:cx,cy:cy,r:r3,fill:'none',stroke:'rgba(255,255,255,.06)',strokeWidth:6}),
+mPct>0&&React.createElement('path',{d:arc(r1,mPct),fill:'none',stroke:'rgba(255,255,255,.30)',strokeWidth:6,strokeLinecap:'round'}),
+wPct>0&&React.createElement('path',{d:arc(r2,wPct),fill:'none',stroke:'#C9A86A',strokeWidth:6,strokeLinecap:'round'}),
+tPct>0&&React.createElement('path',{d:arc(r3,tPct),fill:'none',stroke:'rgba(255,255,255,.85)',strokeWidth:6,strokeLinecap:'round'}),
 React.createElement('text',{x:cx,y:cy+1,textAnchor:'middle',dominantBaseline:'middle',fill:'#fff',fontSize:14,fontFamily:"'Bebas Neue',sans-serif"},wPct+'%'),
-React.createElement('text',{x:cx,y:cy-r1-1,textAnchor:'middle',fill:'#FF2D20',fontSize:8,fontFamily:"'Bebas Neue',sans-serif",opacity:0.8},mPct+'%'),
-React.createElement('text',{x:cx,y:cy+r3+4,textAnchor:'middle',fill:'#30D158',fontSize:8,fontFamily:"'Bebas Neue',sans-serif",opacity:0.8},tPct+'%')
+React.createElement('text',{x:cx,y:cy-r1-1,textAnchor:'middle',fill:'rgba(255,255,255,.35)',fontSize:8,fontFamily:"'Bebas Neue',sans-serif"},mPct+'%'),
+React.createElement('text',{x:cx,y:cy+r3+4,textAnchor:'middle',fill:'rgba(255,255,255,.6)',fontSize:8,fontFamily:"'Bebas Neue',sans-serif"},tPct+'%')
 ),
-React.createElement('div',{style:{fontSize:11,color:selected?'#fff':'#888',marginTop:2,fontWeight:selected?700:400}},label)
+React.createElement('div',{style:{fontSize:11,color:selected?'#fff':'var(--t35)',marginTop:2,fontWeight:selected?500:300}},label)
 )}
 function CommentOverlay({comment:cm,onClose}){
 var lineEl=null;
@@ -211,7 +300,7 @@ if(cm.air){if(cm.air.comeback)airTxt='📺 回歸特輯！停播 '+cm.air.offDay
 else if(cm.air.delta>0)airTxt='📺 本集播出，觀眾 +'+cm.air.delta}
 var airEl=airTxt?React.createElement('p',{style:{textAlign:'center',color:'#C9A86A',fontSize:12,marginTop:12,padding:'6px 12px',background:'rgba(201,168,106,.08)',borderRadius:8}},airTxt):null;
 var noteEl=cm.progressNote?React.createElement('p',{style:{textAlign:'center',color:'#888',fontSize:12,marginTop:airEl?6:12,padding:'6px 12px',background:'rgba(255,255,255,.05)',borderRadius:8}},cm.progressNote):null;
-var editEl=cm.editNote?React.createElement('p',{style:{textAlign:'center',color:'#FF9F0A',fontSize:11,marginTop:6,padding:'5px 12px',background:'rgba(255,159,10,.07)',borderRadius:8}},cm.editNote):null;
+var editEl=cm.editNote?React.createElement('p',{style:{textAlign:'center',color:'#C9A86A',fontSize:11,marginTop:6,padding:'5px 12px',background:'rgba(201,168,106,.08)',borderRadius:8}},cm.editNote):null;
 return React.createElement('div',{onClick:onClose,style:{position:'fixed',inset:0,background:'rgba(0,0,0,.85)',zIndex:100,display:'flex',alignItems:'center',justifyContent:'center',padding:20}},
 React.createElement('div',{onClick:function(e){e.stopPropagation()},style:{width:'100%',maxWidth:380},className:'fade-in'},
 cm.type==='ptt'&&React.createElement('div',{style:{background:'#0a1628',borderRadius:8,padding:16,fontFamily:'monospace',border:'1px solid #1a3050'}},
@@ -235,7 +324,7 @@ React.createElement('p',{style:{fontSize:13,color:'#444',lineHeight:1.7,margin:0
 airEl,
 noteEl,
 editEl,
-React.createElement('p',{style:{textAlign:'center',color:'#555',fontSize:12,marginTop:8}},'\u9EDE\u4EFB\u610F\u8655\u95DC\u9589')))}
+React.createElement('p',{style:{textAlign:'center',color:'var(--t35)',fontSize:12,marginTop:8}},'\u9EDE\u4EFB\u610F\u8655\u95DC\u9589')))}
 function App(){
 var[data,setData]=useState(function(){var d=load()||init();d=settleAll(d);save(d);return d});
 var[page,setPage]=useState('dashboard');
@@ -245,49 +334,55 @@ var up=useCallback(function(fn){setData(function(p){var n={...p,categories:p.cat
 var trigCmt=useCallback(function(newRecs,ev){if(data.categories.length===0)return;var c=genComment(data.categories,data.records.concat(newRecs||[]),(data.goalEditLog||[]).length);if(c){if(ev)c.air=ev;setComment(c)}},[data]);
 var[intro,setIntro]=useState(function(){return!!data.setupDone});
 useEffect(function(){var id=setTimeout(function(){setIntro(false)},2300);return function(){clearTimeout(id)}},[]);
+var[modal,setModal]=useState(null);
+var ask=useCallback(function(o){setModal(o)},[]);
 if(!data.setupDone)return React.createElement(Setup,{up:up});
 var content=null;
 if(page==='dashboard')content=React.createElement(Dash,{data:data});
 if(page==='record')content=React.createElement(Rec,{data:data,up:up,trig:trigCmt});
-if(page==='settings')content=React.createElement(Settings,{data:data,up:up});
-var navItems=[['dashboard','\uD83D\uDCCA','\u4E3B\u9801'],['record','\u270F\uFE0F','\u8A18\u9304'],['settings','\u2699\uFE0F','\u8A2D\u5B9A']];
-return React.createElement('div',{style:{maxWidth:430,margin:'0 auto',minHeight:'100vh',background:'transparent',fontFamily:"'Noto Sans TC',sans-serif",color:'#fff',paddingBottom:70}},
+if(page==='settings')content=React.createElement(Settings,{data:data,up:up,ask:ask});
+var navItems=[['dashboard','home','HOME'],['record','record','RECORD'],['settings','settings','SETTINGS']];
+return React.createElement('div',{style:{maxWidth:430,margin:'0 auto',minHeight:'100vh',background:'transparent',fontFamily:"'Noto Sans TC',sans-serif",color:'#fff',paddingBottom:74}},
 content,
+React.createElement('div',{className:'vignette'}),
+React.createElement('div',{className:'grain'}),
 comment&&React.createElement(CommentOverlay,{comment:comment,onClose:function(){setComment(null)}}),
-intro&&React.createElement('div',{style:{position:'fixed',inset:0,zIndex:200,display:'flex',overflow:'hidden',pointerEvents:'none'}},
-React.createElement('div',{className:'curtain curtain-l',style:{width:'50%',height:'100%'}}),
-React.createElement('div',{className:'curtain curtain-r',style:{width:'50%',height:'100%'}})),
-React.createElement('div',{style:{position:'fixed',bottom:0,left:'50%',transform:'translateX(-50%)',width:'100%',maxWidth:430,background:'#111',borderTop:'1px solid #222',display:'flex',zIndex:50}},
-navItems.map(function(item){return React.createElement('button',{key:item[0],onClick:function(){setPage(item[0])},style:{flex:1,padding:'10px 0 8px',background:'none',border:'none',cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',gap:2}},
-React.createElement('span',{style:{fontSize:20}},item[1]),
-React.createElement('span',{style:{fontSize:10,color:page===item[0]?'#FF2D20':'#666',fontWeight:page===item[0]?700:400}},item[2]))})))}
+modal&&React.createElement(Modal,{title:modal.title,body:modal.body,confirmText:modal.confirmText,danger:modal.danger,onConfirm:modal.onConfirm,onClose:function(){setModal(null)}}),
+intro&&React.createElement('div',{style:{position:'fixed',inset:0,zIndex:1200,display:'flex',overflow:'hidden',pointerEvents:'none'}},
+React.createElement('div',{className:'curtain-l',style:{width:'50%',height:'100%'}},React.createElement(IntroPanel,{side:'l'})),
+React.createElement('div',{className:'curtain-r',style:{width:'50%',height:'100%'}},React.createElement(IntroPanel,{side:'r'}))),
+React.createElement('div',{style:{position:'fixed',bottom:0,left:'50%',transform:'translateX(-50%)',width:'100%',maxWidth:430,background:'rgba(5,5,5,.92)',backdropFilter:'blur(10px)',WebkitBackdropFilter:'blur(10px)',borderTop:'1px solid var(--line)',display:'flex',zIndex:50}},
+navItems.map(function(item){var act=page===item[0];return React.createElement('button',{key:item[0],onClick:function(){setPage(item[0])},style:{flex:1,padding:'12px 0 10px',background:'none',border:'none',cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',gap:5,color:act?'#C9A86A':'rgba(255,255,255,.35)'}},
+React.createElement(Icon,{name:item[1],size:20}),
+React.createElement('span',{style:{fontSize:8,letterSpacing:3,fontWeight:act?500:300}},item[2]))})))}
 function Setup({up}){
 var[cats,setCats]=useState([]);
 var[nc,setNc]=useState('');
 var tot=cats.reduce(function(s,c){return s+c.h},0);
 return React.createElement('div',{style:{maxWidth:430,margin:'0 auto',minHeight:'100vh',background:'transparent',padding:24,color:'#fff'}},
-React.createElement('div',{style:{textAlign:'center',margin:'60px 0 40px'}},
-React.createElement('h1',{className:'ft',style:{fontSize:56,color:'#FF2D20',letterSpacing:2}},"YOU'RE ON"),
-React.createElement('p',{style:{color:'#888',fontSize:14,letterSpacing:4,marginTop:4}},'\u6578\u5B57\u4E0D\u6703\u8AAA\u8B0A')),
-React.createElement('p',{style:{color:'#888',fontSize:14,marginBottom:24}},'\u65B0\u589E\u4F60\u7684 categories \u4E26\u8A2D\u5B9A\u6BCF\u9031\u76EE\u6A19\u6642\u6578\uFF1A'),
-cats.length===0&&React.createElement('div',{style:{textAlign:'center',padding:'32px 0',color:'#555',fontSize:14}},'\u9084\u6C92\u6709\u4EFB\u4F55 category\uFF0C\u5F9E\u4E0B\u65B9\u65B0\u589E\u4F60\u7684\u7B2C\u4E00\u500B\u5427\uFF01'),
-cats.map(function(c,i){return React.createElement('div',{key:i,style:{display:'flex',alignItems:'center',marginBottom:12,gap:12}},
-React.createElement('span',{style:{flex:1,fontSize:16}},c.name),
-React.createElement('button',{onClick:function(){setCats(cats.map(function(x,j){return j===i?{...x,h:Math.max(0,x.h-1)}:x}))},style:{width:32,height:32,background:'#141414',border:'1px solid #222',color:'#fff',borderRadius:8,fontSize:18,cursor:'pointer'}},'\u2212'),
+React.createElement('div',{className:'spot',style:{textAlign:'center',margin:'64px 0 44px'}},
+React.createElement('h1',{className:'ft',style:{fontSize:58,color:'#FF2D20',letterSpacing:1,lineHeight:1}},"YOU'RE ON"),
+React.createElement('p',{className:'tag',style:{fontSize:11,marginTop:6}},'\u6578\u5B57\u4E0D\u6703\u8AAA\u8B0A')),
+React.createElement('p',{style:{color:'var(--t60)',fontSize:14,marginBottom:24}},'\u65B0\u589E\u4F60\u7684 categories \u4E26\u8A2D\u5B9A\u6BCF\u9031\u76EE\u6A19\u6642\u6578\uFF1A'),
+cats.length===0&&React.createElement('div',{style:{textAlign:'center',padding:'32px 0',color:'var(--t35)',fontSize:14}},'\u9084\u6C92\u6709\u4EFB\u4F55 category\uFF0C\u5F9E\u4E0B\u65B9\u65B0\u589E\u4F60\u7684\u7B2C\u4E00\u500B\u5427\uFF01'),
+cats.map(function(c,i){return React.createElement('div',{key:i,style:{display:'flex',alignItems:'center',gap:12,padding:'10px 0',borderBottom:'1px solid var(--line)'}},
+React.createElement('span',{style:{flex:1,fontSize:16,fontWeight:500}},c.name),
+React.createElement('button',{onClick:function(){setCats(cats.map(function(x,j){return j===i?{...x,h:Math.max(0,x.h-1)}:x}))},style:{width:32,height:32,background:'transparent',border:'1px solid rgba(255,255,255,.14)',color:'var(--t60)',borderRadius:8,fontSize:18,cursor:'pointer'}},'\u2212'),
 React.createElement('span',{className:'ft',style:{fontSize:24,width:40,textAlign:'center'}},c.h+'h'),
-React.createElement('button',{onClick:function(){setCats(cats.map(function(x,j){return j===i?{...x,h:x.h+1}:x}))},style:{width:32,height:32,background:'#141414',border:'1px solid #222',color:'#fff',borderRadius:8,fontSize:18,cursor:'pointer'}},'+'),
-React.createElement('button',{onClick:function(){setCats(cats.filter(function(_,j){return j!==i}))},style:{width:32,height:32,background:'transparent',border:'none',color:'#555',fontSize:18,cursor:'pointer'}},'\u00D7'))}),
-React.createElement('div',{style:{display:'flex',gap:8,margin:'16px 0 24px'}},
-React.createElement('input',{value:nc,onChange:function(e){setNc(e.target.value)},placeholder:'\u8F38\u5165 category \u540D\u7A31',onKeyDown:function(e){if(e.key==='Enter'&&nc.trim()&&cats.length<8){setCats([...cats,{name:nc.trim(),h:0}]);setNc('')}},style:{flex:1,padding:'10px 14px',background:'#141414',border:'1px solid #222',borderRadius:8,color:'#fff',fontSize:14,outline:'none'}}),
-React.createElement('button',{onClick:function(){if(nc.trim()&&cats.length<8){setCats([...cats,{name:nc.trim(),h:0}]);setNc('')}},disabled:cats.length>=8,style:{padding:'10px 16px',background:cats.length>=8?'#555':'#FF2D20',border:'none',borderRadius:8,color:'#fff',fontSize:14,cursor:cats.length>=8?'default':'pointer'}},(cats.length>=8?'\u4E0A\u9650 8 \u500B':'\u65B0\u589E'))),
-cats.length>0&&React.createElement('div',{style:{background:'#141414',borderRadius:12,padding:16,marginBottom:32,border:'1px solid #222'}},
-React.createElement('div',{style:{display:'flex',justifyContent:'space-between',marginBottom:8}},
-React.createElement('span',{style:{color:'#888',fontSize:13}},'\u6BCF\u9031\u7E3D\u6642\u6578'),
-React.createElement('span',{className:'ft',style:{fontSize:24}},tot+'h')),
+React.createElement('button',{onClick:function(){setCats(cats.map(function(x,j){return j===i?{...x,h:x.h+1}:x}))},style:{width:32,height:32,background:'transparent',border:'1px solid rgba(255,255,255,.14)',color:'var(--t60)',borderRadius:8,fontSize:18,cursor:'pointer'}},'+'),
+React.createElement('button',{onClick:function(){setCats(cats.filter(function(_,j){return j!==i}))},style:{width:32,height:32,background:'transparent',border:'none',color:'var(--t35)',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}},React.createElement(Icon,{name:'x',size:15})))}),
+React.createElement('div',{style:{display:'flex',gap:8,margin:'18px 0 24px'}},
+React.createElement('input',{value:nc,onChange:function(e){setNc(e.target.value)},placeholder:'\u8F38\u5165 category \u540D\u7A31',onKeyDown:function(e){if(e.key==='Enter'&&nc.trim()&&cats.length<8){setCats([...cats,{name:nc.trim(),h:0}]);setNc('')}},style:{flex:1,padding:'10px 14px',background:'#0d0d0d',border:'1px solid var(--line)',borderRadius:8,color:'#fff',fontSize:14,outline:'none',minWidth:0}}),
+React.createElement('button',{onClick:function(){if(nc.trim()&&cats.length<8){setCats([...cats,{name:nc.trim(),h:0}]);setNc('')}},disabled:cats.length>=8,style:{padding:'10px 16px',background:cats.length>=8?'rgba(255,255,255,.06)':'#C9A86A',border:'none',borderRadius:8,color:cats.length>=8?'var(--t35)':'#0a0a0a',fontSize:14,fontWeight:500,cursor:cats.length>=8?'default':'pointer'}},(cats.length>=8?'\u4E0A\u9650 8 \u500B':'\u65B0\u589E'))),
+cats.length>0&&React.createElement('div',{style:{padding:'4px 2px',marginBottom:28}},
+React.createElement('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:6,paddingBottom:6,borderBottom:'1px solid var(--line)'}},
+React.createElement('span',{style:{color:'var(--t60)',fontSize:13}},'\u6BCF\u9031\u7E3D\u6642\u6578'),
+React.createElement('span',{className:'ft',style:{fontSize:26}},tot+'h')),
 cats.map(function(c,i){return React.createElement('div',{key:i,style:{display:'flex',justifyContent:'space-between',padding:'4px 0'}},
-React.createElement('span',{style:{color:'#888',fontSize:13}},c.name),
-React.createElement('span',{className:'ft',style:{fontSize:16,color:'#FF9F0A'}},(tot>0?Math.round(c.h/tot*100):0)+'%'))})),
-React.createElement('button',{onClick:function(){var total=cats.reduce(function(s,c){return s+c.h},0);if(cats.length===0){alert('\u8ACB\u81F3\u5C11\u65B0\u589E\u4E00\u500B category');return}if(total===0){alert('\u8ACB\u81F3\u5C11\u8A2D\u5B9A\u4E00\u500B category \u7684\u76EE\u6A19\u6642\u6578');return}up(function(d){d.categories=cats.map(function(c,i){return{id:'c'+Date.now()+'_'+i,name:c.name,weeklyGoalHours:c.h}});d.setupDone=true})},disabled:!cats.length,style:{width:'100%',padding:16,background:cats.length&&tot>0?'#FF2D20':'#555',border:'none',borderRadius:12,color:'#fff',fontSize:18,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:2,cursor:cats.length&&tot>0?'pointer':'default'}},'START TRACKING'))}function Dash({data}){
+React.createElement('span',{style:{color:'var(--t60)',fontSize:13}},c.name),
+React.createElement('span',{className:'ft',style:{fontSize:16,color:'#C9A86A'}},(tot>0?Math.round(c.h/tot*100):0)+'%'))})),
+tot===0&&cats.length>0&&React.createElement('p',{style:{color:'var(--t35)',fontSize:11,textAlign:'center',marginBottom:10}},'\u81F3\u5C11\u7D66\u4E00\u500B category \u76EE\u6A19\u6642\u6578\u624D\u80FD\u958B\u64AD'),
+React.createElement('button',{onClick:function(){if(cats.length===0||tot===0)return;up(function(d){d.categories=cats.map(function(c,i){return{id:'c'+Date.now()+'_'+i,name:c.name,weeklyGoalHours:c.h}});d.setupDone=true})},disabled:!cats.length||tot===0,style:{width:'100%',padding:16,background:cats.length&&tot>0?'#C9A86A':'rgba(255,255,255,.06)',border:'none',borderRadius:12,color:cats.length&&tot>0?'#0a0a0a':'var(--t35)',fontSize:19,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:3,cursor:cats.length&&tot>0?'pointer':'default'}},'START THE SHOW'))}function Dash({data}){
 var t=todayS(),wd=weekDates(t),md=monthDates(t);
 var dow=dayOfWeek(t),dom=dayOfMonth(t),dim_=daysInMonth(t);
 var hrs=function(cid,ds){return data.records.filter(function(r){return r.categoryId===cid&&ds.includes(r.date)}).reduce(function(s,r){return s+r.hours},0)};
@@ -303,97 +398,97 @@ var airedToday=hasRecOn(data.records,t);
 var offDays=data.lastAirDate?Math.max(0,diffDays(data.lastAirDate,t)-1):0;
 var todayDelta=(data.audienceLog||[]).filter(function(e){return e.date===t}).reduce(function(s,e){return s+e.delta},0);
 var statusTxt=airedToday?'連播 '+streak+' 集':offDays>=1?'停播 '+offDays+' 天':streak>0?'連播 '+streak+' 集・今日尚未播出':'今日尚未播出';
+var epN=Object.keys(data.records.reduce(function(m,r){m[r.date]=1;return m},{})).length;
 var avg=function(a){return a.length?Math.round(a.reduce(function(s,x){return s+x},0)/a.length):0};
 var tP=avg(catData.map(function(d){return d.tPct}));
 var wP=avg(catData.map(function(d){return d.wPct}));
 var mP=avg(catData.map(function(d){return d.mPct}));
 var selData=sel!==null?catData.find(function(d){return d.cat.id===sel}):null;
 var screenItems=[['\u4ECA\u65E5',tP,tH],['\u672C\u9031',wP,wH],['\u672C\u6708',mP,mH]];
-var legend=[['#FF2D20','\u6708'],['#FF9F0A','\u9031'],['#30D158','\u65E5']];
+var legend=[['rgba(255,255,255,.30)','\u6708'],['#C9A86A','\u9031'],['rgba(255,255,255,.85)','\u65E5']];
 var n=catData.length;
 var ringSize=n<=1?110:n<=4?100:n<=6?85:76;
 var topCount=n<=1?n:Math.ceil(n/2);
 var topRow=catData.slice(0,topCount);
 var bottomRow=catData.slice(topCount);
-var audience=[
-{w:14,h:22,x:8},{w:16,h:26,x:24},{w:12,h:20,x:44},
-{w:18,h:28,x:62},{w:14,h:24,x:84},{w:20,h:32,x:104},
-{w:22,h:36,x:128},{w:24,h:38,x:154},
-{w:22,h:36,x:182},{w:20,h:32,x:208},
-{w:14,h:24,x:232},{w:18,h:28,x:250},
-{w:12,h:20,x:272},{w:16,h:26,x:288},{w:14,h:22,x:308}
-];
+var backSeats=Array.from({length:11},function(_,i){return{x:2+i*30,hx:2+i*30+13+((i%3)-1)*2}});
+var frontSeats=Array.from({length:9},function(_,i){return{x:-4+i*38,hx:-4+i*38+17+((i*2)%3-1)*2.5}});
 return React.createElement('div',{style:{padding:'0 16px',minHeight:'calc(100vh - 70px)',display:'flex',flexDirection:'column'}},
-React.createElement('div',{className:'screen-wrap',style:{position:'relative',marginTop:22}},
-React.createElement('div',{className:'valance',style:{position:'absolute',top:-9,left:-6,right:-6,height:16,zIndex:3}}),
-React.createElement('div',{className:'curtain',style:{position:'absolute',top:-4,bottom:40,left:-6,width:22,zIndex:2,borderRadius:'0 0 5px 5px'}}),
-React.createElement('div',{className:'curtain',style:{position:'absolute',top:-4,bottom:40,right:-6,width:22,zIndex:2,borderRadius:'0 0 5px 5px'}}),
-React.createElement('div',{className:'screen-inner screen-glow',style:{background:'#0d1117',borderRadius:4,padding:'20px 22px 14px',border:'1px solid #1a2a3a',position:'relative'}},
-React.createElement('div',{style:{position:'absolute',top:0,left:0,right:0,bottom:0,background:'repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(100,180,255,.008) 2px,rgba(100,180,255,.008) 4px)',pointerEvents:'none'}}),
-React.createElement('div',{style:{textAlign:'center',marginBottom:8}},
-React.createElement('h1',{className:'ft',style:{fontSize:26,color:'#FF2D20',letterSpacing:6,margin:0}},"YOU'RE ON"),
-React.createElement('p',{style:{color:'#445',fontSize:10,letterSpacing:3,marginTop:2}},'\u6578\u5B57\u4E0D\u6703\u8AAA\u8B0A')),
-React.createElement('div',{style:{textAlign:'center',margin:'14px 0 6px'}},
-React.createElement('div',{style:{color:'#556',fontSize:10,letterSpacing:2}},'\uD83D\uDCFA \u76EE\u524D\u6536\u770B\u4EBA\u6578'),
-React.createElement('div',{style:{display:'flex',alignItems:'baseline',justifyContent:'center',gap:8}},
-React.createElement('span',{className:'ft',style:{fontSize:54,color:'#fff',lineHeight:1.1}},data.audience.toLocaleString()),
-todayDelta!==0&&React.createElement('span',{className:'ft',style:{fontSize:18,color:todayDelta>0?'#C9A86A':'#FF2D20'}},(todayDelta>0?'\u2191 ':'\u2193 ')+Math.abs(todayDelta))),
-React.createElement('div',{style:{color:offDays>=1?'#FF2D20':'#C9A86A',fontSize:11,letterSpacing:1,marginTop:2}},statusTxt)),
+React.createElement('div',{className:'screen-wrap',style:{position:'relative',marginTop:26}},
+React.createElement(Valance,null),
+React.createElement(SideDrape,{side:'l'}),
+React.createElement(SideDrape,{side:'r'}),
+React.createElement('div',{className:'screen-inner screen-glow',style:{background:'#0a0e14',borderRadius:4,padding:'14px 22px 14px',position:'relative'}},
+React.createElement('div',{style:{position:'absolute',top:0,left:0,right:0,bottom:0,background:'radial-gradient(ellipse 80% 55% at 50% 38%,rgba(140,180,255,.05),transparent 70%)',pointerEvents:'none'}}),
+React.createElement('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}},
+React.createElement('div',{style:{display:'flex',alignItems:'center',gap:6}},
+React.createElement('span',{className:airedToday?'onair-dot':'',style:{width:7,height:7,borderRadius:4,background:airedToday?'#FF2D20':'rgba(255,255,255,.18)',boxShadow:airedToday?'0 0 8px rgba(255,45,32,.8)':'none'}}),
+React.createElement('span',{style:{fontSize:9,letterSpacing:2.5,color:airedToday?'#FF2D20':'var(--t35)'}},airedToday?'ON AIR':'OFF AIR')),
+React.createElement('span',{className:'ft',style:{fontSize:15,color:'var(--t60)',letterSpacing:1}},'EP.'+(epN+(airedToday?0:1)))),
+React.createElement('div',{style:{textAlign:'center',marginBottom:4}},
+React.createElement('h1',{className:'ft',style:{fontSize:27,color:'#FF2D20',letterSpacing:3,margin:0}},"YOU'RE ON"),
+React.createElement('p',{className:'tag',style:{marginTop:2}},'\u6578\u5B57\u4E0D\u6703\u8AAA\u8B0A')),
+React.createElement('div',{className:'spot',style:{textAlign:'center',margin:'14px 0 8px'}},
+React.createElement('div',{className:'tag'},'\u76EE\u524D\u6536\u770B\u4EBA\u6578'),
+React.createElement('div',{style:{display:'flex',alignItems:'baseline',justifyContent:'center',gap:10}},
+React.createElement(CountUp,{value:data.audience,className:'ft',style:{fontSize:76,color:'#fff',lineHeight:1.05,letterSpacing:1}}),
+todayDelta!==0&&React.createElement('span',{className:'ft',style:{fontSize:20,color:todayDelta>0?'#C9A86A':'#FF2D20'}},(todayDelta>0?'\u2191 ':'\u2193 ')+Math.abs(todayDelta))),
+React.createElement('div',{style:{color:offDays>=1?'#FF2D20':'#C9A86A',fontSize:11,letterSpacing:1.5,marginTop:3}},statusTxt)),
 React.createElement('div',{style:{display:'flex',justifyContent:'space-around',margin:'12px 0 10px'}},
 screenItems.map(function(item,i){return React.createElement('div',{key:i,style:{textAlign:'center',flex:1}},
-React.createElement('div',{style:{color:'#556',fontSize:10,letterSpacing:1}},item[0]),
-React.createElement('div',{className:'ft',style:{fontSize:38,color:pctC(item[1]),lineHeight:1,margin:'2px 0'}},item[1]+'%'),
-React.createElement('div',{style:{color:'#334',fontSize:10}},Math.round(item[2]*10)/10+'h'))})),
+React.createElement('div',{className:'tag'},item[0]),
+React.createElement('div',{className:'ft',style:{fontSize:34,color:pctC(item[1]),lineHeight:1,margin:'3px 0 2px'}},item[1]+'%'),
+React.createElement('div',{style:{color:'var(--t35)',fontSize:10}},Math.round(item[2]*10)/10+'h'))})),
 React.createElement('div',{style:{display:'flex',justifyContent:'center',gap:16,marginTop:4}},
-React.createElement('span',{style:{color:'#334',fontSize:10}},'\u25A0 \u9031'+weekDayNames[dow-1]+' ('+dow+'/7)'),
-React.createElement('span',{style:{color:'#334',fontSize:10}},'\u25A0 '+dom+'/'+dim_+'\u65E5'))),
-React.createElement('div',{style:{position:'relative',height:44,overflow:'hidden',marginTop:-2}},
-React.createElement('div',{style:{position:'absolute',top:0,left:0,right:0,height:26,background:'linear-gradient(180deg,rgba(140,180,255,.12),transparent)',pointerEvents:'none'}}),
-React.createElement('svg',{width:'100%',height:44,style:{position:'absolute',bottom:0,left:0},viewBox:'0 0 330 44',preserveAspectRatio:'xMidYMax meet'},
-audience.map(function(a,i){
-var headR=a.w*0.38;
-var bodyTop=headR*2+2;
-var bodyH=a.h-bodyTop;
-var cx=a.x+a.w/2;
-var cy=44-a.h+headR;
-return React.createElement('g',{key:i,opacity:0.35+Math.random()*0.15},
-React.createElement('circle',{cx:cx,cy:cy,r:headR,fill:'#0a0a0a'}),
-React.createElement('ellipse',{cx:cx,cy:44-bodyH/2,rx:a.w/2,ry:bodyH/2,fill:'#0a0a0a'}),
-React.createElement('circle',{cx:cx,cy:cy,r:headR,fill:'none',stroke:'rgba(150,180,210,.12)',strokeWidth:0.5}),
-React.createElement('path',{d:'M'+(cx-headR)+','+cy+' A'+headR+','+headR+' 0 0,1 '+(cx+headR)+','+cy,fill:'none',stroke:'rgba(180,220,255,.22)',strokeWidth:0.8}))})))),
+React.createElement('span',{style:{color:'var(--t35)',fontSize:10,letterSpacing:1}},'\u9031'+weekDayNames[dow-1]+' '+dow+'/7'),
+React.createElement('span',{style:{color:'var(--t35)',fontSize:10,letterSpacing:1}},dom+'/'+dim_+'\u65E5'))),
+React.createElement('div',{style:{position:'relative',height:54,overflow:'hidden',marginTop:-2}},
+React.createElement('div',{style:{position:'absolute',top:0,left:0,right:0,height:30,background:'linear-gradient(180deg,rgba(140,180,255,.13),transparent)',pointerEvents:'none'}}),
+React.createElement('svg',{width:'100%',height:54,style:{position:'absolute',bottom:0,left:0},viewBox:'0 0 330 54',preserveAspectRatio:'xMidYMax slice'},
+backSeats.map(function(s,i){return React.createElement('g',{key:'b'+i,opacity:.8},
+React.createElement('circle',{cx:s.hx,cy:15,r:4.5,fill:'#070707'}),
+React.createElement('path',{d:'M'+(s.hx-4.5)+' 15 A4.5 4.5 0 0 1 '+(s.hx+4.5)+' 15',fill:'none',stroke:'rgba(160,195,235,.14)',strokeWidth:.7}),
+React.createElement('rect',{x:s.x,y:19,width:26,height:16,rx:3,fill:'#060606'}),
+React.createElement('rect',{x:s.x,y:19,width:26,height:1.2,rx:.6,fill:'rgba(140,180,255,.07)'}))}),
+frontSeats.map(function(s,i){return React.createElement('g',{key:'f'+i},
+React.createElement('circle',{cx:s.hx,cy:30,r:6,fill:'#050505'}),
+React.createElement('path',{d:'M'+(s.hx-6)+' 30 A6 6 0 0 1 '+(s.hx+6)+' 30',fill:'none',stroke:'rgba(180,215,255,.30)',strokeWidth:1}),
+React.createElement('rect',{x:s.x,y:36,width:34,height:20,rx:4,fill:'#040404'}),
+React.createElement('rect',{x:s.x,y:36,width:34,height:1.6,rx:.8,fill:'rgba(150,190,255,.12)'}))})))),
 React.createElement('div',{style:{display:'flex',justifyContent:'center',gap:16,margin:'10px 0 4px'}},
 legend.map(function(item,i){return React.createElement('div',{key:i,style:{display:'flex',alignItems:'center',gap:4}},
 React.createElement('div',{style:{width:8,height:8,borderRadius:4,background:item[0]}}),
-React.createElement('span',{style:{fontSize:10,color:'#888'}},item[1]))})),
+React.createElement('span',{style:{fontSize:10,color:'var(--t35)'}},item[1]))})),
 React.createElement('div',{style:{display:'flex',flexDirection:'column',alignItems:'center',gap:8,margin:'4px 0'}},
 React.createElement('div',{style:{display:'flex',justifyContent:'center',gap:8}},
 topRow.map(function(d){return React.createElement(Ring,{key:d.cat.id,size:ringSize,tPct:d.tPct,wPct:d.wPct,mPct:d.mPct,label:d.cat.name,selected:sel===d.cat.id,onClick:function(){setSel(sel===d.cat.id?null:d.cat.id)}})})),
 bottomRow.length>0&&React.createElement('div',{style:{display:'flex',justifyContent:'center',gap:8}},
 bottomRow.map(function(d){return React.createElement(Ring,{key:d.cat.id,size:ringSize,tPct:d.tPct,wPct:d.wPct,mPct:d.mPct,label:d.cat.name,selected:sel===d.cat.id,onClick:function(){setSel(sel===d.cat.id?null:d.cat.id)}})}))),
-selData&&React.createElement('div',{className:'fade-in',style:{background:'#141414',borderRadius:12,padding:14,margin:'6px 0',border:'1px solid #222'}},
-React.createElement('div',{style:{display:'flex',justifyContent:'space-between',marginBottom:6}},
-React.createElement('span',{style:{fontSize:15,fontWeight:600}},selData.cat.name),
-React.createElement('span',{className:'ft',style:{fontSize:14,color:'#555'}},selData.cat.weeklyGoalHours+'h/wk')),
-[['\u4ECA\u65E5',selData.tPct,selData.tHrs,selData.tG,'#30D158'],['\u672C\u9031',selData.wPct,selData.wHrs,selData.wG,'#FF9F0A'],['\u672C\u6708',selData.mPct,selData.mHrs,selData.mG,'#FF2D20']].map(function(item,i){return React.createElement('div',{key:i,style:{display:'flex',alignItems:'center',marginBottom:6,gap:8}},
-React.createElement('span',{style:{color:'#888',fontSize:12,width:36}},item[0]),
+selData&&React.createElement('div',{className:'fade-in',style:{background:'rgba(255,255,255,.025)',borderRadius:12,padding:'14px 16px',margin:'6px 0'}},
+React.createElement('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:8}},
+React.createElement('span',{style:{fontSize:15,fontWeight:500}},selData.cat.name),
+React.createElement('span',{className:'ft',style:{fontSize:14,color:'var(--t35)'}},selData.cat.weeklyGoalHours+'h/wk')),
+[['\u4ECA\u65E5',selData.tPct,selData.tHrs,selData.tG,'rgba(255,255,255,.85)'],['\u672C\u9031',selData.wPct,selData.wHrs,selData.wG,'#C9A86A'],['\u672C\u6708',selData.mPct,selData.mHrs,selData.mG,'rgba(255,255,255,.30)']].map(function(item,i){return React.createElement('div',{key:i,style:{display:'flex',alignItems:'center',marginBottom:6,gap:8}},
+React.createElement('span',{style:{color:'var(--t60)',fontSize:12,width:36}},item[0]),
 React.createElement('span',{className:'ft',style:{fontSize:20,color:item[4],width:50}},item[1]+'%'),
-React.createElement('div',{style:{flex:1,height:4,background:'#222',borderRadius:2}},
-React.createElement('div',{style:{height:4,background:item[4],borderRadius:2,width:Math.min(item[1],100)+'%',transition:'width .5s'}})),
-React.createElement('span',{style:{color:'#888',fontSize:11,minWidth:70,textAlign:'right'}},Math.round(item[2]*10)/10+'/'+Math.round(item[3]*10)/10+'h'))})),
-!selData&&React.createElement('div',{style:{background:'#141414',borderRadius:12,padding:12,margin:'6px 0',border:'1px solid #222'}},
-React.createElement('div',{style:{display:'flex',padding:'2px 0',borderBottom:'1px solid #222',marginBottom:6}},
-['','\u76EE\u6A19','\u5BE6\u969B','\u5DEE\u8DDD'].map(function(h,i){return React.createElement('span',{key:i,style:{color:'#555',fontSize:10,flex:i===0?2:1,textAlign:i===0?'left':i===3?'right':'center'}},h)})),
+React.createElement('div',{style:{flex:1,height:3,background:'rgba(255,255,255,.07)',borderRadius:2}},
+React.createElement('div',{style:{height:3,background:item[4],borderRadius:2,width:Math.min(item[1],100)+'%',transition:'width .5s'}})),
+React.createElement('span',{style:{color:'var(--t35)',fontSize:11,minWidth:70,textAlign:'right'}},Math.round(item[2]*10)/10+'/'+Math.round(item[3]*10)/10+'h'))})),
+!selData&&React.createElement('div',{style:{padding:'10px 4px 4px',margin:'6px 0'}},
+React.createElement('div',{className:'tag',style:{marginBottom:8}},'\u6642\u9593\u5206\u914D \u2014 \u76EE\u6A19 vs \u5BE6\u969B'),
+React.createElement('div',{style:{display:'flex',padding:'2px 0',borderBottom:'1px solid var(--line)',marginBottom:6}},
+['','\u76EE\u6A19','\u5BE6\u969B','\u5DEE\u8DDD'].map(function(h,i){return React.createElement('span',{key:i,style:{color:'var(--t35)',fontSize:10,flex:i===0?2:1,textAlign:i===0?'left':i===3?'right':'center'}},h)})),
 data.categories.map(function(cat){
 var totG=data.categories.reduce(function(s,c){return s+c.weeklyGoalHours},0);
 var gP=totG>0?Math.round(cat.weeklyGoalHours/totG*100):0;
 var aH=data.records.filter(function(r){return r.categoryId===cat.id}).reduce(function(s,r){return s+r.hours},0);
 var totH=data.records.reduce(function(s,r){return s+r.hours},0);
 var aP=totH>0?Math.round(aH/totH*100):0;var diff=aP-gP;
-return React.createElement('div',{key:cat.id,style:{display:'flex',padding:'4px 0'}},
-React.createElement('span',{style:{fontSize:12,flex:2}},cat.name),
-React.createElement('span',{className:'ft',style:{fontSize:14,flex:1,textAlign:'center',color:'#888'}},gP+'%'),
-React.createElement('span',{className:'ft',style:{fontSize:14,flex:1,textAlign:'center',color:'#FF9F0A'}},aP+'%'),
-React.createElement('span',{className:'ft',style:{fontSize:14,flex:1,textAlign:'right',color:diff>=0?'#30D158':'#FF2D20'}},(diff>0?'+':'')+diff+'%'))})))}function Rec({data,up,trig}){
+return React.createElement('div',{key:cat.id,style:{display:'flex',padding:'5px 0',borderBottom:'1px solid rgba(255,255,255,.04)'}},
+React.createElement('span',{style:{fontSize:12,flex:2,color:'var(--t60)'}},cat.name),
+React.createElement('span',{className:'ft',style:{fontSize:15,flex:1,textAlign:'center',color:'var(--t35)'}},gP+'%'),
+React.createElement('span',{className:'ft',style:{fontSize:15,flex:1,textAlign:'center',color:'#C9A86A'}},aP+'%'),
+React.createElement('span',{className:'ft',style:{fontSize:15,flex:1,textAlign:'right',color:diff>=0?'#30D158':'#FF2D20'}},(diff>0?'+':'')+diff+'%'))})))}function Rec({data,up,trig}){
 var[date,setDate]=useState(todayS());
 var[vals,setVals]=useState({});
 var[saved,setSaved]=useState(false);
@@ -407,72 +502,76 @@ var box={};
 up(function(d){newRecs.forEach(function(r){d.records.push(r)});if(date===todayS())box.ev=airToday(d)});
 setVals({});setSaved(true);
 setTimeout(function(){setSaved(false);trig(newRecs,box.ev)},600)};
-var bSt={width:34,height:34,background:'#1a1a1a',border:'1px solid #2a2a2a',color:'#fff',borderRadius:8,fontSize:16,cursor:'pointer',flexShrink:0};
+var bSt={width:34,height:34,background:'transparent',border:'1px solid rgba(255,255,255,.14)',color:'var(--t60)',borderRadius:8,fontSize:16,cursor:'pointer',flexShrink:0};
 return React.createElement('div',{style:{padding:16}},
-React.createElement('h1',{className:'ft',style:{fontSize:28,letterSpacing:2,margin:'16px 0'}},'RECORD'),
-React.createElement('div',{style:{marginBottom:16}},
-React.createElement('label',{style:{color:'#888',fontSize:12,display:'block',marginBottom:6}},'\u65E5\u671F'),
-React.createElement('input',{type:'date',value:date,onChange:function(e){setDate(e.target.value)},style:{width:'100%',padding:'10px 14px',background:'#141414',border:'1px solid #222',borderRadius:8,color:'#fff',fontSize:16,outline:'none',boxSizing:'border-box'}})),
-React.createElement('p',{style:{color:'#888',fontSize:12,marginBottom:8}},'\u6BCF\u500B category \u5404\u81EA\u586B\u6642\u6578\uFF0C\u6C92\u586B\u8996\u70BA 0\uFF1A'),
-data.categories.map(function(c){return React.createElement('div',{key:c.id,style:{display:'flex',alignItems:'center',gap:8,background:'#141414',border:'1px solid #222',borderRadius:10,padding:'10px 12px',marginBottom:8}},
+React.createElement('div',{style:{margin:'18px 0 16px'}},
+React.createElement('h1',{className:'ft',style:{fontSize:30,letterSpacing:1,margin:0}},'RECORD'),
+React.createElement('p',{className:'tag'},'\u4ECA\u65E5\u7D20\u6750\uFF0C\u4EA4\u7D66\u89C0\u773E')),
+React.createElement('div',{style:{marginBottom:18}},
+React.createElement('label',{className:'tag',style:{display:'block',marginBottom:6}},'\u65E5\u671F'),
+React.createElement('input',{type:'date',value:date,onChange:function(e){setDate(e.target.value)},style:{width:'100%',padding:'10px 14px',background:'#0d0d0d',border:'1px solid var(--line)',borderRadius:8,color:'#fff',fontSize:16,outline:'none',boxSizing:'border-box'}})),
+React.createElement('p',{style:{color:'var(--t35)',fontSize:11,marginBottom:4}},'\u6BCF\u500B category \u5404\u81EA\u586B\u6642\u6578\uFF0C\u6C92\u586B\u8996\u70BA 0'),
+data.categories.map(function(c){return React.createElement('div',{key:c.id,style:{display:'flex',alignItems:'center',gap:8,padding:'12px 2px',borderBottom:'1px solid var(--line)'}},
 React.createElement('div',{style:{flex:1,minWidth:0}},
-React.createElement('div',{style:{fontSize:14}},c.name),
-React.createElement('div',{style:{fontSize:10,color:'#555'}},'\u76EE\u6A19 '+c.weeklyGoalHours+'h/wk')),
+React.createElement('div',{style:{fontSize:14,fontWeight:500}},c.name),
+React.createElement('div',{style:{fontSize:10,color:'var(--t35)'}},'\u76EE\u6A19 '+c.weeklyGoalHours+'h/wk')),
 React.createElement('button',{style:bSt,onClick:function(){step(c.id,-0.5)}},'\u2212'),
-React.createElement('input',{type:'number',step:'0.5',min:'0',placeholder:'0',value:vals[c.id]||'',onChange:function(e){var n={...vals};n[c.id]=e.target.value;setVals(n)},style:{width:64,padding:'6px 4px',background:'#0f0f0f',border:'1px solid #222',borderRadius:8,color:'#fff',fontSize:20,fontFamily:"'Bebas Neue',sans-serif",outline:'none',textAlign:'center'}}),
+React.createElement('input',{type:'number',step:'0.5',min:'0',placeholder:'0',value:vals[c.id]||'',onChange:function(e){var n={...vals};n[c.id]=e.target.value;setVals(n)},style:{width:64,padding:'6px 4px',background:'#0d0d0d',border:'1px solid var(--line)',borderRadius:8,color:'#fff',fontSize:20,fontFamily:"'Bebas Neue',sans-serif",outline:'none',textAlign:'center'}}),
 React.createElement('button',{style:bSt,onClick:function(){step(c.id,0.5)}},'+'),
-React.createElement('span',{style:{color:'#555',fontSize:11,width:12}},'h'))}),
-total>0&&React.createElement('div',{style:{display:'flex',justifyContent:'space-between',padding:'8px 12px',marginBottom:12}},
-React.createElement('span',{style:{color:'#888',fontSize:12}},'\u672C\u6B21\u5408\u8A08'),
-React.createElement('span',{className:'ft',style:{fontSize:18,color:'#FF9F0A'}},Math.round(total*10)/10+'h')),
-dayLog.length>0&&React.createElement('div',{style:{background:'#141414',borderRadius:12,padding:12,marginBottom:16,border:'1px solid #222'}},
-React.createElement('p',{style:{color:'#555',fontSize:11,marginBottom:8}},date===todayS()?'\u4ECA\u65E5\u5DF2\u8A18\u9304':'\u8A72\u65E5\u5DF2\u8A18\u9304'),
+React.createElement('span',{style:{color:'var(--t35)',fontSize:11,width:12}},'h'))}),
+total>0&&React.createElement('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'baseline',padding:'10px 2px',marginBottom:8}},
+React.createElement('span',{className:'tag'},'\u672c\u6B21\u5408\u8A08'),
+React.createElement('span',{className:'ft',style:{fontSize:22,color:'#C9A86A'}},Math.round(total*10)/10+'h')),
+dayLog.length>0&&React.createElement('div',{style:{background:'rgba(255,255,255,.025)',borderRadius:10,padding:12,margin:'8px 0 16px'}},
+React.createElement('p',{className:'tag',style:{marginBottom:8}},date===todayS()?'\u4ECA\u65E5\u5DF2\u8A18\u9304':'\u8A72\u65E5\u5DF2\u8A18\u9304'),
 React.createElement('div',{style:{display:'flex',flexWrap:'wrap',gap:8}},
-dayLog.map(function(l,i){return React.createElement('span',{key:i,style:{background:'#1a1a1a',padding:'4px 10px',borderRadius:6,fontSize:13,color:'#888'}},l.name+' ',React.createElement('span',{className:'ft',style:{color:'#FF9F0A'}},l.hours+'h'))}))),
-React.createElement('button',{onClick:submit,style:{width:'100%',padding:16,background:saved?'#30D158':total>0?'#FF2D20':'#333',border:'none',borderRadius:12,color:'#fff',fontSize:18,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:2,cursor:total>0?'pointer':'default',transition:'background .3s'}},saved?'\u2713 ON AIR':'\u64ad\u51fa\u672c\u96c6'))}
-function Settings({data,up}){
+dayLog.map(function(l,i){return React.createElement('span',{key:i,style:{padding:'4px 10px',borderRadius:6,fontSize:13,color:'var(--t60)',background:'rgba(255,255,255,.04)'}},l.name+' ',React.createElement('span',{className:'ft',style:{color:'#C9A86A'}},l.hours+'h'))}))),
+React.createElement('button',{onClick:submit,style:{width:'100%',padding:16,marginTop:8,background:saved?'#C9A86A':total>0?'#C9A86A':'rgba(255,255,255,.06)',border:'none',borderRadius:12,color:saved||total>0?'#0a0a0a':'var(--t35)',fontSize:19,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:3,cursor:total>0?'pointer':'default'}},saved?'\u2713 ON AIR':'\u64ad\u51fa\u672c\u96c6'))}
+function Settings({data,up,ask}){
 var[nc,setNc]=useState('');
 var[nh,setNh]=useState(5);
 var[drafts,setDrafts]=useState({});
 var twg=data.categories.reduce(function(s,c){return s+c.weeklyGoalHours},0);
-var bSm={width:32,height:32,background:'#141414',border:'1px solid #222',color:'#fff',borderRadius:8,fontSize:18,cursor:'pointer'};
+var bSm={width:32,height:32,background:'transparent',border:'1px solid rgba(255,255,255,.14)',color:'var(--t60)',borderRadius:8,fontSize:18,cursor:'pointer'};
 var setDraft=function(id,v){setDrafts(function(p){var n={...p};if(v==null)delete n[id];else n[id]=v;return n})};
 return React.createElement('div',{style:{padding:16}},
-React.createElement('h1',{className:'ft',style:{fontSize:28,letterSpacing:2,margin:'16px 0'}},'SETTINGS'),
-(data.goalEditLog||[]).length>0&&React.createElement('p',{style:{color:'#C9A86A',fontSize:11,marginBottom:2}},'\uD83D\uDC41 \u76EE\u6A19\u5DF2\u4FEE\u6539 '+data.goalEditLog.length+' \u6B21\uFF0C\u89C0\u773E\u90FD\u8A18\u5F97'),
-React.createElement('h2',{className:'ft',style:{fontSize:18,color:'#888',letterSpacing:2,margin:'20px 0 4px'}},'WEEKLY GOALS'),
-React.createElement('p',{style:{color:'#555',fontSize:10,marginBottom:12}},'\u76EE\u6A19\u96A8\u6642\u53EF\u6539\u3001\u7ACB\u5373\u751F\u6548\uFF1B\u4F46\u6BCF\u6B21\u4FEE\u6539\u90FD\u6703\u7559\u4E0B\u7D00\u9304\uFF0C\u89C0\u773E\u8A18\u5F97\uFF0C\u800C\u4E14\u6703\u7FFB\u820A\u5E33'),
+React.createElement('div',{style:{margin:'18px 0 14px'}},
+React.createElement('h1',{className:'ft',style:{fontSize:30,letterSpacing:1,margin:0}},'SETTINGS'),
+React.createElement('p',{className:'tag'},'\u88FD\u4F5C\u55AE\u4F4D\u5F8C\u53F0')),
+(data.goalEditLog||[]).length>0&&React.createElement('p',{style:{color:'#C9A86A',fontSize:11,marginBottom:2,display:'flex',alignItems:'center',gap:5}},React.createElement(Icon,{name:'eye',size:13,color:'#C9A86A'}),'\u76EE\u6A19\u5DF2\u4FEE\u6539 '+data.goalEditLog.length+' \u6B21\uFF0C\u89C0\u773E\u90FD\u8A18\u5F97'),
+React.createElement('h2',{className:'tag',style:{margin:'22px 0 4px'}},'WEEKLY GOALS'),
+React.createElement('p',{style:{color:'var(--t35)',fontSize:10,marginBottom:8}},'\u76EE\u6A19\u96A8\u6642\u53EF\u6539\u3001\u7ACB\u5373\u751F\u6548\uFF1B\u4F46\u6BCF\u6B21\u4FEE\u6539\u90FD\u6703\u7559\u4E0B\u7D00\u9304\uFF0C\u89C0\u773E\u8A18\u5F97\uFF0C\u800C\u4E14\u6703\u7FFB\u820A\u5E33'),
 data.categories.map(function(cat){
 var draft=drafts[cat.id]!=null?drafts[cat.id]:cat.weeklyGoalHours;
 var dirty=draft!==cat.weeklyGoalHours;
-return React.createElement('div',{key:cat.id,style:{background:'#141414',borderRadius:12,padding:14,marginBottom:8,border:'1px solid #222'}},
+return React.createElement('div',{key:cat.id,style:{padding:'12px 2px',borderBottom:'1px solid var(--line)'}},
 React.createElement('div',{style:{display:'flex',alignItems:'center',gap:10}},
-React.createElement('span',{style:{flex:1,fontSize:15}},cat.name),
+React.createElement('span',{style:{flex:1,fontSize:15,fontWeight:500}},cat.name),
 React.createElement('button',{style:bSm,onClick:function(){setDraft(cat.id,Math.max(1,draft-1))}},'\u2212'),
 React.createElement('span',{className:'ft',style:{fontSize:22,width:40,textAlign:'center',color:dirty?'#C9A86A':'#fff'}},draft+'h'),
 React.createElement('button',{style:bSm,onClick:function(){setDraft(cat.id,draft+1)}},'+'),
-React.createElement('span',{className:'ft',style:{fontSize:14,color:'#C9A86A',width:36,textAlign:'right'}},(twg>0?Math.round(cat.weeklyGoalHours/twg*100):0)+'%'),
-React.createElement('button',{onClick:function(){if(confirm('\u522A\u9664 '+cat.name+'\uFF1F'))up(function(d){d.categories=d.categories.filter(function(x){return x.id!==cat.id})})},style:{background:'transparent',border:'none',color:'#FF2D20',fontSize:16,cursor:'pointer'}},'\u00D7')),
+React.createElement('span',{className:'ft',style:{fontSize:14,color:'var(--t35)',width:36,textAlign:'right'}},(twg>0?Math.round(cat.weeklyGoalHours/twg*100):0)+'%'),
+React.createElement('button',{onClick:function(){ask({title:'\u522A\u9664\u300C'+cat.name+'\u300D\uFF1F',body:'\u9019\u500B category \u548C\u5B83\u7684\u76EE\u6A19\u6703\u6D88\u5931\uFF0C\u5DF2\u8A18\u9304\u7684\u6642\u6578\u6703\u4FDD\u7559\u5728\u6B77\u53F2\u88E1\u3002',confirmText:'\u522A\u9664',danger:true,onConfirm:function(){up(function(d){d.categories=d.categories.filter(function(x){return x.id!==cat.id})})}})},style:{background:'transparent',border:'none',color:'var(--t35)',cursor:'pointer',padding:4,display:'flex'}},React.createElement(Icon,{name:'x',size:15}))),
 dirty&&React.createElement('div',{style:{display:'flex',alignItems:'center',gap:8,marginTop:8,padding:'6px 8px',background:'rgba(201,168,106,.07)',borderRadius:8}},
 React.createElement('span',{style:{fontSize:11,color:'#C9A86A',flex:1}},cat.weeklyGoalHours+'h \u2192 '+draft+'h\uFF0C\u7ACB\u5373\u751F\u6548'),
 React.createElement('button',{onClick:function(){var v=draft,from=cat.weeklyGoalHours;up(function(d){var c=d.categories.find(function(x){return x.id===cat.id});if(c){c.weeklyGoalHours=v;d.goalEditLog.push({date:todayS(),catId:cat.id,from:from,to:v})}});setDraft(cat.id,null)},style:{padding:'4px 10px',background:'#FF2D20',border:'none',borderRadius:6,color:'#fff',fontSize:11,cursor:'pointer'}},'\u78BA\u8A8D\u4FEE\u6539'),
 React.createElement('button',{onClick:function(){setDraft(cat.id,null)},style:{padding:'4px 10px',background:'transparent',border:'1px solid #333',borderRadius:6,color:'#888',fontSize:11,cursor:'pointer'}},'\u9084\u539F')))}),
-React.createElement('div',{style:{background:'#141414',borderRadius:12,padding:14,marginTop:16,border:'1px solid #222'}},
-React.createElement('p',{style:{color:'#888',fontSize:13,marginBottom:10}},'\u65B0\u589E Category'),
+React.createElement('h2',{className:'tag',style:{margin:'26px 0 10px'}},'NEW CATEGORY'),
 React.createElement('div',{style:{display:'flex',gap:8,alignItems:'center'}},
-React.createElement('input',{value:nc,onChange:function(e){setNc(e.target.value)},placeholder:'\u540D\u7A31',style:{flex:1,padding:'10px 12px',background:'#0f0f0f',border:'1px solid #222',borderRadius:8,color:'#fff',fontSize:14,outline:'none'}}),
+React.createElement('input',{value:nc,onChange:function(e){setNc(e.target.value)},placeholder:'\u540D\u7A31',style:{flex:1,padding:'10px 12px',background:'#0d0d0d',border:'1px solid var(--line)',borderRadius:8,color:'#fff',fontSize:14,outline:'none',minWidth:0}}),
 React.createElement('button',{style:bSm,onClick:function(){setNh(Math.max(1,nh-1))}},'\u2212'),
 React.createElement('span',{className:'ft',style:{fontSize:20,width:32,textAlign:'center'}},nh+'h'),
 React.createElement('button',{style:bSm,onClick:function(){setNh(nh+1)}},'+'),
-React.createElement('button',{onClick:function(){if(nc.trim()&&data.categories.length<8){up(function(d){d.categories.push({id:'c'+Date.now(),name:nc.trim(),weeklyGoalHours:nh})});setNc('');setNh(5)}},disabled:data.categories.length>=8,style:{padding:'8px 14px',background:data.categories.length>=8?'#555':'#FF2D20',border:'none',borderRadius:8,color:'#fff',fontSize:13,cursor:data.categories.length>=8?'default':'pointer'}},(data.categories.length>=8?'\u4E0A\u9650':'\u52A0')))),
-React.createElement('div',{style:{background:'#141414',borderRadius:12,padding:16,marginTop:24,border:'1px solid #222'}},
-React.createElement('div',{style:{display:'flex',justifyContent:'space-between',marginBottom:8}},
-React.createElement('span',{style:{color:'#888',fontSize:13}},'\u6BCF\u9031\u7E3D\u6642\u6578'),
-React.createElement('span',{className:'ft',style:{fontSize:22}},twg+'h')),
+React.createElement('button',{onClick:function(){if(nc.trim()&&data.categories.length<8){up(function(d){d.categories.push({id:'c'+Date.now(),name:nc.trim(),weeklyGoalHours:nh})});setNc('');setNh(5)}},disabled:data.categories.length>=8,style:{padding:'9px 14px',background:data.categories.length>=8?'rgba(255,255,255,.06)':'#C9A86A',border:'none',borderRadius:8,color:data.categories.length>=8?'var(--t35)':'#0a0a0a',fontSize:13,fontWeight:500,cursor:data.categories.length>=8?'default':'pointer'}},(data.categories.length>=8?'\u4E0A\u9650':'\u52A0'))),
+React.createElement('h2',{className:'tag',style:{margin:'26px 0 8px'}},'WEEKLY TOTAL'),
+React.createElement('div',{style:{padding:'2px 2px'}},
+React.createElement('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:6,paddingBottom:6,borderBottom:'1px solid var(--line)'}},
+React.createElement('span',{style:{color:'var(--t60)',fontSize:13}},'\u6BCF\u9031\u7E3D\u6642\u6578'),
+React.createElement('span',{className:'ft',style:{fontSize:26}},twg+'h')),
 data.categories.map(function(cat){return React.createElement('div',{key:cat.id,style:{display:'flex',justifyContent:'space-between',padding:'3px 0'}},
-React.createElement('span',{style:{color:'#888',fontSize:13}},cat.name),
-React.createElement('span',{className:'ft',style:{fontSize:15,color:'#FF9F0A'}},(twg>0?Math.round(cat.weeklyGoalHours/twg*100):0)+'%'))})),
-React.createElement('button',{onClick:function(){if(confirm('\u78BA\u5B9A\u8981\u6E05\u9664\u6240\u6709\u8CC7\u6599\u91CD\u65B0\u958B\u59CB\uFF1F')){localStorage.removeItem(KEY);localStorage.removeItem(OLDKEY);location.reload()}},style:{width:'100%',padding:14,background:'transparent',border:'1px solid #FF2D20',borderRadius:12,color:'#FF2D20',fontSize:14,cursor:'pointer',marginTop:32}},'\u91CD\u7F6E\u6240\u6709\u8CC7\u6599'))}
+React.createElement('span',{style:{color:'var(--t60)',fontSize:13}},cat.name),
+React.createElement('span',{className:'ft',style:{fontSize:15,color:'#C9A86A'}},(twg>0?Math.round(cat.weeklyGoalHours/twg*100):0)+'%'))})),
+React.createElement('button',{onClick:function(){ask({title:'\u91CD\u7F6E\u6240\u6709\u8CC7\u6599\uFF1F',body:'\u7BC0\u76EE\u505C\u64AD\uFF0C\u5168\u90E8\u89C0\u773E\u56DE\u5BB6\uFF0C\u8A18\u9304\u6B78\u96F6\u3002\u6B64\u64CD\u4F5C\u7121\u6CD5\u5FA9\u539F\u3002',confirmText:'\u5168\u90E8\u6E05\u9664',danger:true,onConfirm:function(){localStorage.removeItem(KEY);localStorage.removeItem(OLDKEY);location.reload()}})},style:{width:'100%',padding:14,background:'transparent',border:'1px solid rgba(255,45,32,.5)',borderRadius:12,color:'#FF2D20',fontSize:14,cursor:'pointer',marginTop:36}},'\u91CD\u7F6E\u6240\u6709\u8CC7\u6599'))}
 ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(App));
 </script>
 </body>
