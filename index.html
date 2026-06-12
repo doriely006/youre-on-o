@@ -142,32 +142,42 @@ settings:'M12 8.5a3.5 3.5 0 110 7 3.5 3.5 0 010-7zM12 2v3M12 19v3M2 12h3M19 12h3
 eye:'M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12zM12 9.5a2.5 2.5 0 110 5 2.5 2.5 0 010-5z',
 x:'M6 6l12 12M18 6L6 18'};
 function Icon({name,size,color,style}){return React.createElement('svg',{width:size||24,height:size||24,viewBox:'0 0 24 24',fill:'none',stroke:color||'currentColor',strokeWidth:1.5,strokeLinecap:'round',strokeLinejoin:'round',style:style},React.createElement('path',{d:IconPaths[name]}))}
-function Valance(){
-var scallops=Array.from({length:20},function(_,i){return React.createElement('path',{key:i,d:'M'+(i*20)+' 12 q10 11 20 0 l0 -12 l-20 0 z',fill:i%2?'#71140f':'#5c0f0d'})});
-return React.createElement('svg',{viewBox:'0 0 400 24',preserveAspectRatio:'none',style:{position:'absolute',top:-10,left:-8,width:'calc(100% + 16px)',height:22,zIndex:3}},
-React.createElement('defs',null,React.createElement('linearGradient',{id:'vlg',x1:0,y1:0,x2:20,y2:0,gradientUnits:'userSpaceOnUse',spreadMethod:'repeat'},
-React.createElement('stop',{offset:'0',stopColor:'#3a0907'}),
-React.createElement('stop',{offset:'.42',stopColor:'#8e1c16'}),
-React.createElement('stop',{offset:'.55',stopColor:'#a8261d'}),
-React.createElement('stop',{offset:'.7',stopColor:'#6b120f'}),
-React.createElement('stop',{offset:'1',stopColor:'#3a0907'}))),
-scallops,
-React.createElement('rect',{x:0,y:0,width:400,height:13,fill:'url(#vlg)'}),
-React.createElement('rect',{x:0,y:0,width:400,height:1.4,fill:'rgba(255,255,255,.10)'}))}
-function SideDrape({side}){
-var id='sd'+side,mirror=side==='r';
-var edge='M24 0 C19 18 25 36 20 54 C16 72 25 90 20 108 C16 126 24 144 20 162 C17 178 26 192 25 200';
-return React.createElement('svg',{viewBox:'0 0 26 200',preserveAspectRatio:'none',style:Object.assign({position:'absolute',top:-4,bottom:40,width:24,zIndex:2},mirror?{right:-8}:{left:-8})},
-React.createElement('defs',null,React.createElement('linearGradient',{id:id,x1:0,y1:0,x2:12,y2:0,gradientUnits:'userSpaceOnUse',spreadMethod:'repeat'},
-React.createElement('stop',{offset:'0',stopColor:'#330806'}),
-React.createElement('stop',{offset:'.4',stopColor:'#8e1c16'}),
-React.createElement('stop',{offset:'.55',stopColor:'#a8261d'}),
-React.createElement('stop',{offset:'.72',stopColor:'#6b120f'}),
-React.createElement('stop',{offset:'1',stopColor:'#330806'}))),
-React.createElement('g',{transform:mirror?'translate(26,0) scale(-1,1)':undefined},
-React.createElement('path',{d:'M0 0 H24 C19 18 25 36 20 54 C16 72 25 90 20 108 C16 126 24 144 20 162 C17 178 26 192 25 200 H0 Z',fill:'url(#'+id+')'}),
-React.createElement('path',{d:edge,fill:'none',stroke:'rgba(255,225,175,.30)',strokeWidth:1}),
-React.createElement('rect',{x:0,y:0,width:5,height:200,fill:'rgba(0,0,0,.4)'})))}
+function Auditorium(){
+var lamps=[[16,108,2.6],[42,146,2.1],[64,178,1.7]];
+var ceil=[50,105,160,215,270,325,380];
+var wall='M0 0 L84 56 L84 268 L0 332 Z';
+var sideG=function(key,mirror){
+return React.createElement('g',{key:key,transform:mirror?'translate(430,0) scale(-1,1)':undefined},
+React.createElement('path',{d:wall,fill:'url(#cfold)'}),
+React.createElement('path',{d:wall,fill:'url(#cdepth)'}),
+React.createElement('line',{x1:84,y1:56,x2:84,y2:268,stroke:'rgba(255,228,180,.26)',strokeWidth:1.2}),
+lamps.map(function(l,i){return React.createElement('g',{key:i},
+React.createElement('circle',{cx:l[0],cy:l[1],r:l[2]*6,fill:'url(#lglow)',opacity:.5}),
+React.createElement('circle',{cx:l[0],cy:l[1],r:l[2],fill:'#ffdfa8'}),
+React.createElement('ellipse',{cx:l[0],cy:l[1]+l[2]*8,rx:l[2]*2.4,ry:l[2]*9,fill:'rgba(255,205,135,.10)'}))}));};
+return React.createElement('svg',{viewBox:'0 0 430 332',preserveAspectRatio:'none',style:{position:'absolute',top:0,left:0,width:'100%',height:'100%'}},
+React.createElement('defs',null,
+React.createElement('linearGradient',{id:'cfold',x1:0,y1:0,x2:14,y2:0,gradientUnits:'userSpaceOnUse',spreadMethod:'repeat'},
+React.createElement('stop',{offset:'0',stopColor:'#260605'}),
+React.createElement('stop',{offset:'.4',stopColor:'#741712'}),
+React.createElement('stop',{offset:'.55',stopColor:'#962118'}),
+React.createElement('stop',{offset:'.72',stopColor:'#54100c'}),
+React.createElement('stop',{offset:'1',stopColor:'#260605'})),
+React.createElement('linearGradient',{id:'cdepth',x1:0,y1:0,x2:1,y2:0},
+React.createElement('stop',{offset:'0',stopColor:'rgba(0,0,0,0)'}),
+React.createElement('stop',{offset:'.65',stopColor:'rgba(0,0,0,.18)'}),
+React.createElement('stop',{offset:'1',stopColor:'rgba(0,0,0,.52)'})),
+React.createElement('radialGradient',{id:'lglow'},
+React.createElement('stop',{offset:'0',stopColor:'rgba(255,215,150,.55)'}),
+React.createElement('stop',{offset:'1',stopColor:'rgba(255,215,150,0)'}))),
+React.createElement('ellipse',{cx:215,cy:72,rx:150,ry:34,fill:'rgba(255,235,200,.045)'}),
+ceil.map(function(x,i){return React.createElement('g',{key:'c'+i},
+React.createElement('circle',{cx:x,cy:8,r:7,fill:'url(#lglow)',opacity:.55}),
+React.createElement('circle',{cx:x,cy:8,r:1.8,fill:'#ffe3b2'}),
+React.createElement('ellipse',{cx:x,cy:17,rx:2.4,ry:8,fill:'rgba(255,210,150,.07)'}))}),
+sideG('wl',false),
+sideG('wr',true),
+React.createElement('ellipse',{cx:215,cy:296,rx:175,ry:26,fill:'rgba(255,228,185,.05)'}))}
 function IntroPanel({side}){
 var id='ip'+side;
 return React.createElement('svg',{viewBox:'0 0 215 430',preserveAspectRatio:'none',style:{width:'100%',height:'100%',display:'block'}},
@@ -412,34 +422,28 @@ var ringSize=n<=1?110:n<=4?100:n<=6?85:76;
 var topCount=n<=1?n:Math.ceil(n/2);
 var topRow=catData.slice(0,topCount);
 var bottomRow=catData.slice(topCount);
-var backSeats=Array.from({length:11},function(_,i){return{x:2+i*30,hx:2+i*30+13+((i%3)-1)*2}});
-var frontSeats=Array.from({length:9},function(_,i){return{x:-4+i*38,hx:-4+i*38+17+((i*2)%3-1)*2.5}});
+var backSeats=Array.from({length:14},function(_,i){return{x:2+i*31,hx:2+i*31+13+((i%3)-1)*2}});
+var frontSeats=Array.from({length:12},function(_,i){return{x:-6+i*38,hx:-6+i*38+17+((i*2)%3-1)*2.5}});
 return React.createElement('div',{style:{padding:'0 16px',minHeight:'calc(100vh - 70px)',display:'flex',flexDirection:'column'}},
-React.createElement('div',{style:{display:'flex',justifyContent:'space-between',padding:'0 36px',marginTop:8,height:18}},
-[0,1,2,3,4].map(function(i){return React.createElement('div',{key:i,style:{width:16,height:18,backgroundImage:'radial-gradient(circle at 50% 3px,#ffe3b2 1.5px,rgba(255,195,115,.4) 4px,transparent 7px),linear-gradient(180deg,rgba(255,210,150,.13),transparent 85%)'}})})),
-React.createElement('div',{style:{display:'flex',alignItems:'center',margin:'0 2px 10px'}},
-React.createElement('div',{style:{flex:1,display:'flex',alignItems:'center',gap:6}},
-React.createElement('span',{className:airedToday?'onair-dot':'',style:{width:7,height:7,borderRadius:4,background:airedToday?'#FF2D20':'rgba(255,255,255,.18)',boxShadow:airedToday?'0 0 8px rgba(255,45,32,.8)':'none'}}),
-React.createElement('span',{style:{fontSize:9,letterSpacing:2.5,color:airedToday?'#FF2D20':'var(--t35)'}},airedToday?'ON AIR':'OFF AIR')),
-React.createElement('div',{style:{textAlign:'center'}},
-React.createElement('h1',{className:'ft',style:{fontSize:26,color:'#FF2D20',letterSpacing:3,margin:0,textShadow:'0 0 16px rgba(255,45,32,.35)'}},"YOU'RE ON"),
-React.createElement('p',{className:'tag',style:{marginTop:1}},'\u6578\u5B57\u4E0D\u6703\u8AAA\u8B0A')),
-React.createElement('div',{style:{flex:1,textAlign:'right'}},
-React.createElement('span',{className:'ft',style:{fontSize:15,color:'var(--t60)',letterSpacing:1}},'EP.'+(epN+(airedToday?0:1))))),
-React.createElement('div',{className:'screen-wrap',style:{position:'relative',marginTop:14}},
-React.createElement(Valance,null),
-React.createElement(SideDrape,{side:'l'}),
-React.createElement(SideDrape,{side:'r'}),
-React.createElement('div',{className:'screen-inner screen-lit screen-glow',style:{borderRadius:3,padding:'30px 22px 26px',position:'relative'}},
-React.createElement('div',{style:{textAlign:'center'}},
+React.createElement('div',{style:{position:'relative',margin:'0 -16px',height:332,overflow:'hidden'}},
+React.createElement(Auditorium,null),
+React.createElement('div',{style:{position:'absolute',top:14,left:96,right:96,display:'flex',justifyContent:'space-between',alignItems:'center',zIndex:3}},
+React.createElement('div',{style:{display:'flex',alignItems:'center',gap:5}},
+React.createElement('span',{className:airedToday?'onair-dot':'',style:{width:6,height:6,borderRadius:3,background:airedToday?'#FF2D20':'rgba(255,255,255,.18)',boxShadow:airedToday?'0 0 8px rgba(255,45,32,.8)':'none'}}),
+React.createElement('span',{style:{fontSize:8,letterSpacing:2,color:airedToday?'#FF2D20':'var(--t35)'}},airedToday?'ON AIR':'OFF AIR')),
+React.createElement('span',{className:'ft',style:{fontSize:13,color:'var(--t60)',letterSpacing:1}},'EP.'+(epN+(airedToday?0:1)))),
+React.createElement('div',{style:{position:'absolute',top:32,left:90,right:90,textAlign:'center',zIndex:3}},
+React.createElement('h1',{className:'ft',style:{fontSize:24,color:'#FF2D20',letterSpacing:3,margin:0,textShadow:'0 0 16px rgba(255,45,32,.35)'}},"YOU'RE ON"),
+React.createElement('p',{className:'tag',style:{fontSize:8,marginTop:1}},'\u6578\u5B57\u4E0D\u6703\u8AAA\u8B0A')),
+React.createElement('div',{className:'screen-inner screen-lit screen-glow',style:{position:'absolute',left:86,right:86,top:86,height:178,borderRadius:3,zIndex:2,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center'}},
 React.createElement('div',{style:{fontSize:9,letterSpacing:3,color:'rgba(45,33,16,.55)'}},'\u76EE\u524D\u6536\u770B\u4EBA\u6578'),
 React.createElement('div',{style:{display:'flex',alignItems:'baseline',justifyContent:'center',gap:10}},
-React.createElement(CountUp,{value:data.audience,className:'ft',style:{fontSize:78,color:'#241c10',lineHeight:1.05,letterSpacing:1,textShadow:'0 0 8px rgba(45,33,16,.18)'}}),
-todayDelta!==0&&React.createElement('span',{className:'ft',style:{fontSize:20,color:todayDelta>0?'#8a6f3c':'#b3261a'}},(todayDelta>0?'\u2191 ':'\u2193 ')+Math.abs(todayDelta))),
-React.createElement('div',{style:{color:offDays>=1?'#b3261a':'#6b5836',fontSize:11,letterSpacing:1.5,marginTop:4}},statusTxt))),
-React.createElement('div',{style:{position:'relative',height:54,overflow:'hidden',marginTop:-2}},
-React.createElement('div',{style:{position:'absolute',top:0,left:0,right:0,height:30,background:'linear-gradient(180deg,rgba(255,235,200,.15),transparent)',pointerEvents:'none'}}),
-React.createElement('svg',{width:'100%',height:54,style:{position:'absolute',bottom:0,left:0},viewBox:'0 0 330 54',preserveAspectRatio:'xMidYMax slice'},
+React.createElement(CountUp,{value:data.audience,className:'ft',style:{fontSize:72,color:'#241c10',lineHeight:1.05,letterSpacing:1,textShadow:'0 0 8px rgba(45,33,16,.18)'}}),
+todayDelta!==0&&React.createElement('span',{className:'ft',style:{fontSize:19,color:todayDelta>0?'#8a6f3c':'#b3261a'}},(todayDelta>0?'\u2191 ':'\u2193 ')+Math.abs(todayDelta))),
+React.createElement('div',{style:{color:offDays>=1?'#b3261a':'#6b5836',fontSize:10,letterSpacing:1.5,marginTop:4}},statusTxt)),
+React.createElement('div',{style:{position:'absolute',left:0,right:0,bottom:0,height:54,zIndex:2}},
+React.createElement('div',{style:{position:'absolute',top:-26,left:0,right:0,height:30,background:'linear-gradient(180deg,transparent,rgba(255,235,200,.06))',pointerEvents:'none'}}),
+React.createElement('svg',{width:'100%',height:54,style:{position:'absolute',bottom:0,left:0},viewBox:'0 0 430 54',preserveAspectRatio:'xMidYMax slice'},
 backSeats.map(function(s,i){return React.createElement('g',{key:'b'+i,opacity:.8},
 React.createElement('circle',{cx:s.hx,cy:15,r:4.5,fill:'#070707'}),
 React.createElement('path',{d:'M'+(s.hx-4.5)+' 15 A4.5 4.5 0 0 1 '+(s.hx+4.5)+' 15',fill:'none',stroke:'rgba(255,225,180,.16)',strokeWidth:.7}),
