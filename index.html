@@ -8,7 +8,7 @@
 <style>
 :root{--bg:#050505;--red:#FF2D20;--gold:#C9A86A;--green:#30D158;--t100:rgba(255,255,255,1);--t60:rgba(255,255,255,.6);--t35:rgba(255,255,255,.35);--line:rgba(255,255,255,.07)}
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:#050505;background-image:radial-gradient(ellipse 120% 65% at 50% -8%,rgba(110,28,22,.13),transparent 60%),radial-gradient(ellipse 75% 38% at 50% 26%,rgba(140,180,255,.045),transparent 65%);background-attachment:fixed;color:#fff;font-family:'Noto Sans TC',sans-serif;font-weight:300;overflow-x:hidden;-webkit-tap-highlight-color:transparent}
+body{background:#050505;background-image:radial-gradient(ellipse 120% 65% at 50% -8%,rgba(110,28,22,.13),transparent 60%),radial-gradient(ellipse 75% 38% at 50% 26%,rgba(255,230,190,.05),transparent 65%);background-attachment:fixed;color:#fff;font-family:'Noto Sans TC',sans-serif;font-weight:300;overflow-x:hidden;-webkit-tap-highlight-color:transparent}
 .ft{font-family:'Bebas Neue',sans-serif}
 button{font-family:'Noto Sans TC',sans-serif;transition:background .18s ease-out,color .18s ease-out,border-color .18s ease-out,opacity .18s ease-out}
 input[type="date"]{color-scheme:dark}input[type="number"]{-moz-appearance:textfield}input[type="number"]::-webkit-inner-spin-button,input[type="number"]::-webkit-outer-spin-button{-webkit-appearance:none}select{-webkit-appearance:none;appearance:none}
@@ -22,8 +22,9 @@ input[type="date"]{color-scheme:dark}input[type="number"]{-moz-appearance:textfi
 @keyframes floatUp{0%{opacity:0;transform:translateY(6px)}25%{opacity:1}100%{opacity:0;transform:translateY(-14px)}}.float-up{animation:floatUp 1.8s ease-out forwards}
 .screen-wrap{position:relative}
 .screen-inner{position:relative;overflow:hidden}
-.screen-inner::after{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(255,255,255,.01) 2px,rgba(255,255,255,.01) 4px);pointer-events:none}
-.screen-glow{box-shadow:0 0 16px rgba(140,180,255,.18),0 0 70px rgba(140,180,255,.10),0 34px 130px -14px rgba(140,180,255,.16)}
+.screen-lit{background:radial-gradient(ellipse 130% 95% at 50% 28%,#f4ecdc 0%,#eadfc8 42%,#d6c9ad 78%,#bdaf92 100%)}
+.screen-lit::after{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:radial-gradient(ellipse 105% 105% at 50% 38%,transparent 52%,rgba(70,50,25,.20) 100%);pointer-events:none}
+.screen-glow{box-shadow:0 0 18px rgba(255,240,210,.22),0 0 80px rgba(255,235,200,.16),0 40px 150px -12px rgba(255,232,195,.22)}
 @keyframes partL{0%,20%{transform:translateX(0)}100%{transform:translateX(-101%)}}@keyframes partR{0%,20%{transform:translateX(0)}100%{transform:translateX(101%)}}.curtain-l{animation:partL 1.9s cubic-bezier(.7,0,.3,1) forwards}.curtain-r{animation:partR 1.9s cubic-bezier(.7,0,.3,1) forwards}
 </style>
 </head>
@@ -165,7 +166,7 @@ React.createElement('stop',{offset:'.72',stopColor:'#6b120f'}),
 React.createElement('stop',{offset:'1',stopColor:'#330806'}))),
 React.createElement('g',{transform:mirror?'translate(26,0) scale(-1,1)':undefined},
 React.createElement('path',{d:'M0 0 H24 C19 18 25 36 20 54 C16 72 25 90 20 108 C16 126 24 144 20 162 C17 178 26 192 25 200 H0 Z',fill:'url(#'+id+')'}),
-React.createElement('path',{d:edge,fill:'none',stroke:'rgba(150,190,255,.22)',strokeWidth:1}),
+React.createElement('path',{d:edge,fill:'none',stroke:'rgba(255,225,175,.30)',strokeWidth:1}),
 React.createElement('rect',{x:0,y:0,width:5,height:200,fill:'rgba(0,0,0,.4)'})))}
 function IntroPanel({side}){
 var id='ip'+side;
@@ -414,47 +415,49 @@ var bottomRow=catData.slice(topCount);
 var backSeats=Array.from({length:11},function(_,i){return{x:2+i*30,hx:2+i*30+13+((i%3)-1)*2}});
 var frontSeats=Array.from({length:9},function(_,i){return{x:-4+i*38,hx:-4+i*38+17+((i*2)%3-1)*2.5}});
 return React.createElement('div',{style:{padding:'0 16px',minHeight:'calc(100vh - 70px)',display:'flex',flexDirection:'column'}},
-React.createElement('div',{className:'screen-wrap',style:{position:'relative',marginTop:26}},
+React.createElement('div',{style:{display:'flex',justifyContent:'space-between',padding:'0 36px',marginTop:8,height:18}},
+[0,1,2,3,4].map(function(i){return React.createElement('div',{key:i,style:{width:16,height:18,backgroundImage:'radial-gradient(circle at 50% 3px,#ffe3b2 1.5px,rgba(255,195,115,.4) 4px,transparent 7px),linear-gradient(180deg,rgba(255,210,150,.13),transparent 85%)'}})})),
+React.createElement('div',{style:{display:'flex',alignItems:'center',margin:'0 2px 10px'}},
+React.createElement('div',{style:{flex:1,display:'flex',alignItems:'center',gap:6}},
+React.createElement('span',{className:airedToday?'onair-dot':'',style:{width:7,height:7,borderRadius:4,background:airedToday?'#FF2D20':'rgba(255,255,255,.18)',boxShadow:airedToday?'0 0 8px rgba(255,45,32,.8)':'none'}}),
+React.createElement('span',{style:{fontSize:9,letterSpacing:2.5,color:airedToday?'#FF2D20':'var(--t35)'}},airedToday?'ON AIR':'OFF AIR')),
+React.createElement('div',{style:{textAlign:'center'}},
+React.createElement('h1',{className:'ft',style:{fontSize:26,color:'#FF2D20',letterSpacing:3,margin:0,textShadow:'0 0 16px rgba(255,45,32,.35)'}},"YOU'RE ON"),
+React.createElement('p',{className:'tag',style:{marginTop:1}},'\u6578\u5B57\u4E0D\u6703\u8AAA\u8B0A')),
+React.createElement('div',{style:{flex:1,textAlign:'right'}},
+React.createElement('span',{className:'ft',style:{fontSize:15,color:'var(--t60)',letterSpacing:1}},'EP.'+(epN+(airedToday?0:1))))),
+React.createElement('div',{className:'screen-wrap',style:{position:'relative',marginTop:14}},
 React.createElement(Valance,null),
 React.createElement(SideDrape,{side:'l'}),
 React.createElement(SideDrape,{side:'r'}),
-React.createElement('div',{className:'screen-inner screen-glow',style:{background:'#0a0e14',borderRadius:4,padding:'14px 22px 14px',position:'relative'}},
-React.createElement('div',{style:{position:'absolute',top:0,left:0,right:0,bottom:0,background:'radial-gradient(ellipse 80% 55% at 50% 38%,rgba(140,180,255,.05),transparent 70%)',pointerEvents:'none'}}),
-React.createElement('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}},
-React.createElement('div',{style:{display:'flex',alignItems:'center',gap:6}},
-React.createElement('span',{className:airedToday?'onair-dot':'',style:{width:7,height:7,borderRadius:4,background:airedToday?'#FF2D20':'rgba(255,255,255,.18)',boxShadow:airedToday?'0 0 8px rgba(255,45,32,.8)':'none'}}),
-React.createElement('span',{style:{fontSize:9,letterSpacing:2.5,color:airedToday?'#FF2D20':'var(--t35)'}},airedToday?'ON AIR':'OFF AIR')),
-React.createElement('span',{className:'ft',style:{fontSize:15,color:'var(--t60)',letterSpacing:1}},'EP.'+(epN+(airedToday?0:1)))),
-React.createElement('div',{style:{textAlign:'center',marginBottom:4}},
-React.createElement('h1',{className:'ft',style:{fontSize:27,color:'#FF2D20',letterSpacing:3,margin:0}},"YOU'RE ON"),
-React.createElement('p',{className:'tag',style:{marginTop:2}},'\u6578\u5B57\u4E0D\u6703\u8AAA\u8B0A')),
-React.createElement('div',{className:'spot',style:{textAlign:'center',margin:'14px 0 8px'}},
-React.createElement('div',{className:'tag'},'\u76EE\u524D\u6536\u770B\u4EBA\u6578'),
+React.createElement('div',{className:'screen-inner screen-lit screen-glow',style:{borderRadius:3,padding:'30px 22px 26px',position:'relative'}},
+React.createElement('div',{style:{textAlign:'center'}},
+React.createElement('div',{style:{fontSize:9,letterSpacing:3,color:'rgba(45,33,16,.55)'}},'\u76EE\u524D\u6536\u770B\u4EBA\u6578'),
 React.createElement('div',{style:{display:'flex',alignItems:'baseline',justifyContent:'center',gap:10}},
-React.createElement(CountUp,{value:data.audience,className:'ft',style:{fontSize:76,color:'#fff',lineHeight:1.05,letterSpacing:1}}),
-todayDelta!==0&&React.createElement('span',{className:'ft',style:{fontSize:20,color:todayDelta>0?'#C9A86A':'#FF2D20'}},(todayDelta>0?'\u2191 ':'\u2193 ')+Math.abs(todayDelta))),
-React.createElement('div',{style:{color:offDays>=1?'#FF2D20':'#C9A86A',fontSize:11,letterSpacing:1.5,marginTop:3}},statusTxt)),
-React.createElement('div',{style:{display:'flex',justifyContent:'space-around',margin:'12px 0 10px'}},
-screenItems.map(function(item,i){return React.createElement('div',{key:i,style:{textAlign:'center',flex:1}},
-React.createElement('div',{className:'tag'},item[0]),
-React.createElement('div',{className:'ft',style:{fontSize:34,color:pctC(item[1]),lineHeight:1,margin:'3px 0 2px'}},item[1]+'%'),
-React.createElement('div',{style:{color:'var(--t35)',fontSize:10}},Math.round(item[2]*10)/10+'h'))})),
-React.createElement('div',{style:{display:'flex',justifyContent:'center',gap:16,marginTop:4}},
-React.createElement('span',{style:{color:'var(--t35)',fontSize:10,letterSpacing:1}},'\u9031'+weekDayNames[dow-1]+' '+dow+'/7'),
-React.createElement('span',{style:{color:'var(--t35)',fontSize:10,letterSpacing:1}},dom+'/'+dim_+'\u65E5'))),
+React.createElement(CountUp,{value:data.audience,className:'ft',style:{fontSize:78,color:'#241c10',lineHeight:1.05,letterSpacing:1,textShadow:'0 0 8px rgba(45,33,16,.18)'}}),
+todayDelta!==0&&React.createElement('span',{className:'ft',style:{fontSize:20,color:todayDelta>0?'#8a6f3c':'#b3261a'}},(todayDelta>0?'\u2191 ':'\u2193 ')+Math.abs(todayDelta))),
+React.createElement('div',{style:{color:offDays>=1?'#b3261a':'#6b5836',fontSize:11,letterSpacing:1.5,marginTop:4}},statusTxt))),
 React.createElement('div',{style:{position:'relative',height:54,overflow:'hidden',marginTop:-2}},
-React.createElement('div',{style:{position:'absolute',top:0,left:0,right:0,height:30,background:'linear-gradient(180deg,rgba(140,180,255,.13),transparent)',pointerEvents:'none'}}),
+React.createElement('div',{style:{position:'absolute',top:0,left:0,right:0,height:30,background:'linear-gradient(180deg,rgba(255,235,200,.15),transparent)',pointerEvents:'none'}}),
 React.createElement('svg',{width:'100%',height:54,style:{position:'absolute',bottom:0,left:0},viewBox:'0 0 330 54',preserveAspectRatio:'xMidYMax slice'},
 backSeats.map(function(s,i){return React.createElement('g',{key:'b'+i,opacity:.8},
 React.createElement('circle',{cx:s.hx,cy:15,r:4.5,fill:'#070707'}),
-React.createElement('path',{d:'M'+(s.hx-4.5)+' 15 A4.5 4.5 0 0 1 '+(s.hx+4.5)+' 15',fill:'none',stroke:'rgba(160,195,235,.14)',strokeWidth:.7}),
+React.createElement('path',{d:'M'+(s.hx-4.5)+' 15 A4.5 4.5 0 0 1 '+(s.hx+4.5)+' 15',fill:'none',stroke:'rgba(255,225,180,.16)',strokeWidth:.7}),
 React.createElement('rect',{x:s.x,y:19,width:26,height:16,rx:3,fill:'#060606'}),
-React.createElement('rect',{x:s.x,y:19,width:26,height:1.2,rx:.6,fill:'rgba(140,180,255,.07)'}))}),
+React.createElement('rect',{x:s.x,y:19,width:26,height:1.2,rx:.6,fill:'rgba(255,220,170,.08)'}))}),
 frontSeats.map(function(s,i){return React.createElement('g',{key:'f'+i},
 React.createElement('circle',{cx:s.hx,cy:30,r:6,fill:'#050505'}),
-React.createElement('path',{d:'M'+(s.hx-6)+' 30 A6 6 0 0 1 '+(s.hx+6)+' 30',fill:'none',stroke:'rgba(180,215,255,.30)',strokeWidth:1}),
+React.createElement('path',{d:'M'+(s.hx-6)+' 30 A6 6 0 0 1 '+(s.hx+6)+' 30',fill:'none',stroke:'rgba(255,228,185,.34)',strokeWidth:1}),
 React.createElement('rect',{x:s.x,y:36,width:34,height:20,rx:4,fill:'#040404'}),
-React.createElement('rect',{x:s.x,y:36,width:34,height:1.6,rx:.8,fill:'rgba(150,190,255,.12)'}))})))),
+React.createElement('rect',{x:s.x,y:36,width:34,height:1.6,rx:.8,fill:'rgba(255,222,175,.14)'}))})))),
+React.createElement('div',{style:{display:'flex',justifyContent:'space-around',margin:'14px 0 2px'}},
+screenItems.map(function(item,i){return React.createElement('div',{key:i,style:{textAlign:'center',flex:1}},
+React.createElement('div',{className:'tag'},item[0]),
+React.createElement('div',{className:'ft',style:{fontSize:32,color:pctC(item[1]),lineHeight:1,margin:'3px 0 2px'}},item[1]+'%'),
+React.createElement('div',{style:{color:'var(--t35)',fontSize:10}},Math.round(item[2]*10)/10+'h'))})),
+React.createElement('div',{style:{display:'flex',justifyContent:'center',gap:16,margin:'4px 0 2px'}},
+React.createElement('span',{style:{color:'var(--t35)',fontSize:10,letterSpacing:1}},'週'+weekDayNames[dow-1]+' '+dow+'/7'),
+React.createElement('span',{style:{color:'var(--t35)',fontSize:10,letterSpacing:1}},dom+'/'+dim_+'日')),
 React.createElement('div',{style:{display:'flex',justifyContent:'center',gap:16,margin:'10px 0 4px'}},
 legend.map(function(item,i){return React.createElement('div',{key:i,style:{display:'flex',alignItems:'center',gap:4}},
 React.createElement('div',{style:{width:8,height:8,borderRadius:4,background:item[0]}}),
