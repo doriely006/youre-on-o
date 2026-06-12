@@ -143,19 +143,19 @@ eye:'M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12zM12 9.5a2.5 2.5 0 110 5 2.5
 x:'M6 6l12 12M18 6L6 18'};
 function Icon({name,size,color,style}){return React.createElement('svg',{width:size||24,height:size||24,viewBox:'0 0 24 24',fill:'none',stroke:color||'currentColor',strokeWidth:1.5,strokeLinecap:'round',strokeLinejoin:'round',style:style},React.createElement('path',{d:IconPaths[name]}))}
 function Auditorium(){
-var lamps=[[16,108,2.6],[42,146,2.1],[64,178,1.7]];
+var lamps=[[16,116,2.6],[42,156,2.1],[64,190,1.7]];
 var ceil=[50,105,160,215,270,325,380];
-var wall='M0 0 L84 56 L84 268 L0 332 Z';
+var wall='M0 0 L84 60 L84 286 L0 354 Z';
 var sideG=function(key,mirror){
 return React.createElement('g',{key:key,transform:mirror?'translate(430,0) scale(-1,1)':undefined},
 React.createElement('path',{d:wall,fill:'url(#cfold)'}),
 React.createElement('path',{d:wall,fill:'url(#cdepth)'}),
-React.createElement('line',{x1:84,y1:56,x2:84,y2:268,stroke:'rgba(255,228,180,.26)',strokeWidth:1.2}),
+React.createElement('line',{x1:84,y1:60,x2:84,y2:286,stroke:'rgba(255,228,180,.26)',strokeWidth:1.2}),
 lamps.map(function(l,i){return React.createElement('g',{key:i},
 React.createElement('circle',{cx:l[0],cy:l[1],r:l[2]*6,fill:'url(#lglow)',opacity:.5}),
 React.createElement('circle',{cx:l[0],cy:l[1],r:l[2],fill:'#ffdfa8'}),
 React.createElement('ellipse',{cx:l[0],cy:l[1]+l[2]*8,rx:l[2]*2.4,ry:l[2]*9,fill:'rgba(255,205,135,.10)'}))}));};
-return React.createElement('svg',{viewBox:'0 0 430 332',preserveAspectRatio:'none',style:{position:'absolute',top:0,left:0,width:'100%',height:'100%'}},
+return React.createElement('svg',{viewBox:'0 0 430 354',preserveAspectRatio:'none',style:{position:'absolute',top:0,left:0,width:'100%',height:'100%'}},
 React.createElement('defs',null,
 React.createElement('linearGradient',{id:'cfold',x1:0,y1:0,x2:14,y2:0,gradientUnits:'userSpaceOnUse',spreadMethod:'repeat'},
 React.createElement('stop',{offset:'0',stopColor:'#260605'}),
@@ -177,7 +177,7 @@ React.createElement('circle',{cx:x,cy:8,r:1.8,fill:'#ffe3b2'}),
 React.createElement('ellipse',{cx:x,cy:17,rx:2.4,ry:8,fill:'rgba(255,210,150,.07)'}))}),
 sideG('wl',false),
 sideG('wr',true),
-React.createElement('ellipse',{cx:215,cy:296,rx:175,ry:26,fill:'rgba(255,228,185,.05)'}))}
+React.createElement('ellipse',{cx:215,cy:312,rx:175,ry:26,fill:'rgba(255,228,185,.05)'}))}
 function IntroPanel({side}){
 var id='ip'+side;
 return React.createElement('svg',{viewBox:'0 0 215 430',preserveAspectRatio:'none',style:{width:'100%',height:'100%',display:'block'}},
