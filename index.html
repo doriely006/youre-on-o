@@ -17,9 +17,13 @@
 <script type="text/babel">
 const{useState,useEffect,useMemo,useCallback}=React;
 const KEY='reality_v5';
-const load=()=>{try{return JSON.parse(localStorage.getItem(KEY))}catch{return null}};
+const load=()=>{try{const d=JSON.parse(localStorage.getItem(KEY));if(!d)return null;
+if(!d.mode)d.mode='simple';if(!d.repayMode)d.repayMode='week';if(!d.pendingGoals)d.pendingGoals=[];
+if(d.goalEdits==null)d.goalEdits=0;if(d.periodEdits==null)d.periodEdits=0;if(!d.lastSettledMonth)d.lastSettledMonth=null;
+if(d.categories)d.categories.forEach(c=>{if(c.monthlyAdjust==null)c.monthlyAdjust=0});
+return d}catch{return null}};
 const save=d=>{try{localStorage.setItem(KEY,JSON.stringify(d))}catch{}};
-const init=()=>({categories:[],records:[],setupDone:false,lastSettledWeek:null,gaps:{}});
+const init=()=>({categories:[],records:[],setupDone:false,lastSettledWeek:null,gaps:{},mode:'simple',repayMode:'week',pendingGoals:[],goalEdits:0,periodEdits:0,lastSettledMonth:null});
 const toS=d=>d.toISOString().slice(0,10);
 const todayS=()=>toS(new Date());
 const getWeekId=s=>{const d=new Date(s),day=d.getDay()||7,m=new Date(d);m.setDate(d.getDate()-day+1);return toS(m)};
@@ -57,8 +61,32 @@ return data;
 const getEffectiveWeeklyGoal=(cat,gaps)=>{
 const base=cat.weeklyGoalHours;
 const adj=cat.weeklyAdjust||0;
+const madj=cat.monthlyAdjust||0;
 const gap=(gaps&&gaps[cat.id])||0;
-return Math.round((base+adj+gap)*10)/10;
+return Math.max(0,Math.round((base+adj+madj+gap)*10)/10);
+};
+const settleAll=(data)=>{
+const now=Date.now();
+if(!data.pendingGoals)data.pendingGoals=[];
+const matured=data.pendingGoals.filter(p=>p.effectiveTs<=now);
+matured.forEach(p=>{const c=data.categories.find(x=>x.id===p.catId);if(c)c.weeklyGoalHours=p.newHours});
+data.pendingGoals=data.pendingGoals.filter(p=>p.effectiveTs>now);
+const monthId=todayS().slice(0,7);
+if(data.lastSettledMonth!==monthId){if(data.lastSettledMonth)data.categories.forEach(c=>{c.monthlyAdjust=0});data.lastSettledMonth=monthId}
+return settleWeekGaps(data);
+};
+const gapInfo=(cat,recs,gaps,repayMode)=>{
+const t=todayS(),wd=weekDates(t),dow=dayOfWeek(t);
+const eff=getEffectiveWeeklyGoal(cat,gaps);
+const daily=eff/7;
+const past=wd.slice(0,dow-1);
+const actualPast=recs.filter(r=>r.categoryId===cat.id&&past.includes(r.date)).reduce((s,r)=>s+r.hours,0);
+const gap=Math.max(0,Math.round((daily*(dow-1)-actualPast)*10)/10);
+let per;
+if(repayMode==='nextday')per=gap;
+else if(repayMode==='7days')per=Math.round(gap/7*10)/10;
+else per=Math.round(gap/(8-dow)*10)/10;
+return{gap:gap,perDay:per,todayTarget:Math.round((daily+per)*10)/10};
 };
 const pttPool=[
 ['\u2192|{cat}{pct}%\uFF0C\u9019\u5E33\u865F\u662F\u6BAD\u5C4D\u5E33\u865F\u55CE','\u5653|\u672C\u9031{cat}{pct}%\uFF0C\u6211\u66FF\u4F60\u7684\u76EE\u6A19\u611F\u5230\u4E0D\u6368','\u63A8|{pct}%\uFF0C\u6709\u5FC3\u4E86\uFF0C\u5C31\u662F\u5FC3\u592A\u5C0F','\u2192|{cat}{pct}%\uFF0C\u4F60\u672C\u9031\u6709\u51FA\u73FE\uFF0C\u9019\u662F\u512A\u9EDE','\u5653|{cat}\u53EA\u6709{pct}%\uFF0C\u4F60\u7684\u52AA\u529B\u5F88\u542B\u84C4','\u63A8|\u672C\u9031{cat}{hrs}\u5C0F\u6642\uFF1F\u6211\u5348\u7761\u90FD\u6BD4\u9019\u9577','\u2192|\u672C\u9031{cat}{pct}%\uFF0C\u89C0\u773E\u770B\u5F97\u5F88\u8457\u6025\u4F60\u5F88\u6DE1\u5B9A'],
@@ -87,7 +115,8 @@ const finPool=[
 ];
 const pttUsers=['\u5634\u780D\u738B','\u53AD\u4E16\u5DE5\u7A0B\u5E2B','\u8DEF\u904E\u9109\u6C11','\u9178\u6C11\u4EE3\u8868','\u6DF1\u591C\u89C0\u773E','\u9375\u76E4\u5206\u6790\u5E2B','\u4F5B\u7CFB\u9752\u5E74','\u8A8D\u771F\u9B54\u4EBA'];
 const dimList=['今日','本週','本月','整體'];
-const genComment=(cats,recs,gaps)=>{
+const editRoasts=['👁 順帶一提，你的終極目標已經改過 {n} 次了','👁 目標修改第 {n} 次，數字不會說謊，但目標會','👁 觀眾備註：此人目標已調整 {n} 次，僅供參考'];
+const genComment=(cats,recs,gaps,goalEdits)=>{
 if(!cats||cats.length===0)return null;
 const t=todayS(),wd=weekDates(t),md=monthDates(t),dow=dayOfWeek(t);
 const dim=pick(dimList);
@@ -106,10 +135,11 @@ const pct=wv.pct,ti=tierN(pct);
 const v={dim:dim,cat:worst.name,pct:pct,hrs:Math.round(wv.hrs*10)/10,gap:Math.max(0,Math.round((wv.goal-wv.hrs)*10)/10)};
 const T=s=>fill(s,v).split('本週').join(dim);
 const progressNote=dim==='本週'?getProgressNote(pct,dow):'📺 評論維度：'+dim;
+const editNote=(goalEdits>0&&Math.random()<0.35)?pick(editRoasts).split('{n}').join(goalEdits):null;
 const rand=Math.random();
-if(rand<0.5){const raw=pick(pttPool[ti]);const idx=raw.indexOf('|');return{type:'ptt',tp:raw.slice(0,idx),text:T(raw.slice(idx+1)),user:pick(pttUsers),progressNote:progressNote}}
-else if(rand<0.9){const ch=pick(lineChars);const msgs=pick(linePool[ti][ch.s]);return{type:'line',char:ch,msgs:msgs.map(T),time:(8+Math.floor(Math.random()*14))+':'+String(Math.floor(Math.random()*60)).padStart(2,'0'),progressNote:progressNote}}
-else{const raw=finPool[ti];const idx=raw.indexOf('|');return{type:'fin',headline:T(raw.slice(0,idx)),body:T(raw.slice(idx+1)),progressNote:progressNote}}
+if(rand<0.5){const raw=pick(pttPool[ti]);const idx=raw.indexOf('|');return{type:'ptt',tp:raw.slice(0,idx),text:T(raw.slice(idx+1)),user:pick(pttUsers),progressNote:progressNote,editNote:editNote}}
+else if(rand<0.9){const ch=pick(lineChars);const msgs=pick(linePool[ti][ch.s]);return{type:'line',char:ch,msgs:msgs.map(T),time:(8+Math.floor(Math.random()*14))+':'+String(Math.floor(Math.random()*60)).padStart(2,'0'),progressNote:progressNote,editNote:editNote}}
+else{const raw=finPool[ti];const idx=raw.indexOf('|');return{type:'fin',headline:T(raw.slice(0,idx)),body:T(raw.slice(idx+1)),progressNote:progressNote,editNote:editNote}}
 };function Ring({size,tPct,wPct,mPct,label,onClick,selected}){
 var r1=size/2-4,r2=size/2-12,r3=size/2-20,cx=size/2,cy=size/2;
 var arc=function(r,pct){var p=Math.min(pct,100)/100;if(p<=0)return'';if(p>=1)return'M'+cx+','+(cy-r)+' A'+r+','+r+' 0 1,1 '+(cx-0.01)+','+(cy-r)+' A'+r+','+r+' 0 1,1 '+cx+','+(cy-r);var a=p*2*Math.PI;var x=cx+r*Math.sin(a);var y=cy-r*Math.cos(a);var lg=p>0.5?1:0;return'M'+cx+','+(cy-r)+' A'+r+','+r+' 0 '+lg+',1 '+x+','+y};
@@ -150,6 +180,7 @@ React.createElement('span',{style:{fontSize:24}},cm.char.avatar),
 React.createElement('span',{style:{color:'#fff',fontSize:15,fontWeight:600}},cm.char.name)),
 React.createElement('div',{style:{padding:'14px 14px 14px 10px'}},bubbles,userReply));}
 var noteEl=cm.progressNote?React.createElement('p',{style:{textAlign:'center',color:'#888',fontSize:12,marginTop:12,padding:'6px 12px',background:'rgba(255,255,255,.05)',borderRadius:8}},cm.progressNote):null;
+var editEl=cm.editNote?React.createElement('p',{style:{textAlign:'center',color:'#FF9F0A',fontSize:11,marginTop:6,padding:'5px 12px',background:'rgba(255,159,10,.07)',borderRadius:8}},cm.editNote):null;
 return React.createElement('div',{onClick:onClose,style:{position:'fixed',inset:0,background:'rgba(0,0,0,.85)',zIndex:100,display:'flex',alignItems:'center',justifyContent:'center',padding:20}},
 React.createElement('div',{onClick:function(e){e.stopPropagation()},style:{width:'100%',maxWidth:380},className:'fade-in'},
 cm.type==='ptt'&&React.createElement('div',{style:{background:'#0a1628',borderRadius:8,padding:16,fontFamily:'monospace',border:'1px solid #1a3050'}},
@@ -171,14 +202,15 @@ React.createElement('div',{style:{fontSize:11,letterSpacing:6,color:'#666'}},'LI
 React.createElement('h2',{style:{fontSize:17,color:'#111',lineHeight:1.4,margin:'0 0 12px',fontWeight:700}},cm.headline),
 React.createElement('p',{style:{fontSize:13,color:'#444',lineHeight:1.7,margin:0}},cm.body)),
 noteEl,
+editEl,
 React.createElement('p',{style:{textAlign:'center',color:'#555',fontSize:12,marginTop:8}},'\u9EDE\u4EFB\u610F\u8655\u95DC\u9589')))}
 function App(){
-var[data,setData]=useState(function(){var d=load()||init();d=settleWeekGaps(d);if(!d.gaps)d.gaps={};if(!d.lastSettledWeek)d.lastSettledWeek=getWeekId(todayS());save(d);return d});
+var[data,setData]=useState(function(){var d=load()||init();d=settleAll(d);if(!d.gaps)d.gaps={};if(!d.lastSettledWeek)d.lastSettledWeek=getWeekId(todayS());save(d);return d});
 var[page,setPage]=useState('dashboard');
 var[comment,setComment]=useState(null);
 useEffect(function(){save(data)},[data]);
-var up=useCallback(function(fn){setData(function(p){var n={...p,categories:p.categories.map(function(c){return{...c}}),records:[...p.records],gaps:{...p.gaps}};fn(n);return n})},[]);
-var trigCmt=useCallback(function(newRecs){if(data.categories.length===0)return;var c=genComment(data.categories,data.records.concat(newRecs||[]),data.gaps);if(c)setComment(c)},[data]);
+var up=useCallback(function(fn){setData(function(p){var n={...p,categories:p.categories.map(function(c){return{...c}}),records:[...p.records],gaps:{...p.gaps},pendingGoals:(p.pendingGoals||[]).map(function(x){return{...x}})};fn(n);return settleAll(n)})},[]);
+var trigCmt=useCallback(function(newRecs){if(data.categories.length===0)return;var c=genComment(data.categories,data.records.concat(newRecs||[]),data.gaps,data.goalEdits||0);if(c)setComment(c)},[data]);
 var[intro,setIntro]=useState(function(){return!!data.setupDone});
 useEffect(function(){var id=setTimeout(function(){setIntro(false)},2300);return function(){clearTimeout(id)}},[]);
 if(!data.setupDone)return React.createElement(Setup,{up:up});
@@ -223,7 +255,7 @@ React.createElement('span',{className:'ft',style:{fontSize:24}},tot+'h')),
 cats.map(function(c,i){return React.createElement('div',{key:i,style:{display:'flex',justifyContent:'space-between',padding:'4px 0'}},
 React.createElement('span',{style:{color:'#888',fontSize:13}},c.name),
 React.createElement('span',{className:'ft',style:{fontSize:16,color:'#FF9F0A'}},(tot>0?Math.round(c.h/tot*100):0)+'%'))})),
-React.createElement('button',{onClick:function(){var total=cats.reduce(function(s,c){return s+c.h},0);if(cats.length===0){alert('\u8ACB\u81F3\u5C11\u65B0\u589E\u4E00\u500B category');return}if(total===0){alert('\u8ACB\u81F3\u5C11\u8A2D\u5B9A\u4E00\u500B category \u7684\u76EE\u6A19\u6642\u6578');return}up(function(d){d.categories=cats.map(function(c,i){return{id:'c'+Date.now()+'_'+i,name:c.name,weeklyGoalHours:c.h,weeklyAdjust:0}});d.setupDone=true;d.gaps={};d.lastSettledWeek=getWeekId(todayS())})},disabled:!cats.length,style:{width:'100%',padding:16,background:cats.length&&tot>0?'#FF2D20':'#555',border:'none',borderRadius:12,color:'#fff',fontSize:18,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:2,cursor:cats.length&&tot>0?'pointer':'default'}},'START TRACKING'))}function Dash({data}){
+React.createElement('button',{onClick:function(){var total=cats.reduce(function(s,c){return s+c.h},0);if(cats.length===0){alert('\u8ACB\u81F3\u5C11\u65B0\u589E\u4E00\u500B category');return}if(total===0){alert('\u8ACB\u81F3\u5C11\u8A2D\u5B9A\u4E00\u500B category \u7684\u76EE\u6A19\u6642\u6578');return}up(function(d){d.categories=cats.map(function(c,i){return{id:'c'+Date.now()+'_'+i,name:c.name,weeklyGoalHours:c.h,weeklyAdjust:0,monthlyAdjust:0}});d.setupDone=true;d.gaps={};d.lastSettledWeek=getWeekId(todayS())})},disabled:!cats.length,style:{width:'100%',padding:16,background:cats.length&&tot>0?'#FF2D20':'#555',border:'none',borderRadius:12,color:'#fff',fontSize:18,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:2,cursor:cats.length&&tot>0?'pointer':'default'}},'START TRACKING'))}function Dash({data}){
 var t=todayS(),wd=weekDates(t),md=monthDates(t);
 var dow=dayOfWeek(t),dom=dayOfMonth(t),dim_=daysInMonth(t);
 var hrs=function(cid,ds){return data.records.filter(function(r){return r.categoryId===cid&&ds.includes(r.date)}).reduce(function(s,r){return s+r.hours},0)};
@@ -234,7 +266,7 @@ var catData=data.categories.map(function(cat){
 var tHrs=hrs(cat.id,[t]),wHrs=hrs(cat.id,wd),mHrs=hrs(cat.id,md);
 var effGoal=getEffectiveWeeklyGoal(cat,data.gaps);
 var tG=effGoal/7,wG=effGoal,mG=effGoal/7*dim_;
-return{cat:cat,tPct:tG>0?Math.round(tHrs/tG*100):0,wPct:wG>0?Math.round(wHrs/wG*100):0,mPct:mG>0?Math.round(mHrs/mG*100):0,tHrs:tHrs,wHrs:wHrs,mHrs:mHrs,tG:tG,wG:wG,mG:mG,effGoal:effGoal,gap:(data.gaps&&data.gaps[cat.id])||0,adj:cat.weeklyAdjust||0}});
+return{cat:cat,tPct:tG>0?Math.round(tHrs/tG*100):0,wPct:wG>0?Math.round(wHrs/wG*100):0,mPct:mG>0?Math.round(mHrs/mG*100):0,tHrs:tHrs,wHrs:wHrs,mHrs:mHrs,tG:tG,wG:wG,mG:mG,effGoal:effGoal,gap:(data.gaps&&data.gaps[cat.id])||0,adj:cat.weeklyAdjust||0,madj:cat.monthlyAdjust||0,gi:gapInfo(cat,data.records,data.gaps,data.repayMode||'week')}});
 var avg=function(a){return a.length?Math.round(a.reduce(function(s,x){return s+x},0)/a.length):0};
 var tP=avg(catData.map(function(d){return d.tPct}));
 var wP=avg(catData.map(function(d){return d.wPct}));
@@ -306,6 +338,16 @@ React.createElement('span',{className:'ft',style:{fontSize:13,color:'#FF2D20'}},
 selData.adj!==0&&React.createElement('div',{style:{display:'flex',justifyContent:'space-between',padding:'4px 8px',marginBottom:6,background:'rgba(255,159,10,.08)',borderRadius:6,border:'1px solid rgba(255,159,10,.15)'}},
 React.createElement('span',{style:{fontSize:11,color:'#FF9F0A'}},'\u672C\u9031\u8ABF\u6574'),
 React.createElement('span',{className:'ft',style:{fontSize:13,color:'#FF9F0A'}},(selData.adj>0?'+':'')+selData.adj+'h')),
+selData.madj!==0&&React.createElement('div',{style:{display:'flex',justifyContent:'space-between',padding:'4px 8px',marginBottom:6,background:'rgba(255,159,10,.08)',borderRadius:6,border:'1px solid rgba(255,159,10,.15)'}},
+React.createElement('span',{style:{fontSize:11,color:'#FF9F0A'}},'\u672C\u6708\u8ABF\u6574'),
+React.createElement('span',{className:'ft',style:{fontSize:13,color:'#FF9F0A'}},(selData.madj>0?'+':'')+selData.madj+'h')),
+selData.gi.gap>0&&React.createElement('div',{style:{padding:'6px 8px',marginBottom:6,background:'rgba(255,45,32,.06)',borderRadius:6,border:'1px solid rgba(255,45,32,.12)'}},
+React.createElement('div',{style:{display:'flex',justifyContent:'space-between',marginBottom:2}},
+React.createElement('span',{style:{fontSize:11,color:'#FF2D20'}},'\u672C\u9031\u9032\u5EA6\u7F3A\u53E3'),
+React.createElement('span',{className:'ft',style:{fontSize:13,color:'#FF2D20'}},selData.gi.gap+'h')),
+React.createElement('div',{style:{display:'flex',justifyContent:'space-between'}},
+React.createElement('span',{style:{fontSize:10,color:'#996'}},'\u6BCF\u5929\u9700\u88DC +'+selData.gi.perDay+'h'),
+React.createElement('span',{style:{fontSize:10,color:'#996'}},'\u4ECA\u65E5\u76EE\u6A19 '+selData.gi.todayTarget+'h'))),
 React.createElement('div',{style:{display:'flex',justifyContent:'space-between',padding:'4px 8px',marginBottom:8,background:'rgba(255,255,255,.03)',borderRadius:6}},
 React.createElement('span',{style:{fontSize:11,color:'#888'}},'\u672C\u9031\u5BE6\u969B\u76EE\u6A19'),
 React.createElement('span',{className:'ft',style:{fontSize:13,color:'#fff'}},selData.effGoal+'h')),
@@ -368,33 +410,64 @@ React.createElement('button',{onClick:submit,style:{width:'100%',padding:16,back
 function Settings({data,up}){
 var[nc,setNc]=useState('');
 var[nh,setNh]=useState(5);
+var[drafts,setDrafts]=useState({});
 var twg=data.categories.reduce(function(s,c){return s+c.weeklyGoalHours},0);
+var adv=data.mode==='advanced';
 var bSm={width:32,height:32,background:'#141414',border:'1px solid #222',color:'#fff',borderRadius:8,fontSize:18,cursor:'pointer'};
 var bSmAdj={width:28,height:28,background:'#1a1a1a',border:'1px solid #333',color:'#FF9F0A',borderRadius:6,fontSize:14,cursor:'pointer'};
+var setDraft=function(id,v){setDrafts(function(p){var n={...p};if(v==null)delete n[id];else n[id]=v;return n})};
+var adjRow=function(cat,field,label){
+var val=cat[field]||0;
+return React.createElement('div',{style:{display:'flex',alignItems:'center',gap:8,paddingLeft:4,marginTop:6}},
+React.createElement('span',{style:{fontSize:11,color:'#888',flex:1}},label),
+React.createElement('button',{style:bSmAdj,onClick:function(){up(function(d){var c=d.categories.find(function(x){return x.id===cat.id});if(c){var old=c[field]||0;if(old>-20){if(old===0)d.periodEdits=(d.periodEdits||0)+1;c[field]=Math.round((old-0.5)*10)/10}}})}},'\u2212'),
+React.createElement('span',{className:'ft',style:{fontSize:16,width:44,textAlign:'center',color:val>0?'#30D158':val<0?'#FF9F0A':'#555'}},(val>0?'+':'')+val+'h'),
+React.createElement('button',{style:bSmAdj,onClick:function(){up(function(d){var c=d.categories.find(function(x){return x.id===cat.id});if(c){var old=c[field]||0;if(old<20){if(old===0)d.periodEdits=(d.periodEdits||0)+1;c[field]=Math.round((old+0.5)*10)/10}}})}},'+'))};
 return React.createElement('div',{style:{padding:16}},
 React.createElement('h1',{className:'ft',style:{fontSize:28,letterSpacing:2,margin:'16px 0'}},'SETTINGS'),
-React.createElement('h2',{className:'ft',style:{fontSize:18,color:'#888',letterSpacing:2,margin:'24px 0 12px'}},'WEEKLY GOALS'),
+React.createElement('div',{style:{display:'flex',gap:8,margin:'8px 0 6px'}},
+[['simple','\u7C21\u55AE\u6A21\u5F0F'],['advanced','\u9032\u968E\u6A21\u5F0F']].map(function(m){return React.createElement('button',{key:m[0],onClick:function(){up(function(d){d.mode=m[0]})},style:{flex:1,padding:'10px 0',borderRadius:10,fontSize:13,cursor:'pointer',background:data.mode===m[0]?'#FF2D20':'#141414',border:'1px solid '+(data.mode===m[0]?'#FF2D20':'#222'),color:data.mode===m[0]?'#fff':'#888'}},m[1])})),
+React.createElement('p',{style:{color:'#555',fontSize:10,marginBottom:4}},adv?'\u9032\u968E\uFF1A\u53EF\u5FAE\u8ABF\u672C\u9031/\u672C\u6708\u76EE\u6A19\u3001\u9078\u64C7\u7F3A\u53E3\u9084\u6B3E\u65B9\u5F0F':'\u7C21\u55AE\uFF1A\u53EA\u7BA1\u7D42\u6975\u76EE\u6A19\uFF0C\u7F3A\u53E3\u81EA\u52D5\u6EFE\u5165\u672C\u9031\u5269\u9918\u5929\u6578'),
+(data.goalEdits||0)>0&&React.createElement('p',{style:{color:'#FF9F0A',fontSize:11,marginBottom:2}},'\uD83D\uDC41 \u7D42\u6975\u76EE\u6A19\u5DF2\u4FEE\u6539 '+data.goalEdits+' \u6B21\uFF0C\u89C0\u773E\u90FD\u8A18\u5F97'),
+adv&&(data.periodEdits||0)>0&&React.createElement('p',{style:{color:'#666',fontSize:10,marginBottom:2}},'\u671F\u9593\u76EE\u6A19\u5DF2\u8ABF\u6574 '+data.periodEdits+' \u6B21'),
+React.createElement('h2',{className:'ft',style:{fontSize:18,color:'#888',letterSpacing:2,margin:'20px 0 4px'}},'WEEKLY GOALS'),
+React.createElement('p',{style:{color:'#555',fontSize:10,marginBottom:12}},'\u7D42\u6975\u76EE\u6A19\u4FEE\u6539\u6709 72 \u5C0F\u6642\u51B7\u975C\u671F\uFF0C\u671F\u9593\u53EF\u53D6\u6D88\uFF0C\u6642\u9593\u5230\u81EA\u52D5\u751F\u6548'),
 data.categories.map(function(cat){
+var pend=(data.pendingGoals||[]).find(function(p){return p.catId===cat.id});
+var draft=drafts[cat.id]!=null?drafts[cat.id]:cat.weeklyGoalHours;
+var dirty=draft!==cat.weeklyGoalHours;
 var adj=cat.weeklyAdjust||0;
+var madj=cat.monthlyAdjust||0;
 var gap=(data.gaps&&data.gaps[cat.id])||0;
 var eff=getEffectiveWeeklyGoal(cat,data.gaps);
+var hrsLeft=pend?Math.max(1,Math.ceil((pend.effectiveTs-Date.now())/3600000)):0;
 return React.createElement('div',{key:cat.id,style:{background:'#141414',borderRadius:12,padding:14,marginBottom:8,border:'1px solid #222'}},
-React.createElement('div',{style:{display:'flex',alignItems:'center',gap:10,marginBottom:gap>0||adj!==0?8:0}},
+React.createElement('div',{style:{display:'flex',alignItems:'center',gap:10}},
 React.createElement('span',{style:{flex:1,fontSize:15}},cat.name),
-React.createElement('button',{style:bSm,onClick:function(){up(function(d){var c=d.categories.find(function(x){return x.id===cat.id});if(c)c.weeklyGoalHours=Math.max(1,c.weeklyGoalHours-1)})}},'\u2212'),
-React.createElement('span',{className:'ft',style:{fontSize:22,width:40,textAlign:'center'}},cat.weeklyGoalHours+'h'),
-React.createElement('button',{style:bSm,onClick:function(){up(function(d){var c=d.categories.find(function(x){return x.id===cat.id});if(c)c.weeklyGoalHours++})}},'+'),
+React.createElement('button',{style:bSm,onClick:function(){setDraft(cat.id,Math.max(1,draft-1))}},'\u2212'),
+React.createElement('span',{className:'ft',style:{fontSize:22,width:40,textAlign:'center',color:dirty?'#FF9F0A':'#fff'}},draft+'h'),
+React.createElement('button',{style:bSm,onClick:function(){setDraft(cat.id,draft+1)}},'+'),
 React.createElement('span',{className:'ft',style:{fontSize:14,color:'#FF9F0A',width:36,textAlign:'right'}},(twg>0?Math.round(cat.weeklyGoalHours/twg*100):0)+'%'),
-React.createElement('button',{onClick:function(){if(confirm('\u522A\u9664 '+cat.name+'\uFF1F'))up(function(d){d.categories=d.categories.filter(function(x){return x.id!==cat.id});delete d.gaps[cat.id]})},style:{background:'transparent',border:'none',color:'#FF2D20',fontSize:16,cursor:'pointer'}},'\u00D7')),
-React.createElement('div',{style:{display:'flex',alignItems:'center',gap:8,paddingLeft:4}},
-React.createElement('span',{style:{fontSize:11,color:'#888',flex:1}},'\u672C\u9031\u8ABF\u6574'),
-React.createElement('button',{style:bSmAdj,onClick:function(){up(function(d){var c=d.categories.find(function(x){return x.id===cat.id});if(c){if(!c.weeklyAdjust)c.weeklyAdjust=0;var newAdj=c.weeklyAdjust-0.5;if(c.weeklyGoalHours+newAdj+((d.gaps&&d.gaps[c.id])||0)>=0){c.weeklyAdjust=newAdj}}})}},'\u2212'),
-React.createElement('span',{className:'ft',style:{fontSize:16,width:44,textAlign:'center',color:adj>0?'#30D158':adj<0?'#FF9F0A':'#555'}},(adj>0?'+':'')+adj+'h'),
-React.createElement('button',{style:bSmAdj,onClick:function(){up(function(d){var c=d.categories.find(function(x){return x.id===cat.id});if(c){if(!c.weeklyAdjust)c.weeklyAdjust=0;if(c.weeklyAdjust<20)c.weeklyAdjust+=0.5}})}},'+'),
-gap>0&&React.createElement('span',{style:{fontSize:10,color:'#FF2D20',marginLeft:4}},'\u7F3A\u53E3+'+gap+'h')),
-(gap>0||adj!==0)&&React.createElement('div',{style:{display:'flex',justifyContent:'flex-end',paddingRight:4,marginTop:4}},
+React.createElement('button',{onClick:function(){if(confirm('\u522A\u9664 '+cat.name+'\uFF1F'))up(function(d){d.categories=d.categories.filter(function(x){return x.id!==cat.id});delete d.gaps[cat.id];d.pendingGoals=(d.pendingGoals||[]).filter(function(p){return p.catId!==cat.id})})},style:{background:'transparent',border:'none',color:'#FF2D20',fontSize:16,cursor:'pointer'}},'\u00D7')),
+dirty&&React.createElement('div',{style:{display:'flex',alignItems:'center',gap:8,marginTop:8,padding:'6px 8px',background:'rgba(255,159,10,.07)',borderRadius:8}},
+React.createElement('span',{style:{fontSize:11,color:'#FF9F0A',flex:1}},cat.weeklyGoalHours+'h \u2192 '+draft+'h\uFF0C72 \u5C0F\u6642\u5F8C\u751F\u6548'),
+React.createElement('button',{onClick:function(){var v=draft;up(function(d){d.pendingGoals=(d.pendingGoals||[]).filter(function(p){return p.catId!==cat.id});d.pendingGoals.push({catId:cat.id,newHours:v,effectiveTs:Date.now()+72*3600*1000});d.goalEdits=(d.goalEdits||0)+1});setDraft(cat.id,null)},style:{padding:'4px 10px',background:'#FF2D20',border:'none',borderRadius:6,color:'#fff',fontSize:11,cursor:'pointer'}},'\u6392\u7A0B'),
+React.createElement('button',{onClick:function(){setDraft(cat.id,null)},style:{padding:'4px 10px',background:'transparent',border:'1px solid #333',borderRadius:6,color:'#888',fontSize:11,cursor:'pointer'}},'\u9084\u539F')),
+pend&&React.createElement('div',{style:{display:'flex',alignItems:'center',gap:8,marginTop:8,padding:'6px 8px',background:'rgba(48,209,88,.06)',borderRadius:8}},
+React.createElement('span',{style:{fontSize:11,color:'#30D158',flex:1}},'\u23F3 \u7D04 '+hrsLeft+' \u5C0F\u6642\u5F8C \u2192 '+pend.newHours+'h'),
+React.createElement('button',{onClick:function(){up(function(d){d.pendingGoals=(d.pendingGoals||[]).filter(function(p){return p.catId!==cat.id})})},style:{padding:'4px 10px',background:'transparent',border:'1px solid #333',borderRadius:6,color:'#888',fontSize:11,cursor:'pointer'}},'\u53D6\u6D88')),
+adv&&adjRow(cat,'weeklyAdjust','\u672C\u9031\u8ABF\u6574'),
+adv&&adjRow(cat,'monthlyAdjust','\u672C\u6708\u8ABF\u6574'),
+gap>0&&React.createElement('div',{style:{display:'flex',justifyContent:'flex-end',paddingRight:4,marginTop:6}},
+React.createElement('span',{style:{fontSize:10,color:'#FF2D20'}},'\u4E0A\u9031\u7F3A\u53E3\u7D50\u8F49 +'+gap+'h')),
+(gap>0||adj!==0||madj!==0)&&React.createElement('div',{style:{display:'flex',justifyContent:'flex-end',paddingRight:4,marginTop:4}},
 React.createElement('span',{style:{fontSize:11,color:'#888'}},'\u672C\u9031\u5BE6\u969B\u76EE\u6A19: '),
 React.createElement('span',{className:'ft',style:{fontSize:13,color:'#fff',marginLeft:4}},eff+'h')))}),
+adv&&React.createElement('div',{style:{background:'#141414',borderRadius:12,padding:14,marginTop:16,border:'1px solid #222'}},
+React.createElement('p',{style:{color:'#888',fontSize:13,marginBottom:10}},'\u7F3A\u53E3\u9084\u6B3E\u65B9\u5F0F'),
+React.createElement('div',{style:{display:'flex',gap:6}},
+[['nextday','\u5EF6\u5230\u9694\u65E5'],['week','\u6EFE\u5165\u672C\u9031\u5269\u9918'],['7days','\u6EFE\u5165\u672A\u4F86 7 \u5929']].map(function(m){return React.createElement('button',{key:m[0],onClick:function(){up(function(d){d.repayMode=m[0]})},style:{flex:1,padding:'8px 4px',borderRadius:8,fontSize:11,cursor:'pointer',background:(data.repayMode||'week')===m[0]?'#FF2D20':'#1a1a1a',border:'1px solid '+((data.repayMode||'week')===m[0]?'#FF2D20':'#222'),color:(data.repayMode||'week')===m[0]?'#fff':'#888'}},m[1])})),
+React.createElement('p',{style:{color:'#555',fontSize:10,marginTop:8}},'\u6C7A\u5B9A\u6C92\u505A\u5B8C\u7684\u6642\u6578\u600E\u9EBC\u6524\u9084\uFF0C\u9810\u8A2D\u6EFE\u5165\u672C\u9031\u5269\u9918\u5929\u6578')),
 React.createElement('div',{style:{background:'#141414',borderRadius:12,padding:14,marginTop:16,border:'1px solid #222'}},
 React.createElement('p',{style:{color:'#888',fontSize:13,marginBottom:10}},'\u65B0\u589E Category'),
 React.createElement('div',{style:{display:'flex',gap:8,alignItems:'center'}},
@@ -402,7 +475,7 @@ React.createElement('input',{value:nc,onChange:function(e){setNc(e.target.value)
 React.createElement('button',{style:bSm,onClick:function(){setNh(Math.max(1,nh-1))}},'\u2212'),
 React.createElement('span',{className:'ft',style:{fontSize:20,width:32,textAlign:'center'}},nh+'h'),
 React.createElement('button',{style:bSm,onClick:function(){setNh(nh+1)}},'+'),
-React.createElement('button',{onClick:function(){if(nc.trim()&&data.categories.length<8){up(function(d){d.categories.push({id:'c'+Date.now(),name:nc.trim(),weeklyGoalHours:nh,weeklyAdjust:0});d.gaps[d.categories[d.categories.length-1].id]=0});setNc('');setNh(5)}},disabled:data.categories.length>=8,style:{padding:'8px 14px',background:data.categories.length>=8?'#555':'#FF2D20',border:'none',borderRadius:8,color:'#fff',fontSize:13,cursor:data.categories.length>=8?'default':'pointer'}},(data.categories.length>=8?'\u4E0A\u9650':'\u52A0')))),
+React.createElement('button',{onClick:function(){if(nc.trim()&&data.categories.length<8){up(function(d){d.categories.push({id:'c'+Date.now(),name:nc.trim(),weeklyGoalHours:nh,weeklyAdjust:0,monthlyAdjust:0});d.gaps[d.categories[d.categories.length-1].id]=0});setNc('');setNh(5)}},disabled:data.categories.length>=8,style:{padding:'8px 14px',background:data.categories.length>=8?'#555':'#FF2D20',border:'none',borderRadius:8,color:'#fff',fontSize:13,cursor:data.categories.length>=8?'default':'pointer'}},(data.categories.length>=8?'\u4E0A\u9650':'\u52A0')))),
 React.createElement('div',{style:{background:'#141414',borderRadius:12,padding:16,marginTop:24,border:'1px solid #222'}},
 React.createElement('div',{style:{display:'flex',justifyContent:'space-between',marginBottom:8}},
 React.createElement('span',{style:{color:'#888',fontSize:13}},'\u6BCF\u9031\u7E3D\u6642\u6578'),
