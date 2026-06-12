@@ -73,6 +73,18 @@ const fill=(s,v)=>{let r=s;Object.entries(v).forEach(([k,val])=>{r=r.replace(new
 const weekDayNames=['\u4E00','\u4E8C','\u4E09','\u56DB','\u4E94','\u516D','\u65E5'];
 const getProgressNote=(pct,dow)=>{var expected=Math.round(dow/7*100);var diff=pct-expected;if(dow<=2){if(diff>=0)return'\uD83D\uDCC5 \u9031'+weekDayNames[dow-1]+'\uFF0C\u624D\u525B\u958B\u59CB\uFF0C\u4E0D\u6025';return'\uD83D\uDCC5 \u9031'+weekDayNames[dow-1]+'\uFF0C\u525B\u958B\u59CB\u800C\u5DF2'}if(diff>=20)return'\uD83D\uDD25 \u8D85\u524D\u9032\u5EA6\uFF0C\u7E7C\u7E8C';if(diff>=-10)return'\uD83D\uDCC5 \u9032\u5EA6\u6B63\u5E38';if(diff>=-30)return'\u26A0\uFE0F \u7A0D\u5FAE\u843D\u5F8C\uFF0C\u9084\u4F86\u5F97\u53CA';return'\u26A0\uFE0F \u9031'+weekDayNames[dow-1]+'\u4E86\uFF0C\u53EA\u5269'+(7-dow)+'\u5929'};
 const addDays=(s,n)=>{const d=new Date(s);d.setDate(d.getDate()+n);return toS(d)};
+const monthOf=s=>s.slice(0,7);
+const prevMonthYM=ym=>{const y=+ym.slice(0,4),m=+ym.slice(5,7);return m===1?(y-1)+'-12':y+'-'+String(m-1).padStart(2,'0')};
+// 月會觸發：上月未開會（次月首次打開補開）優先，否則當月最後一天。只追最近一個月，不翻更早的舊帳
+const dueReviewMonth=d=>{
+if(!d.setupDone||!d.records.length)return null;
+const t=todayS(),cur=monthOf(t);
+const firstYM=monthOf(d.records.reduce((m,r)=>r.date<m?r.date:m,t));
+const reviewed=ym=>(d.monthlyReviews||[]).some(r=>r.month===ym);
+const pm=prevMonthYM(cur);
+if(pm>=firstYM&&!reviewed(pm))return pm;
+if(dayOfMonth(t)===daysInMonth(t)&&cur>=firstYM&&!reviewed(cur))return cur;
+return null};
 const diffDays=(a,b)=>Math.round((new Date(b)-new Date(a))/864e5);
 const hasRecOn=(recs,date)=>recs.some(r=>r.date===date&&r.hours>0);
 // 觀眾數異動：套用下限 1，回傳實際變化量並寫 log
@@ -332,6 +344,11 @@ const edits=(snap.goalEditLog||[]).length;
 const totH=recs.reduce((s,r)=>s+r.hours,0);
 const aud=snap.audience;
 const baseV={aud:aud,streak:streak,declaration:(snap.declaration&&snap.declaration.text)||'（沒寫宣言）',edits:edits,days:days};
+// 上月月會選擇的後果：b=維持 → 本月錯位評論加倍毒；c=決心檢驗 → 觀眾只看說到做到
+const lastRv=(snap.monthlyReviews||[]).slice(-1)[0];
+const rvActive=lastRv&&lastRv.month===prevMonthYM(monthOf(t))?lastRv:null;
+const misProb=rvActive&&rvActive.choice==='b'?0.85:0.5;
+const reviewNote=rvActive&&rvActive.choice==='c'?'👁 決心檢驗中：你在月會上說方向沒錯，觀眾這個月只看「說到做到」':rvActive&&rvActive.choice==='b'?(Math.random()<0.3?'👁 上個月你在月會上說「維持目標」，觀眾都還記得這句':null):null;
 const mkPersist=charUpd=>d=>{d.milestones=Object.assign({},d.milestones,marks);if(charUpd)d.charMemory=Object.assign({},d.charMemory,{[charUpd.name]:charUpd.rec})};
 // 1. 目標修改：當場評論
 if(ev&&ev.goalEdit){
@@ -367,9 +384,9 @@ const aH=recs.filter(r=>r.categoryId===c.id).reduce((s,r)=>s+r.hours,0);
 const aP=Math.round(aH/totH*100);
 const gap=gP-aP;
 if(gap>15&&(!worstMis||gap>worstMis.gap))worstMis={c:c,gP:gP,aP:aP,gap:gap}});
-if(worstMis&&Math.random()<0.5){
+if(worstMis&&Math.random()<misProb){
 const v={...baseV,cat:worstMis.c.name,goalPct:worstMis.gP,actPct:worstMis.aP,gapPp:worstMis.gap};
-const cm=renderEntry(pick(misPool),v);cm.eventTag='錯位評論・宣言 vs 實際';
+const cm=renderEntry(pick(misPool),v);cm.eventTag='錯位評論・宣言 vs 實際';cm.reviewNote=reviewNote;
 return{cm:cm,persist:mkPersist(null)}}}
 // 5. 日常 tier 評論（角色有記憶）
 const dim=pick(dimList);
@@ -390,14 +407,14 @@ const T=s=>fill(s,v).split('本週').join(dim);
 const progressNote=dim==='本週'?getProgressNote(pct,dow):'📺 評論維度：'+dim;
 const editNote=(edits>0&&Math.random()<0.35)?pick(editRoasts).split('{n}').join(edits):null;
 const rand=Math.random();
-if(rand<0.5){const raw=pick(pttPool[ti]);const idx=raw.indexOf('|');return{cm:{type:'ptt',tp:raw.slice(0,idx),text:T(raw.slice(idx+1)),user:pick(pttUsers),progressNote:progressNote,editNote:editNote},persist:mkPersist(null)}}
+if(rand<0.5){const raw=pick(pttPool[ti]);const idx=raw.indexOf('|');return{cm:{type:'ptt',tp:raw.slice(0,idx),text:T(raw.slice(idx+1)),user:pick(pttUsers),progressNote:progressNote,editNote:editNote,reviewNote:reviewNote},persist:mkPersist(null)}}
 else if(rand<0.9){
 const ch=pickChar(pct,days,streak);
 const msgs=pick(linePool[ti][ch.s]).map(T);
 const mem=(snap.charMemory||{})[ch.name];
 if(mem&&Math.random()<0.45)msgs.push(fill(pick(memLines),{mdate:mem.date,mcat:mem.cat,mpct:mem.pct}));
-return{cm:{type:'line',char:ch,msgs:msgs,time:rndTime(),progressNote:progressNote,editNote:editNote},persist:mkPersist({name:ch.name,rec:{date:t,cat:worst.name,pct:pct}})}}
-else{const raw=finPool[ti];const idx=raw.indexOf('|');return{cm:{type:'fin',headline:T(raw.slice(0,idx)),body:T(raw.slice(idx+1)),progressNote:progressNote,editNote:editNote},persist:mkPersist(null)}}
+return{cm:{type:'line',char:ch,msgs:msgs,time:rndTime(),progressNote:progressNote,editNote:editNote,reviewNote:reviewNote},persist:mkPersist({name:ch.name,rec:{date:t,cat:worst.name,pct:pct}})}}
+else{const raw=finPool[ti];const idx=raw.indexOf('|');return{cm:{type:'fin',headline:T(raw.slice(0,idx)),body:T(raw.slice(idx+1)),progressNote:progressNote,editNote:editNote,reviewNote:reviewNote},persist:mkPersist(null)}}
 };function Ring({size,tPct,wPct,label,onClick,selected}){
 var r1=size/2-5,r2=size/2-14,cx=size/2,cy=size/2;
 var arc=function(r,pct){var p=Math.min(pct,100)/100;if(p<=0)return'';if(p>=1)return'M'+cx+','+(cy-r)+' A'+r+','+r+' 0 1,1 '+(cx-0.01)+','+(cy-r)+' A'+r+','+r+' 0 1,1 '+cx+','+(cy-r);var a=p*2*Math.PI;var x=cx+r*Math.sin(a);var y=cy-r*Math.cos(a);var lg=p>0.5?1:0;return'M'+cx+','+(cy-r)+' A'+r+','+r+' 0 '+lg+',1 '+x+','+y};
@@ -440,6 +457,7 @@ else if(cm.air.delta>0)airTxt='📺 本集播出，觀眾 +'+cm.air.delta}
 var airEl=airTxt?React.createElement('p',{style:{textAlign:'center',color:'#C9A86A',fontSize:12,marginTop:12,padding:'6px 12px',background:'rgba(201,168,106,.08)',borderRadius:8}},airTxt):null;
 var noteEl=cm.progressNote?React.createElement('p',{style:{textAlign:'center',color:'#888',fontSize:12,marginTop:airEl?6:12,padding:'6px 12px',background:'rgba(255,255,255,.05)',borderRadius:8}},cm.progressNote):null;
 var editEl=cm.editNote?React.createElement('p',{style:{textAlign:'center',color:'#C9A86A',fontSize:11,marginTop:6,padding:'5px 12px',background:'rgba(201,168,106,.08)',borderRadius:8}},cm.editNote):null;
+var rvEl=cm.reviewNote?React.createElement('p',{style:{textAlign:'center',color:'#C9A86A',fontSize:11,marginTop:6,padding:'5px 12px',background:'rgba(201,168,106,.08)',borderRadius:8}},cm.reviewNote):null;
 return React.createElement('div',{onClick:onClose,style:{position:'fixed',inset:0,background:'rgba(0,0,0,.85)',zIndex:100,display:'flex',alignItems:'center',justifyContent:'center',padding:20}},
 React.createElement('div',{onClick:function(e){e.stopPropagation()},style:{width:'100%',maxWidth:380},className:'fade-in'},
 cm.eventTag&&React.createElement('p',{style:{textAlign:'center',color:'#C9A86A',fontSize:10,letterSpacing:3,marginBottom:10}},'★ '+cm.eventTag+' ★'),
@@ -464,7 +482,61 @@ React.createElement('p',{style:{fontSize:13,color:'#444',lineHeight:1.7,margin:0
 airEl,
 noteEl,
 editEl,
+rvEl,
 React.createElement('p',{style:{textAlign:'center',color:'var(--t35)',fontSize:12,marginTop:8}},'\u9EDE\u4EFB\u610F\u8655\u95DC\u9589')))}
+// 月底改版會議：全螢幕、不可跳過。製作人只問問題，不嘴人
+function MonthlyReview({data,month,up}){
+var[choice,setChoice]=useState(null);
+var cats=data.categories;
+var recs=data.records.filter(function(r){return r.date.slice(0,7)===month});
+var totH=recs.reduce(function(s,r){return s+r.hours},0);
+var totG=cats.reduce(function(s,c){return s+c.weeklyGoalHours},0);
+var stats=cats.map(function(c){
+var gP=totG>0?Math.round(c.weeklyGoalHours/totG*100):0;
+var aH=recs.filter(function(r){return r.categoryId===c.id}).reduce(function(s,r){return s+r.hours},0);
+var aP=totH>0?Math.round(aH/totH*100):0;
+return{cat:c.name,gP:gP,aP:aP,diff:aP-gP}});
+var mLabel=parseInt(month.slice(5,7))+'月';
+var choices=[
+{k:'a',title:'調整目標',sub:'數字跟現實對不上，我要改劇本',resp:'好。公開改，比偷偷改好。會後去後台調整——觀眾會看到，有人會嘴你慫，有人會說你務實。兩種都是觀眾。'},
+{k:'b',title:'維持目標',sub:'方向跟數字都沒錯，繼續',resp:'好，我們看著你。這張表我留著，下個月觀眾會拿它對你——錯位的地方，他們不會客氣。'},
+{k:'c',title:'方向沒錯，執行有問題',sub:'目標不動，是我要說到做到',resp:'方向不動。那下個月只看一件事：說到做到。觀眾會盯著這四個字看一整個月。'}];
+var picked=choice?choices.find(function(c){return c.k===choice}):null;
+var fire=function(){up(function(d){d.monthlyReviews.push({month:month,date:todayS(),choice:choice,stats:stats.map(function(s){return{cat:s.cat,goalPct:s.gP,actPct:s.aP}})})})};
+return React.createElement('div',{style:{position:'fixed',inset:0,zIndex:1000,background:'#050505',overflowY:'auto'}},
+React.createElement('div',{style:{maxWidth:430,margin:'0 auto',minHeight:'100vh',padding:'40px 24px 48px',color:'#fff',display:'flex',flexDirection:'column'}},
+React.createElement('div',{className:'tag',style:{textAlign:'center',color:'#C9A86A',marginBottom:6}},'MONTHLY REVIEW'),
+React.createElement('h1',{className:'ft',style:{fontSize:40,textAlign:'center',letterSpacing:2,margin:'0 0 4px'}},mLabel+'改版會議'),
+React.createElement('p',{style:{textAlign:'center',color:'var(--t35)',fontSize:11,marginBottom:28}},'這場會不能跳過。節目要繼續，得先面對數字。'),
+React.createElement('div',{className:'spot',style:{marginBottom:24}},
+React.createElement('div',{style:{display:'flex',alignItems:'center',gap:10,marginBottom:10}},
+React.createElement('div',{style:{width:38,height:38,borderRadius:19,border:'1px solid rgba(201,168,106,.5)',display:'flex',alignItems:'center',justifyContent:'center',color:'#C9A86A',fontFamily:"'Bebas Neue',sans-serif",fontSize:18}},'P'),
+React.createElement('div',null,
+React.createElement('div',{style:{fontSize:14,fontWeight:500}},'製作人'),
+React.createElement('div',{style:{fontSize:10,color:'var(--t35)'}},'全節目唯一不嘴你的人。他只問問題。'))),
+React.createElement('p',{style:{fontSize:14,color:'var(--t60)',lineHeight:1.8}},mLabel+'結束了。坐。我們看一下你的時間都去了哪裡。')),
+React.createElement('div',{style:{marginBottom:24}},
+React.createElement('div',{className:'tag',style:{marginBottom:8}},mLabel+'總表 — 目標 vs 實際'),
+React.createElement('div',{style:{display:'flex',padding:'2px 0',borderBottom:'1px solid var(--line)',marginBottom:6}},
+['','目標','實際','差距'].map(function(h,i){return React.createElement('span',{key:i,style:{color:'var(--t35)',fontSize:10,flex:i===0?2:1,textAlign:i===0?'left':i===3?'right':'center'}},h)})),
+stats.map(function(s,i){return React.createElement('div',{key:i,style:{display:'flex',padding:'6px 0',borderBottom:'1px solid rgba(255,255,255,.04)'}},
+React.createElement('span',{style:{fontSize:13,flex:2,color:'var(--t60)'}},s.cat),
+React.createElement('span',{className:'ft',style:{fontSize:16,flex:1,textAlign:'center',color:'var(--t35)'}},s.gP+'%'),
+React.createElement('span',{className:'ft',style:{fontSize:16,flex:1,textAlign:'center',color:'#C9A86A'}},s.aP+'%'),
+React.createElement('span',{className:'ft',style:{fontSize:16,flex:1,textAlign:'right',color:s.diff>=0?'#30D158':'#FF2D20'}},(s.diff>0?'+':'')+s.diff+'%'))}),
+totH===0&&React.createElement('p',{style:{color:'var(--t35)',fontSize:11,marginTop:8}},'這個月一集都沒播。表是空的，但會還是要開。')),
+!picked&&React.createElement('div',{style:{marginTop:'auto'}},
+React.createElement('p',{style:{fontSize:15,color:'rgba(255,255,255,.85)',lineHeight:1.8,marginBottom:16}},'問你一個問題就好——這個分配，是你想要的人生比例嗎？下個月，你要怎麼走？'),
+choices.map(function(c){return React.createElement('button',{key:c.k,onClick:function(){setChoice(c.k)},style:{width:'100%',textAlign:'left',padding:'14px 16px',marginBottom:10,background:'rgba(255,255,255,.025)',border:'1px solid rgba(255,255,255,.1)',borderRadius:10,cursor:'pointer',color:'#fff'}},
+React.createElement('div',{style:{fontSize:15,fontWeight:500,marginBottom:2}},c.title),
+React.createElement('div',{style:{fontSize:11,color:'var(--t35)'}},c.sub))})),
+picked&&React.createElement('div',{className:'fade-in',style:{marginTop:'auto'}},
+React.createElement('div',{style:{padding:'16px 18px',background:'rgba(201,168,106,.06)',borderRadius:10,marginBottom:18}},
+React.createElement('div',{className:'tag',style:{color:'#C9A86A',marginBottom:8}},'你的選擇：'+picked.title),
+React.createElement('p',{style:{fontSize:14,color:'var(--t60)',lineHeight:1.8,margin:0}},picked.resp)),
+React.createElement('div',{style:{display:'flex',gap:10}},
+React.createElement('button',{onClick:function(){setChoice(null)},style:{flex:1,padding:'13px 0',background:'transparent',border:'1px solid rgba(255,255,255,.14)',borderRadius:10,color:'var(--t60)',fontSize:13,cursor:'pointer'}},'再想一下'),
+React.createElement('button',{onClick:fire,style:{flex:2,padding:'13px 0',background:'#C9A86A',border:'none',borderRadius:10,color:'#0a0a0a',fontSize:16,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:3,cursor:'pointer'}},'散會')))))}
 function App(){
 var[data,setData]=useState(function(){var d=load()||init();d=settleAll(d);save(d);return d});
 var[page,setPage]=useState('dashboard');
@@ -481,6 +553,7 @@ useEffect(function(){var id=setTimeout(function(){setIntro(false)},2300);return 
 var[modal,setModal]=useState(null);
 var ask=useCallback(function(o){setModal(o)},[]);
 if(!data.setupDone)return React.createElement(Setup,{up:up});
+var rvMonth=dueReviewMonth(data);
 var content=null;
 if(page==='dashboard')content=React.createElement(Dash,{data:data});
 if(page==='record')content=React.createElement(Rec,{data:data,up:up,trig:trigCmt});
@@ -492,6 +565,7 @@ React.createElement('div',{className:'vignette'}),
 React.createElement('div',{className:'grain'}),
 comment&&React.createElement(CommentOverlay,{comment:comment,onClose:function(){setComment(null)}}),
 modal&&React.createElement(Modal,{title:modal.title,body:modal.body,confirmText:modal.confirmText,danger:modal.danger,onConfirm:modal.onConfirm,onClose:function(){setModal(null)}}),
+rvMonth&&React.createElement(MonthlyReview,{data:data,month:rvMonth,up:up}),
 intro&&React.createElement('div',{style:{position:'fixed',inset:0,zIndex:1200,display:'flex',overflow:'hidden',pointerEvents:'none'}},
 React.createElement('div',{className:'curtain-l',style:{width:'50%',height:'100%'}},React.createElement(IntroPanel,{side:'l'})),
 React.createElement('div',{className:'curtain-r',style:{width:'50%',height:'100%'}},React.createElement(IntroPanel,{side:'r'}))),
