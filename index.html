@@ -16,14 +16,29 @@
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <script type="text/babel">
 const{useState,useEffect,useMemo,useCallback}=React;
-const KEY='reality_v5';
-const load=()=>{try{const d=JSON.parse(localStorage.getItem(KEY));if(!d)return null;
-if(!d.mode)d.mode='simple';if(!d.repayMode)d.repayMode='week';if(!d.pendingGoals)d.pendingGoals=[];
-if(d.goalEdits==null)d.goalEdits=0;if(d.periodEdits==null)d.periodEdits=0;if(!d.lastSettledMonth)d.lastSettledMonth=null;
-if(d.categories)d.categories.forEach(c=>{if(c.monthlyAdjust==null)c.monthlyAdjust=0});
+const KEY='reality_v6';const OLDKEY='reality_v5';
+const init=()=>({categories:[],records:[],setupDone:false,
+audience:100,lapseLoss:0,audienceDay:null,lastAirDate:null,audienceLog:[],lastSettledWeek:null,
+declaration:{text:'',date:null,history:[]},charMemory:{},monthlyReviews:[],goalEditLog:[]});
+const migrateV5=old=>{const d=init();
+d.setupDone=!!old.setupDone;
+d.records=(old.records||[]).map(r=>({...r}));
+d.categories=(old.categories||[]).map(c=>({id:c.id,name:c.name,weeklyGoalHours:c.weeklyGoalHours}));
+(old.pendingGoals||[]).forEach(p=>{const c=d.categories.find(x=>x.id===p.catId);if(c)c.weeklyGoalHours=p.newHours});
+if(old.goalEdits>0)d.goalEditLog.push({date:todayS(),catId:null,from:null,to:null,note:'v1 時期已修改 '+old.goalEdits+' 次'});
+d.lastAirDate=d.records.length?d.records.reduce((m,r)=>r.date>m?r.date:m,'0000-00-00'):null;
+d.lastSettledWeek=getWeekId(todayS());
+d.audienceDay=todayS();
+return d};
+const load=()=>{try{
+let d=JSON.parse(localStorage.getItem(KEY));
+if(!d){const old=JSON.parse(localStorage.getItem(OLDKEY));if(old)d=migrateV5(old)}
+if(!d)return null;
+if(d.audience==null)d.audience=100;if(d.lapseLoss==null)d.lapseLoss=0;
+if(!d.audienceLog)d.audienceLog=[];if(!d.declaration)d.declaration={text:'',date:null,history:[]};
+if(!d.charMemory)d.charMemory={};if(!d.monthlyReviews)d.monthlyReviews=[];if(!d.goalEditLog)d.goalEditLog=[];
 return d}catch{return null}};
 const save=d=>{try{localStorage.setItem(KEY,JSON.stringify(d))}catch{}};
-const init=()=>({categories:[],records:[],setupDone:false,lastSettledWeek:null,gaps:{},mode:'simple',repayMode:'week',pendingGoals:[],goalEdits:0,periodEdits:0,lastSettledMonth:null});
 const toS=d=>d.toISOString().slice(0,10);
 const todayS=()=>toS(new Date());
 const getWeekId=s=>{const d=new Date(s),day=d.getDay()||7,m=new Date(d);m.setDate(d.getDate()-day+1);return toS(m)};
@@ -38,56 +53,68 @@ const tierN=p=>p>=100?5:p>=81?4:p>=61?3:p>=41?2:p>=21?1:0;
 const fill=(s,v)=>{let r=s;Object.entries(v).forEach(([k,val])=>{r=r.replace(new RegExp('\\{'+k+'\\}','g'),val)});return r};
 const weekDayNames=['\u4E00','\u4E8C','\u4E09','\u56DB','\u4E94','\u516D','\u65E5'];
 const getProgressNote=(pct,dow)=>{var expected=Math.round(dow/7*100);var diff=pct-expected;if(dow<=2){if(diff>=0)return'\uD83D\uDCC5 \u9031'+weekDayNames[dow-1]+'\uFF0C\u624D\u525B\u958B\u59CB\uFF0C\u4E0D\u6025';return'\uD83D\uDCC5 \u9031'+weekDayNames[dow-1]+'\uFF0C\u525B\u958B\u59CB\u800C\u5DF2'}if(diff>=20)return'\uD83D\uDD25 \u8D85\u524D\u9032\u5EA6\uFF0C\u7E7C\u7E8C';if(diff>=-10)return'\uD83D\uDCC5 \u9032\u5EA6\u6B63\u5E38';if(diff>=-30)return'\u26A0\uFE0F \u7A0D\u5FAE\u843D\u5F8C\uFF0C\u9084\u4F86\u5F97\u53CA';return'\u26A0\uFE0F \u9031'+weekDayNames[dow-1]+'\u4E86\uFF0C\u53EA\u5269'+(7-dow)+'\u5929'};
-const settleWeekGaps=(data)=>{
-const today=todayS();
-const currentWeekId=getWeekId(today);
-if(data.lastSettledWeek===currentWeekId)return data;
-if(!data.lastSettledWeek){data.lastSettledWeek=currentWeekId;if(!data.gaps)data.gaps={};return data}
-const prevWeekId=data.lastSettledWeek;
-const prevWd=weekDates(prevWeekId);
-if(!data.gaps)data.gaps={};
-data.categories.forEach(cat=>{
-const adj=(cat.weeklyAdjust||0);
-const effectiveGoal=cat.weeklyGoalHours+adj;
-const actual=data.records.filter(r=>r.categoryId===cat.id&&prevWd.includes(r.date)).reduce((s,r)=>s+r.hours,0);
-const gap=Math.max(0,Math.round((effectiveGoal-actual)*10)/10);
-const prevGap=data.gaps[cat.id]||0;
-data.gaps[cat.id]=Math.round((prevGap+gap)*10)/10;
-cat.weeklyAdjust=0;
-});
-data.lastSettledWeek=currentWeekId;
-return data;
-};
-const getEffectiveWeeklyGoal=(cat,gaps)=>{
-const base=cat.weeklyGoalHours;
-const adj=cat.weeklyAdjust||0;
-const madj=cat.monthlyAdjust||0;
-const gap=(gaps&&gaps[cat.id])||0;
-return Math.max(0,Math.round((base+adj+madj+gap)*10)/10);
-};
-const settleAll=(data)=>{
-const now=Date.now();
-if(!data.pendingGoals)data.pendingGoals=[];
-const matured=data.pendingGoals.filter(p=>p.effectiveTs<=now);
-matured.forEach(p=>{const c=data.categories.find(x=>x.id===p.catId);if(c)c.weeklyGoalHours=p.newHours});
-data.pendingGoals=data.pendingGoals.filter(p=>p.effectiveTs>now);
-const monthId=todayS().slice(0,7);
-if(data.lastSettledMonth!==monthId){if(data.lastSettledMonth)data.categories.forEach(c=>{c.monthlyAdjust=0});data.lastSettledMonth=monthId}
-return settleWeekGaps(data);
-};
-const gapInfo=(cat,recs,gaps,repayMode)=>{
-const t=todayS(),wd=weekDates(t),dow=dayOfWeek(t);
-const eff=getEffectiveWeeklyGoal(cat,gaps);
-const daily=eff/7;
-const past=wd.slice(0,dow-1);
-const actualPast=recs.filter(r=>r.categoryId===cat.id&&past.includes(r.date)).reduce((s,r)=>s+r.hours,0);
-const gap=Math.max(0,Math.round((daily*(dow-1)-actualPast)*10)/10);
-let per;
-if(repayMode==='nextday')per=gap;
-else if(repayMode==='7days')per=Math.round(gap/7*10)/10;
-else per=Math.round(gap/(8-dow)*10)/10;
-return{gap:gap,perDay:per,todayTarget:Math.round((daily+per)*10)/10};
-};
+const addDays=(s,n)=>{const d=new Date(s);d.setDate(d.getDate()+n);return toS(d)};
+const diffDays=(a,b)=>Math.round((new Date(b)-new Date(a))/864e5);
+const hasRecOn=(recs,date)=>recs.some(r=>r.date===date&&r.hours>0);
+// 觀眾數異動：套用下限 1，回傳實際變化量並寫 log
+const audApply=(d,delta,reason,date)=>{
+const before=d.audience,after=Math.max(1,before+delta),actual=after-before;
+d.audience=after;
+d.audienceLog.push({date:date,delta:actual,reason:reason});
+if(d.audienceLog.length>80)d.audienceLog=d.audienceLog.slice(-80);
+return actual};
+// 停播懲罰：把 audienceDay 之後、昨天以前每個無記錄日結算掉（第1天-3、第2天-8、第3天起-15）
+const settleAudience=d=>{
+const t=todayS();
+if(!d.audienceDay){d.audienceDay=t;return d}
+const y=addDays(t,-1);
+if(d.audienceDay>=y)return d;
+let missRun=0,b=d.audienceDay;
+while(missRun<30&&!hasRecOn(d.records,b)){missRun++;b=addDays(b,-1)}
+let day=addDays(d.audienceDay,1);
+while(day<=y){
+if(hasRecOn(d.records,day)){missRun=0;d.lapseLoss=0}
+else{missRun++;const p=missRun===1?-3:missRun===2?-8:-15;const actual=audApply(d,p,'lapse',day);d.lapseLoss=Math.round(d.lapseLoss-actual)}
+day=addDays(day,1)}
+d.audienceDay=y;
+return d};
+// 週結算：上週全 category 100% → 爆量 +50
+const settleWeek=d=>{
+const cw=getWeekId(todayS());
+if(!d.lastSettledWeek){d.lastSettledWeek=cw;return d}
+if(d.lastSettledWeek===cw)return d;
+const wd=weekDates(d.lastSettledWeek);
+const ok=d.categories.length>0&&d.categories.every(c=>{
+if(c.weeklyGoalHours<=0)return true;
+const a=d.records.filter(r=>r.categoryId===c.id&&wd.includes(r.date)).reduce((s,r)=>s+r.hours,0);
+return a>=c.weeklyGoalHours});
+if(ok)audApply(d,50,'week100',todayS());
+d.lastSettledWeek=cw;
+return d};
+const settleAll=d=>{if(!d.setupDone)return d;return settleWeek(settleAudience(d))};
+// 播出本集：今日首次記錄時加觀眾（+5，當日達標 +15）、處理回歸特輯（停播≥3天回來 → 回補流失量 50%）
+const airToday=d=>{
+const t=todayS();
+const ev={comeback:false,refund:0,delta:0,offDays:0};
+const credited=d.audienceLog.filter(e=>e.date===t&&e.reason==='air').reduce((s,e)=>s+e.delta,0);
+const totGoal=d.categories.reduce((s,c)=>s+c.weeklyGoalHours,0);
+const dayH=d.records.filter(r=>r.date===t).reduce((s,r)=>s+r.hours,0);
+const target=totGoal>0&&dayH>=totGoal/7?15:5;
+if(credited<target)ev.delta=audApply(d,target-credited,'air',t);
+if(credited===0){
+ev.offDays=d.lastAirDate?Math.max(0,diffDays(d.lastAirDate,t)-1):0;
+if(ev.offDays>=3){ev.comeback=true;if(d.lapseLoss>0)ev.refund=audApply(d,Math.round(d.lapseLoss*0.5),'comeback',t)}
+d.lapseLoss=0}
+if(!d.lastAirDate||t>d.lastAirDate)d.lastAirDate=t;
+return ev};
+// 連播集數：從 lastAirDate 往回數連續有記錄的天數；斷了（lastAirDate 早於昨天）= 0
+const calcStreak=(recs,la)=>{
+if(!la)return 0;
+const t=todayS();
+if(la!==t&&la!==addDays(t,-1))return 0;
+let n=0,day=la;
+while(n<999&&hasRecOn(recs,day)){n++;day=addDays(day,-1)}
+return n};
 const pttPool=[
 ['\u2192|{cat}{pct}%\uFF0C\u9019\u5E33\u865F\u662F\u6BAD\u5C4D\u5E33\u865F\u55CE','\u5653|\u672C\u9031{cat}{pct}%\uFF0C\u6211\u66FF\u4F60\u7684\u76EE\u6A19\u611F\u5230\u4E0D\u6368','\u63A8|{pct}%\uFF0C\u6709\u5FC3\u4E86\uFF0C\u5C31\u662F\u5FC3\u592A\u5C0F','\u2192|{cat}{pct}%\uFF0C\u4F60\u672C\u9031\u6709\u51FA\u73FE\uFF0C\u9019\u662F\u512A\u9EDE','\u5653|{cat}\u53EA\u6709{pct}%\uFF0C\u4F60\u7684\u52AA\u529B\u5F88\u542B\u84C4','\u63A8|\u672C\u9031{cat}{hrs}\u5C0F\u6642\uFF1F\u6211\u5348\u7761\u90FD\u6BD4\u9019\u9577','\u2192|\u672C\u9031{cat}{pct}%\uFF0C\u89C0\u773E\u770B\u5F97\u5F88\u8457\u6025\u4F60\u5F88\u6DE1\u5B9A'],
 ['\u2192|\u672C\u9031{cat}{pct}%\uFF0C\u525B\u597D\u8B93\u4EBA\u8AAA\u4E0D\u51FA\u54EA\u88E1\u597D','\u63A8|{cat}{pct}%\uFF0C\u89C0\u773E\u6C92\u7761\u8457...\u5427\uFF1F','\u5653|{cat}{pct}%\uFF0C\u9019\u500B\u6578\u5B57\u6563\u767C\u8457\u4F5B\u7CFB\u7684\u6C23\u8CEA','\u2192|{cat}{pct}%\uFF0C\u4E0D\u4E0A\u4E0D\u4E0B\uFF0C\u8DDF\u4F60\u7684\u4EBA\u751F\u4E00\u6A23','\u63A8|\u672C\u9031{cat}{pct}%\uFF0C\u8AAA\u4F60\u8A8D\u771F\u6211\u4FE1\uFF0C\u8AAA\u4F60\u6709\u62DA\u6211\u5B58\u7591'],
@@ -116,12 +143,12 @@ const finPool=[
 const pttUsers=['\u5634\u780D\u738B','\u53AD\u4E16\u5DE5\u7A0B\u5E2B','\u8DEF\u904E\u9109\u6C11','\u9178\u6C11\u4EE3\u8868','\u6DF1\u591C\u89C0\u773E','\u9375\u76E4\u5206\u6790\u5E2B','\u4F5B\u7CFB\u9752\u5E74','\u8A8D\u771F\u9B54\u4EBA'];
 const dimList=['今日','本週','本月','整體'];
 const editRoasts=['👁 順帶一提，你的終極目標已經改過 {n} 次了','👁 目標修改第 {n} 次，數字不會說謊，但目標會','👁 觀眾備註：此人目標已調整 {n} 次，僅供參考'];
-const genComment=(cats,recs,gaps,goalEdits)=>{
+const genComment=(cats,recs,goalEdits)=>{
 if(!cats||cats.length===0)return null;
 const t=todayS(),wd=weekDates(t),md=monthDates(t),dow=dayOfWeek(t);
 const dim=pick(dimList);
 const calc=cat=>{
-const gw=getEffectiveWeeklyGoal(cat,gaps);
+const gw=cat.weeklyGoalHours;
 const cr=recs.filter(r=>r.categoryId===cat.id);
 let hrs=0,goal=gw;
 if(dim==='今日'){hrs=cr.filter(r=>r.date===t).reduce((s,r)=>s+r.hours,0);goal=gw/7}
@@ -179,7 +206,11 @@ React.createElement('span',{style:{color:'rgba(255,255,255,.7)',fontSize:14}},'\
 React.createElement('span',{style:{fontSize:24}},cm.char.avatar),
 React.createElement('span',{style:{color:'#fff',fontSize:15,fontWeight:600}},cm.char.name)),
 React.createElement('div',{style:{padding:'14px 14px 14px 10px'}},bubbles,userReply));}
-var noteEl=cm.progressNote?React.createElement('p',{style:{textAlign:'center',color:'#888',fontSize:12,marginTop:12,padding:'6px 12px',background:'rgba(255,255,255,.05)',borderRadius:8}},cm.progressNote):null;
+var airTxt=null;
+if(cm.air){if(cm.air.comeback)airTxt='📺 回歸特輯！停播 '+cm.air.offDays+' 天後回歸'+(cm.air.refund>0?'，觀眾回流 +'+cm.air.refund:'')
+else if(cm.air.delta>0)airTxt='📺 本集播出，觀眾 +'+cm.air.delta}
+var airEl=airTxt?React.createElement('p',{style:{textAlign:'center',color:'#C9A86A',fontSize:12,marginTop:12,padding:'6px 12px',background:'rgba(201,168,106,.08)',borderRadius:8}},airTxt):null;
+var noteEl=cm.progressNote?React.createElement('p',{style:{textAlign:'center',color:'#888',fontSize:12,marginTop:airEl?6:12,padding:'6px 12px',background:'rgba(255,255,255,.05)',borderRadius:8}},cm.progressNote):null;
 var editEl=cm.editNote?React.createElement('p',{style:{textAlign:'center',color:'#FF9F0A',fontSize:11,marginTop:6,padding:'5px 12px',background:'rgba(255,159,10,.07)',borderRadius:8}},cm.editNote):null;
 return React.createElement('div',{onClick:onClose,style:{position:'fixed',inset:0,background:'rgba(0,0,0,.85)',zIndex:100,display:'flex',alignItems:'center',justifyContent:'center',padding:20}},
 React.createElement('div',{onClick:function(e){e.stopPropagation()},style:{width:'100%',maxWidth:380},className:'fade-in'},
@@ -201,16 +232,17 @@ React.createElement('div',{style:{borderBottom:'3px double #222',paddingBottom:8
 React.createElement('div',{style:{fontSize:11,letterSpacing:6,color:'#666'}},'LIFE FINANCIAL TIMES')),
 React.createElement('h2',{style:{fontSize:17,color:'#111',lineHeight:1.4,margin:'0 0 12px',fontWeight:700}},cm.headline),
 React.createElement('p',{style:{fontSize:13,color:'#444',lineHeight:1.7,margin:0}},cm.body)),
+airEl,
 noteEl,
 editEl,
 React.createElement('p',{style:{textAlign:'center',color:'#555',fontSize:12,marginTop:8}},'\u9EDE\u4EFB\u610F\u8655\u95DC\u9589')))}
 function App(){
-var[data,setData]=useState(function(){var d=load()||init();d=settleAll(d);if(!d.gaps)d.gaps={};if(!d.lastSettledWeek)d.lastSettledWeek=getWeekId(todayS());save(d);return d});
+var[data,setData]=useState(function(){var d=load()||init();d=settleAll(d);save(d);return d});
 var[page,setPage]=useState('dashboard');
 var[comment,setComment]=useState(null);
 useEffect(function(){save(data)},[data]);
-var up=useCallback(function(fn){setData(function(p){var n={...p,categories:p.categories.map(function(c){return{...c}}),records:[...p.records],gaps:{...p.gaps},pendingGoals:(p.pendingGoals||[]).map(function(x){return{...x}})};fn(n);return settleAll(n)})},[]);
-var trigCmt=useCallback(function(newRecs){if(data.categories.length===0)return;var c=genComment(data.categories,data.records.concat(newRecs||[]),data.gaps,data.goalEdits||0);if(c)setComment(c)},[data]);
+var up=useCallback(function(fn){setData(function(p){var n={...p,categories:p.categories.map(function(c){return{...c}}),records:[...p.records],audienceLog:[...(p.audienceLog||[])],goalEditLog:[...(p.goalEditLog||[])],declaration:{...(p.declaration||{}),history:[...((p.declaration||{}).history||[])]}};fn(n);return settleAll(n)})},[]);
+var trigCmt=useCallback(function(newRecs,ev){if(data.categories.length===0)return;var c=genComment(data.categories,data.records.concat(newRecs||[]),(data.goalEditLog||[]).length);if(c){if(ev)c.air=ev;setComment(c)}},[data]);
 var[intro,setIntro]=useState(function(){return!!data.setupDone});
 useEffect(function(){var id=setTimeout(function(){setIntro(false)},2300);return function(){clearTimeout(id)}},[]);
 if(!data.setupDone)return React.createElement(Setup,{up:up});
@@ -255,7 +287,7 @@ React.createElement('span',{className:'ft',style:{fontSize:24}},tot+'h')),
 cats.map(function(c,i){return React.createElement('div',{key:i,style:{display:'flex',justifyContent:'space-between',padding:'4px 0'}},
 React.createElement('span',{style:{color:'#888',fontSize:13}},c.name),
 React.createElement('span',{className:'ft',style:{fontSize:16,color:'#FF9F0A'}},(tot>0?Math.round(c.h/tot*100):0)+'%'))})),
-React.createElement('button',{onClick:function(){var total=cats.reduce(function(s,c){return s+c.h},0);if(cats.length===0){alert('\u8ACB\u81F3\u5C11\u65B0\u589E\u4E00\u500B category');return}if(total===0){alert('\u8ACB\u81F3\u5C11\u8A2D\u5B9A\u4E00\u500B category \u7684\u76EE\u6A19\u6642\u6578');return}up(function(d){d.categories=cats.map(function(c,i){return{id:'c'+Date.now()+'_'+i,name:c.name,weeklyGoalHours:c.h,weeklyAdjust:0,monthlyAdjust:0}});d.setupDone=true;d.gaps={};d.lastSettledWeek=getWeekId(todayS())})},disabled:!cats.length,style:{width:'100%',padding:16,background:cats.length&&tot>0?'#FF2D20':'#555',border:'none',borderRadius:12,color:'#fff',fontSize:18,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:2,cursor:cats.length&&tot>0?'pointer':'default'}},'START TRACKING'))}function Dash({data}){
+React.createElement('button',{onClick:function(){var total=cats.reduce(function(s,c){return s+c.h},0);if(cats.length===0){alert('\u8ACB\u81F3\u5C11\u65B0\u589E\u4E00\u500B category');return}if(total===0){alert('\u8ACB\u81F3\u5C11\u8A2D\u5B9A\u4E00\u500B category \u7684\u76EE\u6A19\u6642\u6578');return}up(function(d){d.categories=cats.map(function(c,i){return{id:'c'+Date.now()+'_'+i,name:c.name,weeklyGoalHours:c.h}});d.setupDone=true})},disabled:!cats.length,style:{width:'100%',padding:16,background:cats.length&&tot>0?'#FF2D20':'#555',border:'none',borderRadius:12,color:'#fff',fontSize:18,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:2,cursor:cats.length&&tot>0?'pointer':'default'}},'START TRACKING'))}function Dash({data}){
 var t=todayS(),wd=weekDates(t),md=monthDates(t);
 var dow=dayOfWeek(t),dom=dayOfMonth(t),dim_=daysInMonth(t);
 var hrs=function(cid,ds){return data.records.filter(function(r){return r.categoryId===cid&&ds.includes(r.date)}).reduce(function(s,r){return s+r.hours},0)};
@@ -264,9 +296,13 @@ var tH=allH([t]),wH=allH(wd),mH=allH(md);
 var[sel,setSel]=useState(null);
 var catData=data.categories.map(function(cat){
 var tHrs=hrs(cat.id,[t]),wHrs=hrs(cat.id,wd),mHrs=hrs(cat.id,md);
-var effGoal=getEffectiveWeeklyGoal(cat,data.gaps);
-var tG=effGoal/7,wG=effGoal,mG=effGoal/7*dim_;
-return{cat:cat,tPct:tG>0?Math.round(tHrs/tG*100):0,wPct:wG>0?Math.round(wHrs/wG*100):0,mPct:mG>0?Math.round(mHrs/mG*100):0,tHrs:tHrs,wHrs:wHrs,mHrs:mHrs,tG:tG,wG:wG,mG:mG,effGoal:effGoal,gap:(data.gaps&&data.gaps[cat.id])||0,adj:cat.weeklyAdjust||0,madj:cat.monthlyAdjust||0,gi:gapInfo(cat,data.records,data.gaps,data.repayMode||'week')}});
+var wG=cat.weeklyGoalHours,tG=wG/7,mG=wG/7*dim_;
+return{cat:cat,tPct:tG>0?Math.round(tHrs/tG*100):0,wPct:wG>0?Math.round(wHrs/wG*100):0,mPct:mG>0?Math.round(mHrs/mG*100):0,tHrs:tHrs,wHrs:wHrs,mHrs:mHrs,tG:tG,wG:wG,mG:mG}});
+var streak=calcStreak(data.records,data.lastAirDate);
+var airedToday=hasRecOn(data.records,t);
+var offDays=data.lastAirDate?Math.max(0,diffDays(data.lastAirDate,t)-1):0;
+var todayDelta=(data.audienceLog||[]).filter(function(e){return e.date===t}).reduce(function(s,e){return s+e.delta},0);
+var statusTxt=airedToday?'連播 '+streak+' 集':offDays>=1?'停播 '+offDays+' 天':streak>0?'連播 '+streak+' 集・今日尚未播出':'今日尚未播出';
 var avg=function(a){return a.length?Math.round(a.reduce(function(s,x){return s+x},0)/a.length):0};
 var tP=avg(catData.map(function(d){return d.tPct}));
 var wP=avg(catData.map(function(d){return d.wPct}));
@@ -297,6 +333,12 @@ React.createElement('div',{style:{position:'absolute',top:0,left:0,right:0,botto
 React.createElement('div',{style:{textAlign:'center',marginBottom:8}},
 React.createElement('h1',{className:'ft',style:{fontSize:26,color:'#FF2D20',letterSpacing:6,margin:0}},"YOU'RE ON"),
 React.createElement('p',{style:{color:'#445',fontSize:10,letterSpacing:3,marginTop:2}},'\u6578\u5B57\u4E0D\u6703\u8AAA\u8B0A')),
+React.createElement('div',{style:{textAlign:'center',margin:'14px 0 6px'}},
+React.createElement('div',{style:{color:'#556',fontSize:10,letterSpacing:2}},'\uD83D\uDCFA \u76EE\u524D\u6536\u770B\u4EBA\u6578'),
+React.createElement('div',{style:{display:'flex',alignItems:'baseline',justifyContent:'center',gap:8}},
+React.createElement('span',{className:'ft',style:{fontSize:54,color:'#fff',lineHeight:1.1}},data.audience.toLocaleString()),
+todayDelta!==0&&React.createElement('span',{className:'ft',style:{fontSize:18,color:todayDelta>0?'#C9A86A':'#FF2D20'}},(todayDelta>0?'\u2191 ':'\u2193 ')+Math.abs(todayDelta))),
+React.createElement('div',{style:{color:offDays>=1?'#FF2D20':'#C9A86A',fontSize:11,letterSpacing:1,marginTop:2}},statusTxt)),
 React.createElement('div',{style:{display:'flex',justifyContent:'space-around',margin:'12px 0 10px'}},
 screenItems.map(function(item,i){return React.createElement('div',{key:i,style:{textAlign:'center',flex:1}},
 React.createElement('div',{style:{color:'#556',fontSize:10,letterSpacing:1}},item[0]),
@@ -332,25 +374,6 @@ selData&&React.createElement('div',{className:'fade-in',style:{background:'#1414
 React.createElement('div',{style:{display:'flex',justifyContent:'space-between',marginBottom:6}},
 React.createElement('span',{style:{fontSize:15,fontWeight:600}},selData.cat.name),
 React.createElement('span',{className:'ft',style:{fontSize:14,color:'#555'}},selData.cat.weeklyGoalHours+'h/wk')),
-selData.gap>0&&React.createElement('div',{style:{display:'flex',justifyContent:'space-between',padding:'4px 8px',marginBottom:6,background:'rgba(255,45,32,.08)',borderRadius:6,border:'1px solid rgba(255,45,32,.15)'}},
-React.createElement('span',{style:{fontSize:11,color:'#FF2D20'}},'\u4E0A\u9031\u7F3A\u53E3\u7D50\u8F49'),
-React.createElement('span',{className:'ft',style:{fontSize:13,color:'#FF2D20'}},'+'+selData.gap+'h')),
-selData.adj!==0&&React.createElement('div',{style:{display:'flex',justifyContent:'space-between',padding:'4px 8px',marginBottom:6,background:'rgba(255,159,10,.08)',borderRadius:6,border:'1px solid rgba(255,159,10,.15)'}},
-React.createElement('span',{style:{fontSize:11,color:'#FF9F0A'}},'\u672C\u9031\u8ABF\u6574'),
-React.createElement('span',{className:'ft',style:{fontSize:13,color:'#FF9F0A'}},(selData.adj>0?'+':'')+selData.adj+'h')),
-selData.madj!==0&&React.createElement('div',{style:{display:'flex',justifyContent:'space-between',padding:'4px 8px',marginBottom:6,background:'rgba(255,159,10,.08)',borderRadius:6,border:'1px solid rgba(255,159,10,.15)'}},
-React.createElement('span',{style:{fontSize:11,color:'#FF9F0A'}},'\u672C\u6708\u8ABF\u6574'),
-React.createElement('span',{className:'ft',style:{fontSize:13,color:'#FF9F0A'}},(selData.madj>0?'+':'')+selData.madj+'h')),
-selData.gi.gap>0&&React.createElement('div',{style:{padding:'6px 8px',marginBottom:6,background:'rgba(255,45,32,.06)',borderRadius:6,border:'1px solid rgba(255,45,32,.12)'}},
-React.createElement('div',{style:{display:'flex',justifyContent:'space-between',marginBottom:2}},
-React.createElement('span',{style:{fontSize:11,color:'#FF2D20'}},'\u672C\u9031\u9032\u5EA6\u7F3A\u53E3'),
-React.createElement('span',{className:'ft',style:{fontSize:13,color:'#FF2D20'}},selData.gi.gap+'h')),
-React.createElement('div',{style:{display:'flex',justifyContent:'space-between'}},
-React.createElement('span',{style:{fontSize:10,color:'#996'}},'\u6BCF\u5929\u9700\u88DC +'+selData.gi.perDay+'h'),
-React.createElement('span',{style:{fontSize:10,color:'#996'}},'\u4ECA\u65E5\u76EE\u6A19 '+selData.gi.todayTarget+'h'))),
-React.createElement('div',{style:{display:'flex',justifyContent:'space-between',padding:'4px 8px',marginBottom:8,background:'rgba(255,255,255,.03)',borderRadius:6}},
-React.createElement('span',{style:{fontSize:11,color:'#888'}},'\u672C\u9031\u5BE6\u969B\u76EE\u6A19'),
-React.createElement('span',{className:'ft',style:{fontSize:13,color:'#fff'}},selData.effGoal+'h')),
 [['\u4ECA\u65E5',selData.tPct,selData.tHrs,selData.tG,'#30D158'],['\u672C\u9031',selData.wPct,selData.wHrs,selData.wG,'#FF9F0A'],['\u672C\u6708',selData.mPct,selData.mHrs,selData.mG,'#FF2D20']].map(function(item,i){return React.createElement('div',{key:i,style:{display:'flex',alignItems:'center',marginBottom:6,gap:8}},
 React.createElement('span',{style:{color:'#888',fontSize:12,width:36}},item[0]),
 React.createElement('span',{className:'ft',style:{fontSize:20,color:item[4],width:50}},item[1]+'%'),
@@ -361,9 +384,8 @@ React.createElement('span',{style:{color:'#888',fontSize:11,minWidth:70,textAlig
 React.createElement('div',{style:{display:'flex',padding:'2px 0',borderBottom:'1px solid #222',marginBottom:6}},
 ['','\u76EE\u6A19','\u5BE6\u969B','\u5DEE\u8DDD'].map(function(h,i){return React.createElement('span',{key:i,style:{color:'#555',fontSize:10,flex:i===0?2:1,textAlign:i===0?'left':i===3?'right':'center'}},h)})),
 data.categories.map(function(cat){
-var effG=getEffectiveWeeklyGoal(cat,data.gaps);
-var totEff=data.categories.reduce(function(s,c){return s+getEffectiveWeeklyGoal(c,data.gaps)},0);
-var gP=totEff>0?Math.round(effG/totEff*100):0;
+var totG=data.categories.reduce(function(s,c){return s+c.weeklyGoalHours},0);
+var gP=totG>0?Math.round(cat.weeklyGoalHours/totG*100):0;
 var aH=data.records.filter(function(r){return r.categoryId===cat.id}).reduce(function(s,r){return s+r.hours},0);
 var totH=data.records.reduce(function(s,r){return s+r.hours},0);
 var aP=totH>0?Math.round(aH/totH*100):0;var diff=aP-gP;
@@ -381,9 +403,10 @@ var total=data.categories.reduce(function(s,c){return s+(parseFloat(vals[c.id])|
 var submit=function(){
 var newRecs=data.categories.map(function(c){return{categoryId:c.id,date:date,hours:parseFloat(vals[c.id])||0,ts:Date.now()}}).filter(function(r){return r.hours>0});
 if(newRecs.length===0)return;
-up(function(d){newRecs.forEach(function(r){d.records.push(r)})});
+var box={};
+up(function(d){newRecs.forEach(function(r){d.records.push(r)});if(date===todayS())box.ev=airToday(d)});
 setVals({});setSaved(true);
-setTimeout(function(){setSaved(false);trig(newRecs)},600)};
+setTimeout(function(){setSaved(false);trig(newRecs,box.ev)},600)};
 var bSt={width:34,height:34,background:'#1a1a1a',border:'1px solid #2a2a2a',color:'#fff',borderRadius:8,fontSize:16,cursor:'pointer',flexShrink:0};
 return React.createElement('div',{style:{padding:16}},
 React.createElement('h1',{className:'ft',style:{fontSize:28,letterSpacing:2,margin:'16px 0'}},'RECORD'),
@@ -406,68 +429,34 @@ dayLog.length>0&&React.createElement('div',{style:{background:'#141414',borderRa
 React.createElement('p',{style:{color:'#555',fontSize:11,marginBottom:8}},date===todayS()?'\u4ECA\u65E5\u5DF2\u8A18\u9304':'\u8A72\u65E5\u5DF2\u8A18\u9304'),
 React.createElement('div',{style:{display:'flex',flexWrap:'wrap',gap:8}},
 dayLog.map(function(l,i){return React.createElement('span',{key:i,style:{background:'#1a1a1a',padding:'4px 10px',borderRadius:6,fontSize:13,color:'#888'}},l.name+' ',React.createElement('span',{className:'ft',style:{color:'#FF9F0A'}},l.hours+'h'))}))),
-React.createElement('button',{onClick:submit,style:{width:'100%',padding:16,background:saved?'#30D158':total>0?'#FF2D20':'#333',border:'none',borderRadius:12,color:'#fff',fontSize:18,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:2,cursor:total>0?'pointer':'default',transition:'background .3s'}},saved?'\u2713 SAVED':'SUBMIT'))}
+React.createElement('button',{onClick:submit,style:{width:'100%',padding:16,background:saved?'#30D158':total>0?'#FF2D20':'#333',border:'none',borderRadius:12,color:'#fff',fontSize:18,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:2,cursor:total>0?'pointer':'default',transition:'background .3s'}},saved?'\u2713 ON AIR':'\u64ad\u51fa\u672c\u96c6'))}
 function Settings({data,up}){
 var[nc,setNc]=useState('');
 var[nh,setNh]=useState(5);
 var[drafts,setDrafts]=useState({});
 var twg=data.categories.reduce(function(s,c){return s+c.weeklyGoalHours},0);
-var adv=data.mode==='advanced';
 var bSm={width:32,height:32,background:'#141414',border:'1px solid #222',color:'#fff',borderRadius:8,fontSize:18,cursor:'pointer'};
-var bSmAdj={width:28,height:28,background:'#1a1a1a',border:'1px solid #333',color:'#FF9F0A',borderRadius:6,fontSize:14,cursor:'pointer'};
 var setDraft=function(id,v){setDrafts(function(p){var n={...p};if(v==null)delete n[id];else n[id]=v;return n})};
-var adjRow=function(cat,field,label){
-var val=cat[field]||0;
-return React.createElement('div',{style:{display:'flex',alignItems:'center',gap:8,paddingLeft:4,marginTop:6}},
-React.createElement('span',{style:{fontSize:11,color:'#888',flex:1}},label),
-React.createElement('button',{style:bSmAdj,onClick:function(){up(function(d){var c=d.categories.find(function(x){return x.id===cat.id});if(c){var old=c[field]||0;if(old>-20){if(old===0)d.periodEdits=(d.periodEdits||0)+1;c[field]=Math.round((old-0.5)*10)/10}}})}},'\u2212'),
-React.createElement('span',{className:'ft',style:{fontSize:16,width:44,textAlign:'center',color:val>0?'#30D158':val<0?'#FF9F0A':'#555'}},(val>0?'+':'')+val+'h'),
-React.createElement('button',{style:bSmAdj,onClick:function(){up(function(d){var c=d.categories.find(function(x){return x.id===cat.id});if(c){var old=c[field]||0;if(old<20){if(old===0)d.periodEdits=(d.periodEdits||0)+1;c[field]=Math.round((old+0.5)*10)/10}}})}},'+'))};
 return React.createElement('div',{style:{padding:16}},
 React.createElement('h1',{className:'ft',style:{fontSize:28,letterSpacing:2,margin:'16px 0'}},'SETTINGS'),
-React.createElement('div',{style:{display:'flex',gap:8,margin:'8px 0 6px'}},
-[['simple','\u7C21\u55AE\u6A21\u5F0F'],['advanced','\u9032\u968E\u6A21\u5F0F']].map(function(m){return React.createElement('button',{key:m[0],onClick:function(){up(function(d){d.mode=m[0]})},style:{flex:1,padding:'10px 0',borderRadius:10,fontSize:13,cursor:'pointer',background:data.mode===m[0]?'#FF2D20':'#141414',border:'1px solid '+(data.mode===m[0]?'#FF2D20':'#222'),color:data.mode===m[0]?'#fff':'#888'}},m[1])})),
-React.createElement('p',{style:{color:'#555',fontSize:10,marginBottom:4}},adv?'\u9032\u968E\uFF1A\u53EF\u5FAE\u8ABF\u672C\u9031/\u672C\u6708\u76EE\u6A19\u3001\u9078\u64C7\u7F3A\u53E3\u9084\u6B3E\u65B9\u5F0F':'\u7C21\u55AE\uFF1A\u53EA\u7BA1\u7D42\u6975\u76EE\u6A19\uFF0C\u7F3A\u53E3\u81EA\u52D5\u6EFE\u5165\u672C\u9031\u5269\u9918\u5929\u6578'),
-(data.goalEdits||0)>0&&React.createElement('p',{style:{color:'#FF9F0A',fontSize:11,marginBottom:2}},'\uD83D\uDC41 \u7D42\u6975\u76EE\u6A19\u5DF2\u4FEE\u6539 '+data.goalEdits+' \u6B21\uFF0C\u89C0\u773E\u90FD\u8A18\u5F97'),
-adv&&(data.periodEdits||0)>0&&React.createElement('p',{style:{color:'#666',fontSize:10,marginBottom:2}},'\u671F\u9593\u76EE\u6A19\u5DF2\u8ABF\u6574 '+data.periodEdits+' \u6B21'),
+(data.goalEditLog||[]).length>0&&React.createElement('p',{style:{color:'#C9A86A',fontSize:11,marginBottom:2}},'\uD83D\uDC41 \u76EE\u6A19\u5DF2\u4FEE\u6539 '+data.goalEditLog.length+' \u6B21\uFF0C\u89C0\u773E\u90FD\u8A18\u5F97'),
 React.createElement('h2',{className:'ft',style:{fontSize:18,color:'#888',letterSpacing:2,margin:'20px 0 4px'}},'WEEKLY GOALS'),
-React.createElement('p',{style:{color:'#555',fontSize:10,marginBottom:12}},'\u7D42\u6975\u76EE\u6A19\u4FEE\u6539\u6709 72 \u5C0F\u6642\u51B7\u975C\u671F\uFF0C\u671F\u9593\u53EF\u53D6\u6D88\uFF0C\u6642\u9593\u5230\u81EA\u52D5\u751F\u6548'),
+React.createElement('p',{style:{color:'#555',fontSize:10,marginBottom:12}},'\u76EE\u6A19\u96A8\u6642\u53EF\u6539\u3001\u7ACB\u5373\u751F\u6548\uFF1B\u4F46\u6BCF\u6B21\u4FEE\u6539\u90FD\u6703\u7559\u4E0B\u7D00\u9304\uFF0C\u89C0\u773E\u8A18\u5F97\uFF0C\u800C\u4E14\u6703\u7FFB\u820A\u5E33'),
 data.categories.map(function(cat){
-var pend=(data.pendingGoals||[]).find(function(p){return p.catId===cat.id});
 var draft=drafts[cat.id]!=null?drafts[cat.id]:cat.weeklyGoalHours;
 var dirty=draft!==cat.weeklyGoalHours;
-var adj=cat.weeklyAdjust||0;
-var madj=cat.monthlyAdjust||0;
-var gap=(data.gaps&&data.gaps[cat.id])||0;
-var eff=getEffectiveWeeklyGoal(cat,data.gaps);
-var hrsLeft=pend?Math.max(1,Math.ceil((pend.effectiveTs-Date.now())/3600000)):0;
 return React.createElement('div',{key:cat.id,style:{background:'#141414',borderRadius:12,padding:14,marginBottom:8,border:'1px solid #222'}},
 React.createElement('div',{style:{display:'flex',alignItems:'center',gap:10}},
 React.createElement('span',{style:{flex:1,fontSize:15}},cat.name),
 React.createElement('button',{style:bSm,onClick:function(){setDraft(cat.id,Math.max(1,draft-1))}},'\u2212'),
-React.createElement('span',{className:'ft',style:{fontSize:22,width:40,textAlign:'center',color:dirty?'#FF9F0A':'#fff'}},draft+'h'),
+React.createElement('span',{className:'ft',style:{fontSize:22,width:40,textAlign:'center',color:dirty?'#C9A86A':'#fff'}},draft+'h'),
 React.createElement('button',{style:bSm,onClick:function(){setDraft(cat.id,draft+1)}},'+'),
-React.createElement('span',{className:'ft',style:{fontSize:14,color:'#FF9F0A',width:36,textAlign:'right'}},(twg>0?Math.round(cat.weeklyGoalHours/twg*100):0)+'%'),
-React.createElement('button',{onClick:function(){if(confirm('\u522A\u9664 '+cat.name+'\uFF1F'))up(function(d){d.categories=d.categories.filter(function(x){return x.id!==cat.id});delete d.gaps[cat.id];d.pendingGoals=(d.pendingGoals||[]).filter(function(p){return p.catId!==cat.id})})},style:{background:'transparent',border:'none',color:'#FF2D20',fontSize:16,cursor:'pointer'}},'\u00D7')),
-dirty&&React.createElement('div',{style:{display:'flex',alignItems:'center',gap:8,marginTop:8,padding:'6px 8px',background:'rgba(255,159,10,.07)',borderRadius:8}},
-React.createElement('span',{style:{fontSize:11,color:'#FF9F0A',flex:1}},cat.weeklyGoalHours+'h \u2192 '+draft+'h\uFF0C72 \u5C0F\u6642\u5F8C\u751F\u6548'),
-React.createElement('button',{onClick:function(){var v=draft;up(function(d){d.pendingGoals=(d.pendingGoals||[]).filter(function(p){return p.catId!==cat.id});d.pendingGoals.push({catId:cat.id,newHours:v,effectiveTs:Date.now()+72*3600*1000});d.goalEdits=(d.goalEdits||0)+1});setDraft(cat.id,null)},style:{padding:'4px 10px',background:'#FF2D20',border:'none',borderRadius:6,color:'#fff',fontSize:11,cursor:'pointer'}},'\u6392\u7A0B'),
-React.createElement('button',{onClick:function(){setDraft(cat.id,null)},style:{padding:'4px 10px',background:'transparent',border:'1px solid #333',borderRadius:6,color:'#888',fontSize:11,cursor:'pointer'}},'\u9084\u539F')),
-pend&&React.createElement('div',{style:{display:'flex',alignItems:'center',gap:8,marginTop:8,padding:'6px 8px',background:'rgba(48,209,88,.06)',borderRadius:8}},
-React.createElement('span',{style:{fontSize:11,color:'#30D158',flex:1}},'\u23F3 \u7D04 '+hrsLeft+' \u5C0F\u6642\u5F8C \u2192 '+pend.newHours+'h'),
-React.createElement('button',{onClick:function(){up(function(d){d.pendingGoals=(d.pendingGoals||[]).filter(function(p){return p.catId!==cat.id})})},style:{padding:'4px 10px',background:'transparent',border:'1px solid #333',borderRadius:6,color:'#888',fontSize:11,cursor:'pointer'}},'\u53D6\u6D88')),
-adv&&adjRow(cat,'weeklyAdjust','\u672C\u9031\u8ABF\u6574'),
-adv&&adjRow(cat,'monthlyAdjust','\u672C\u6708\u8ABF\u6574'),
-gap>0&&React.createElement('div',{style:{display:'flex',justifyContent:'flex-end',paddingRight:4,marginTop:6}},
-React.createElement('span',{style:{fontSize:10,color:'#FF2D20'}},'\u4E0A\u9031\u7F3A\u53E3\u7D50\u8F49 +'+gap+'h')),
-(gap>0||adj!==0||madj!==0)&&React.createElement('div',{style:{display:'flex',justifyContent:'flex-end',paddingRight:4,marginTop:4}},
-React.createElement('span',{style:{fontSize:11,color:'#888'}},'\u672C\u9031\u5BE6\u969B\u76EE\u6A19: '),
-React.createElement('span',{className:'ft',style:{fontSize:13,color:'#fff',marginLeft:4}},eff+'h')))}),
-adv&&React.createElement('div',{style:{background:'#141414',borderRadius:12,padding:14,marginTop:16,border:'1px solid #222'}},
-React.createElement('p',{style:{color:'#888',fontSize:13,marginBottom:10}},'\u7F3A\u53E3\u9084\u6B3E\u65B9\u5F0F'),
-React.createElement('div',{style:{display:'flex',gap:6}},
-[['nextday','\u5EF6\u5230\u9694\u65E5'],['week','\u6EFE\u5165\u672C\u9031\u5269\u9918'],['7days','\u6EFE\u5165\u672A\u4F86 7 \u5929']].map(function(m){return React.createElement('button',{key:m[0],onClick:function(){up(function(d){d.repayMode=m[0]})},style:{flex:1,padding:'8px 4px',borderRadius:8,fontSize:11,cursor:'pointer',background:(data.repayMode||'week')===m[0]?'#FF2D20':'#1a1a1a',border:'1px solid '+((data.repayMode||'week')===m[0]?'#FF2D20':'#222'),color:(data.repayMode||'week')===m[0]?'#fff':'#888'}},m[1])})),
-React.createElement('p',{style:{color:'#555',fontSize:10,marginTop:8}},'\u6C7A\u5B9A\u6C92\u505A\u5B8C\u7684\u6642\u6578\u600E\u9EBC\u6524\u9084\uFF0C\u9810\u8A2D\u6EFE\u5165\u672C\u9031\u5269\u9918\u5929\u6578')),
+React.createElement('span',{className:'ft',style:{fontSize:14,color:'#C9A86A',width:36,textAlign:'right'}},(twg>0?Math.round(cat.weeklyGoalHours/twg*100):0)+'%'),
+React.createElement('button',{onClick:function(){if(confirm('\u522A\u9664 '+cat.name+'\uFF1F'))up(function(d){d.categories=d.categories.filter(function(x){return x.id!==cat.id})})},style:{background:'transparent',border:'none',color:'#FF2D20',fontSize:16,cursor:'pointer'}},'\u00D7')),
+dirty&&React.createElement('div',{style:{display:'flex',alignItems:'center',gap:8,marginTop:8,padding:'6px 8px',background:'rgba(201,168,106,.07)',borderRadius:8}},
+React.createElement('span',{style:{fontSize:11,color:'#C9A86A',flex:1}},cat.weeklyGoalHours+'h \u2192 '+draft+'h\uFF0C\u7ACB\u5373\u751F\u6548'),
+React.createElement('button',{onClick:function(){var v=draft,from=cat.weeklyGoalHours;up(function(d){var c=d.categories.find(function(x){return x.id===cat.id});if(c){c.weeklyGoalHours=v;d.goalEditLog.push({date:todayS(),catId:cat.id,from:from,to:v})}});setDraft(cat.id,null)},style:{padding:'4px 10px',background:'#FF2D20',border:'none',borderRadius:6,color:'#fff',fontSize:11,cursor:'pointer'}},'\u78BA\u8A8D\u4FEE\u6539'),
+React.createElement('button',{onClick:function(){setDraft(cat.id,null)},style:{padding:'4px 10px',background:'transparent',border:'1px solid #333',borderRadius:6,color:'#888',fontSize:11,cursor:'pointer'}},'\u9084\u539F')))}),
 React.createElement('div',{style:{background:'#141414',borderRadius:12,padding:14,marginTop:16,border:'1px solid #222'}},
 React.createElement('p',{style:{color:'#888',fontSize:13,marginBottom:10}},'\u65B0\u589E Category'),
 React.createElement('div',{style:{display:'flex',gap:8,alignItems:'center'}},
@@ -475,7 +464,7 @@ React.createElement('input',{value:nc,onChange:function(e){setNc(e.target.value)
 React.createElement('button',{style:bSm,onClick:function(){setNh(Math.max(1,nh-1))}},'\u2212'),
 React.createElement('span',{className:'ft',style:{fontSize:20,width:32,textAlign:'center'}},nh+'h'),
 React.createElement('button',{style:bSm,onClick:function(){setNh(nh+1)}},'+'),
-React.createElement('button',{onClick:function(){if(nc.trim()&&data.categories.length<8){up(function(d){d.categories.push({id:'c'+Date.now(),name:nc.trim(),weeklyGoalHours:nh,weeklyAdjust:0,monthlyAdjust:0});d.gaps[d.categories[d.categories.length-1].id]=0});setNc('');setNh(5)}},disabled:data.categories.length>=8,style:{padding:'8px 14px',background:data.categories.length>=8?'#555':'#FF2D20',border:'none',borderRadius:8,color:'#fff',fontSize:13,cursor:data.categories.length>=8?'default':'pointer'}},(data.categories.length>=8?'\u4E0A\u9650':'\u52A0')))),
+React.createElement('button',{onClick:function(){if(nc.trim()&&data.categories.length<8){up(function(d){d.categories.push({id:'c'+Date.now(),name:nc.trim(),weeklyGoalHours:nh})});setNc('');setNh(5)}},disabled:data.categories.length>=8,style:{padding:'8px 14px',background:data.categories.length>=8?'#555':'#FF2D20',border:'none',borderRadius:8,color:'#fff',fontSize:13,cursor:data.categories.length>=8?'default':'pointer'}},(data.categories.length>=8?'\u4E0A\u9650':'\u52A0')))),
 React.createElement('div',{style:{background:'#141414',borderRadius:12,padding:16,marginTop:24,border:'1px solid #222'}},
 React.createElement('div',{style:{display:'flex',justifyContent:'space-between',marginBottom:8}},
 React.createElement('span',{style:{color:'#888',fontSize:13}},'\u6BCF\u9031\u7E3D\u6642\u6578'),
@@ -483,7 +472,7 @@ React.createElement('span',{className:'ft',style:{fontSize:22}},twg+'h')),
 data.categories.map(function(cat){return React.createElement('div',{key:cat.id,style:{display:'flex',justifyContent:'space-between',padding:'3px 0'}},
 React.createElement('span',{style:{color:'#888',fontSize:13}},cat.name),
 React.createElement('span',{className:'ft',style:{fontSize:15,color:'#FF9F0A'}},(twg>0?Math.round(cat.weeklyGoalHours/twg*100):0)+'%'))})),
-React.createElement('button',{onClick:function(){if(confirm('\u78BA\u5B9A\u8981\u6E05\u9664\u6240\u6709\u8CC7\u6599\u91CD\u65B0\u958B\u59CB\uFF1F')){localStorage.removeItem(KEY);location.reload()}},style:{width:'100%',padding:14,background:'transparent',border:'1px solid #FF2D20',borderRadius:12,color:'#FF2D20',fontSize:14,cursor:'pointer',marginTop:32}},'\u91CD\u7F6E\u6240\u6709\u8CC7\u6599'))}
+React.createElement('button',{onClick:function(){if(confirm('\u78BA\u5B9A\u8981\u6E05\u9664\u6240\u6709\u8CC7\u6599\u91CD\u65B0\u958B\u59CB\uFF1F')){localStorage.removeItem(KEY);localStorage.removeItem(OLDKEY);location.reload()}},style:{width:'100%',padding:14,background:'transparent',border:'1px solid #FF2D20',borderRadius:12,color:'#FF2D20',fontSize:14,cursor:'pointer',marginTop:32}},'\u91CD\u7F6E\u6240\u6709\u8CC7\u6599'))}
 ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(App));
 </script>
 </body>
