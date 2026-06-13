@@ -65,7 +65,10 @@ if(d.liveSession===undefined)d.liveSession=null;
 return d}catch{return null}};
 const save=d=>{try{localStorage.setItem(KEY,JSON.stringify(d))}catch{}};
 const toS=d=>d.toISOString().slice(0,10);
-const todayS=()=>toS(new Date());
+// 開發模式（?dev=1 或曾啟用過）：可時間旅行，把一個月壓縮成兩分鐘驗證整個迴路。正常使用看不到
+var DEV=(function(){try{var u=new URLSearchParams(location.search).has('dev');if(u)localStorage.setItem('yo_dev','1');return u||localStorage.getItem('yo_dev')==='1'}catch(e){return false}})();
+var nowOverride=DEV?(function(){try{return localStorage.getItem('yo_now')||null}catch(e){return null}})():null;
+const todayS=()=>nowOverride||toS(new Date());
 const getWeekId=s=>{const d=new Date(s),day=d.getDay()||7,m=new Date(d);m.setDate(d.getDate()-day+1);return toS(m)};
 const weekDates=s=>{const d=new Date(s),day=d.getDay()||7,m=new Date(d);m.setDate(d.getDate()-day+1);return Array.from({length:7},(_,i)=>{const x=new Date(m);x.setDate(m.getDate()+i);return toS(x)})};
 const monthDates=s=>{const d=new Date(s),y=d.getFullYear(),m=d.getMonth();return Array.from({length:new Date(y,m+1,0).getDate()},(_,i)=>toS(new Date(y,m,i+1)))};
@@ -666,6 +669,35 @@ React.createElement('div',{style:{display:'flex',alignItems:'baseline',justifyCo
 React.createElement('span',{className:'ft',style:{fontSize:20,color:'#30D158'}},'+'),
 React.createElement(CountUp,{value:refund,className:'ft',style:{fontSize:56,color:'#30D158',lineHeight:1,textShadow:'0 0 18px rgba(48,209,88,.35)'}}))),
 React.createElement('p',{style:{fontSize:11,color:'var(--t35)',letterSpacing:2}},'點擊繼續，觀眾有話要說')))}
+// 開發者時間旅行工具列（DEV 模式才出現）：快速記集、跳天數，觸發停播/回歸/週爆量/月會/里程碑
+function DevBar({data,up,trig}){
+var[open,setOpen]=useState(true);
+var t=todayS();
+var persist=function(){try{if(nowOverride)localStorage.setItem('yo_now',nowOverride);else localStorage.removeItem('yo_now')}catch(e){}};
+var adv=function(n){nowOverride=addDays(todayS(),n);persist();up(function(d){})};
+var toMonthEnd=function(){var d=new Date(todayS());nowOverride=toS(new Date(d.getFullYear(),d.getMonth(),daysInMonth(todayS())));persist();up(function(d){})};
+var real=function(){nowOverride=null;persist();up(function(d){})};
+var exit=function(){nowOverride=null;try{localStorage.removeItem('yo_now');localStorage.removeItem('yo_dev')}catch(e){}location.href=location.pathname};
+var rec=function(hit){
+var tt=todayS();
+var recs=data.categories.map(function(c){var dg=c.weeklyGoalHours/7;var h=hit?Math.round(dg*10)/10:Math.round(dg*(0.2+Math.random())*10)/10;return{categoryId:c.id,date:tt,hours:h,ts:Date.now()}}).filter(function(r){return r.hours>0});
+if(!recs.length)return;
+var box={};
+up(function(d){recs.forEach(function(r){d.records.push(r)});box.ev=airToday(d)});
+setTimeout(function(){trig(recs,box.ev)},60)};
+var btn={padding:'5px 9px',background:'rgba(255,255,255,.08)',border:'1px solid rgba(255,255,255,.15)',borderRadius:6,color:'#fff',fontSize:11,cursor:'pointer',whiteSpace:'nowrap',flexShrink:0};
+if(!open)return React.createElement('button',{onClick:function(){setOpen(true)},style:Object.assign({},btn,{position:'fixed',top:6,right:6,zIndex:2000})},'🛠 DEV');
+return React.createElement('div',{style:{position:'fixed',top:0,left:0,right:0,zIndex:2000,background:'rgba(18,10,26,.96)',borderBottom:'1px solid rgba(255,255,255,.15)',padding:'6px 8px',display:'flex',gap:6,alignItems:'center',overflowX:'auto'}},
+React.createElement('span',{style:{fontSize:10,color:'#C9A86A',whiteSpace:'nowrap',flexShrink:0}},(nowOverride?'🛠 模擬 ':'🛠 真實 ')+t),
+React.createElement('button',{onClick:function(){rec(true)},style:btn},'達標集'),
+React.createElement('button',{onClick:function(){rec(false)},style:btn},'隨便記'),
+React.createElement('button',{onClick:function(){adv(1)},style:btn},'+1天'),
+React.createElement('button',{onClick:function(){adv(3)},style:btn},'+3天'),
+React.createElement('button',{onClick:function(){adv(7)},style:btn},'+7天'),
+React.createElement('button',{onClick:toMonthEnd,style:btn},'→月底'),
+React.createElement('button',{onClick:real,style:Object.assign({},btn,{color:'#C9A86A'})},'回真實'),
+React.createElement('button',{onClick:exit,style:Object.assign({},btn,{color:'#FF6B6B'})},'關DEV'),
+React.createElement('button',{onClick:function(){setOpen(false)},style:btn},'▲'))}
 function App(){
 var[data,setData]=useState(function(){var d=load()||init();d=settleAll(d);save(d);return d});
 var[page,setPage]=useState('dashboard');
@@ -698,6 +730,7 @@ React.createElement('div',{className:'vignette'}),
 React.createElement('div',{className:'grain'}),
 comment&&React.createElement(CommentOverlay,{comment:comment,onClose:function(){setComment(null)}}),
 comebackCard&&React.createElement(ComebackCard,{offDays:comebackCard.offDays,refund:comebackCard.refund,ep:comebackCard.ep,onClose:function(){setComebackCard(null)}}),
+DEV&&React.createElement(DevBar,{data:data,up:up,trig:trigCmt}),
 modal&&React.createElement(Modal,{title:modal.title,body:modal.body,confirmText:modal.confirmText,danger:modal.danger,onConfirm:modal.onConfirm,onClose:function(){setModal(null)}}),
 rvMonth&&React.createElement(MonthlyReview,{data:data,month:rvMonth,up:up}),
 intro&&React.createElement('div',{style:{position:'fixed',inset:0,zIndex:1200,display:'flex',overflow:'hidden',pointerEvents:'none'}},
