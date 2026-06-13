@@ -504,13 +504,16 @@ return{cm:{type:'line',char:ch,msgs:msgs,time:rndTime(),progressNote:progressNot
 else{const raw=pick(finPool[ti]);const idx=raw.indexOf('|');return{cm:{type:'fin',headline:T(raw.slice(0,idx)),body:T(raw.slice(idx+1)),progressNote:progressNote,editNote:editNote,reviewNote:reviewNote},persist:mkPersist(null)}}
 };function Ring({size,tPct,wPct,label,onClick,selected}){
 var r1=size/2-6,r2=size/2-15,cx=size/2,cy=size/2;
-var arc=function(r,pct){var p=Math.min(pct,100)/100;if(p<=0)return'';if(p>=1)return'M'+cx+','+(cy-r)+' A'+r+','+r+' 0 1,1 '+(cx-0.01)+','+(cy-r)+' A'+r+','+r+' 0 1,1 '+cx+','+(cy-r);var a=p*2*Math.PI;var x=cx+r*Math.sin(a);var y=cy-r*Math.cos(a);var lg=p>0.5?1:0;return'M'+cx+','+(cy-r)+' A'+r+','+r+' 0 '+lg+',1 '+x+','+y};
+var ringArc=function(r,pct,stroke,sw){var p=Math.min(pct,100)/100;if(p<=0)return null;
+if(p>=1)return React.createElement('circle',{cx:cx,cy:cy,r:r,fill:'none',stroke:stroke,strokeWidth:sw});
+var a=p*2*Math.PI,x=cx+r*Math.sin(a),y=cy-r*Math.cos(a),lg=p>0.5?1:0;
+return React.createElement('path',{d:'M'+cx+','+(cy-r)+' A'+r+','+r+' 0 '+lg+',1 '+x+','+y,fill:'none',stroke:stroke,strokeWidth:sw,strokeLinecap:'round'})};
 return React.createElement('div',{onClick:onClick,style:{cursor:'pointer',textAlign:'center',transition:'transform .2s',transform:selected?'scale(1.08)':'scale(1)'}},
 React.createElement('svg',{width:size,height:size,className:wPct>=100?'ring-glow':''},
 React.createElement('circle',{cx:cx,cy:cy,r:r1,fill:'none',stroke:'rgba(255,255,255,.07)',strokeWidth:7}),
 React.createElement('circle',{cx:cx,cy:cy,r:r2,fill:'none',stroke:'rgba(255,255,255,.05)',strokeWidth:3}),
-wPct>0&&React.createElement('path',{d:arc(r1,wPct),fill:'none',stroke:'#C9A86A',strokeWidth:7,strokeLinecap:'round'}),
-tPct>0&&React.createElement('path',{d:arc(r2,tPct),fill:'none',stroke:'rgba(255,255,255,.75)',strokeWidth:3,strokeLinecap:'round'}),
+ringArc(r1,wPct,'#C9A86A',7),
+ringArc(r2,tPct,'rgba(255,255,255,.75)',3),
 React.createElement('text',{x:cx,y:cy-1,textAnchor:'middle',dominantBaseline:'middle',fill:'#fff',fontSize:Math.round(size*0.16),fontFamily:"'Bebas Neue',sans-serif"},wPct+'%'),
 React.createElement('text',{x:cx,y:cy+Math.round(size*0.13),textAnchor:'middle',fill:'rgba(255,255,255,.5)',fontSize:Math.max(7,Math.round(size*0.075)),fontFamily:"'Bebas Neue',sans-serif",letterSpacing:1},'日 '+tPct+'%')
 ),
