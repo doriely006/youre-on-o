@@ -851,7 +851,7 @@ React.createElement('div',{className:'tag'},item[0]),
 React.createElement('div',{className:'ft',style:{fontSize:32,color:pctC(item[1]),lineHeight:1,margin:'3px 0 2px'}},item[1]+'%'),
 React.createElement('div',{style:{color:'var(--t35)',fontSize:10}},Math.round(item[2]*10)/10+'h'))})),
 React.createElement('div',{style:{display:'flex',justifyContent:'center',alignItems:'center',gap:12,margin:'4px 0 2px'}},
-React.createElement('span',{style:{color:'var(--t35)',fontSize:10,letterSpacing:1}},'週'+weekDayNames[dow-1]+' '+dow+'/7'),
+React.createElement('span',{style:{color:'var(--t35)',fontSize:10,letterSpacing:1}},t.replace(/-/g,'/')+'(週'+weekDayNames[dow-1]+')'),
 finaleDays===0
 ?React.createElement('span',{style:{color:'#FF2D20',fontSize:9,letterSpacing:2}},'★ 今晚・改版會議')
 :finaleDays<=10&&React.createElement('span',{style:{color:'#C9A86A',fontSize:9,letterSpacing:2}},'★ SEASON FINALE 倒數 '+finaleDays+' 天')),
@@ -887,7 +887,7 @@ var aP=totH>0?Math.round(aH/totH*100):0;var diff=aP-gP;
 return React.createElement('div',{key:cat.id,style:{display:'flex',padding:'5px 0',borderBottom:'1px solid rgba(255,255,255,.04)'}},
 React.createElement('span',{style:{fontSize:12,flex:2,color:'var(--t60)'}},cat.name),
 React.createElement('span',{className:'ft',style:{fontSize:15,flex:1,textAlign:'center',color:'var(--t35)'}},gP+'%'),
-React.createElement('span',{className:'ft',style:{fontSize:15,flex:1,textAlign:'center',color:'#C9A86A'}},aP+'%'),
+React.createElement('span',{className:'ft',style:{fontSize:15,flex:1,textAlign:'center',color:'rgba(255,255,255,.9)'}},aP+'%'),
 React.createElement('span',{className:'ft',style:{fontSize:15,flex:1,textAlign:'right',color:diff>=0?'#30D158':'#FF2D20'}},(diff>0?'+':'')+diff+'%'))})))}function Rec({data,up,trig,ask}){
 var[date,setDate]=useState(todayS());
 var[vals,setVals]=useState({});
