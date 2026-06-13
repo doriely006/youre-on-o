@@ -775,11 +775,13 @@ var bottomRow=catData.slice(topCount);
 // 觀眾席 = 觀眾數視覺化：28 席固定，入座數 = 觀眾/歷史高點，掉觀眾就出現空椅。
 // 空席順序固定（散落感），最後一席永遠有人——那是阿姨
 var seatRatio=Math.max(0,Math.min(1,data.audience/(data.audiencePeak||100)));
-var occCount=Math.max(1,Math.round(seatRatio*28));
-var emptyOrder=[3,14,7,22,11,26,1,18,9,24,5,16,13,27,2,20,6,25,10,15,0,19,8,23,12,21,4,17];
-var emptySet={};emptyOrder.slice(0,28-occCount).forEach(function(ix){emptySet[ix]=1});
-var backRow=Array.from({length:16},function(_,i){return{idx:i,x:8+i*26.4}});
-var frontRow=Array.from({length:12},function(_,i){return{idx:16+i,x:2+i*36}});
+var SEATS=42,auntIdx=35; // 三排共 42 席；前排中央那席（35）永遠有人——阿姨
+var occCount=Math.max(1,Math.round(seatRatio*SEATS));
+var emptyOrder=(function(){var p=[];for(var k=0;k<SEATS;k++)p.push((k*17+5)%SEATS);var o=p.filter(function(v){return v!==auntIdx});o.push(auntIdx);return o})();
+var emptySet={};emptyOrder.slice(0,SEATS-occCount).forEach(function(ix){emptySet[ix]=1});
+var backRow=Array.from({length:16},function(_,i){return{idx:i,x:4+i*26.5}});
+var midRow=Array.from({length:14},function(_,i){return{idx:16+i,x:5+i*30.4}});
+var frontRow=Array.from({length:12},function(_,i){return{idx:30+i,x:6+i*35.6}});
 return React.createElement('div',{style:{padding:'0 16px',minHeight:'calc(100vh - 70px)',display:'flex',flexDirection:'column'}},
 React.createElement('div',{style:{position:'relative',margin:'0 -16px',height:354,overflow:'hidden'}},
 React.createElement(Auditorium,null),
@@ -814,19 +816,24 @@ React.createElement('div',{style:{display:'flex',alignItems:'baseline',justifyCo
 React.createElement(CountUp,{value:data.audience,className:'ft',style:{fontSize:isLive?60:72,color:'#241c10',lineHeight:1.05,letterSpacing:1,textShadow:'0 0 8px rgba(45,33,16,.18)'}}),
 todayDelta!==0&&React.createElement('span',{className:'ft',style:{fontSize:19,color:todayDelta>0?'#8a6f3c':'#b3261a'}},(todayDelta>0?'\u2191 ':'\u2193 ')+Math.abs(todayDelta))),
 React.createElement('div',{style:{color:isLive?'#b3261a':'#6b5836',fontSize:10,letterSpacing:1.5,marginTop:4}},isLive?'\u76F4\u64AD\u9304\u88FD\u4E2D':statusTxt)),
-React.createElement('div',{style:{position:'absolute',left:0,right:0,bottom:0,height:54,zIndex:2}},
+React.createElement('div',{style:{position:'absolute',left:0,right:0,bottom:0,height:70,zIndex:2}},
 React.createElement('div',{style:{position:'absolute',top:-26,left:0,right:0,height:30,background:'linear-gradient(180deg,transparent,rgba(255,235,200,.06))',pointerEvents:'none'}}),
-React.createElement('svg',{width:'100%',height:54,style:{position:'absolute',bottom:0,left:0},viewBox:'0 0 430 54',preserveAspectRatio:'xMidYMax slice'},
+React.createElement('svg',{width:'100%',height:70,style:{position:'absolute',bottom:0,left:0},viewBox:'0 0 430 70',preserveAspectRatio:'xMidYMax slice'},
 backRow.map(function(s){var occ=!emptySet[s.idx];return React.createElement('g',{key:'b'+s.idx},
-occ&&React.createElement('circle',{cx:s.x+10,cy:14,r:4.2,fill:'#080808'}),
-occ&&React.createElement('path',{d:'M'+(s.x+5.8)+' 14 A4.2 4.2 0 0 1 '+(s.x+14.2)+' 14',fill:'none',stroke:'rgba(255,225,180,.13)',strokeWidth:.7}),
-React.createElement('rect',{x:s.x,y:18,width:20,height:11,rx:3,fill:occ?'#060606':'#040404'}),
-React.createElement('rect',{x:s.x,y:18,width:20,height:1,rx:.5,fill:occ?'rgba(255,220,170,.07)':'rgba(255,220,170,.035)'}))}),
+occ&&React.createElement('circle',{cx:s.x+10,cy:11,r:3.4,fill:'#070707'}),
+occ&&React.createElement('path',{d:'M'+(s.x+6.6)+' 11 A3.4 3.4 0 0 1 '+(s.x+13.4)+' 11',fill:'none',stroke:'rgba(255,225,180,.12)',strokeWidth:.6}),
+React.createElement('rect',{x:s.x,y:14,width:20,height:9,rx:3,fill:occ?'#060606':'#040404'}),
+React.createElement('rect',{x:s.x,y:14,width:20,height:1,rx:.5,fill:occ?'rgba(255,220,170,.06)':'rgba(255,220,170,.03)'}))}),
+midRow.map(function(s){var occ=!emptySet[s.idx];return React.createElement('g',{key:'m'+s.idx},
+occ&&React.createElement('circle',{cx:s.x+12,cy:30,r:4.6,fill:'#060606'}),
+occ&&React.createElement('path',{d:'M'+(s.x+7.4)+' 30 A4.6 4.6 0 0 1 '+(s.x+16.6)+' 30',fill:'none',stroke:'rgba(255,226,182,.20)',strokeWidth:.8}),
+React.createElement('rect',{x:s.x,y:34,width:24,height:12,rx:3.5,fill:occ?'#050505':'#030303'}),
+React.createElement('rect',{x:s.x,y:34,width:24,height:1.2,rx:.6,fill:occ?'rgba(255,221,172,.10)':'rgba(255,221,172,.04)'}))}),
 frontRow.map(function(s){var occ=!emptySet[s.idx];return React.createElement('g',{key:'f'+s.idx},
-occ&&React.createElement('circle',{cx:s.x+14,cy:33,r:6,fill:'#050505'}),
-occ&&React.createElement('path',{d:'M'+(s.x+8)+' 33 A6 6 0 0 1 '+(s.x+20)+' 33',fill:'none',stroke:'rgba(255,228,185,.30)',strokeWidth:1}),
-React.createElement('rect',{x:s.x,y:38,width:28,height:16,rx:4,fill:occ?'#040404':'#030303'}),
-React.createElement('rect',{x:s.x,y:38,width:28,height:1.4,rx:.7,fill:occ?'rgba(255,222,175,.12)':'rgba(255,222,175,.05)'}))})))),
+occ&&React.createElement('circle',{cx:s.x+14.5,cy:51,r:6.2,fill:'#040404'}),
+occ&&React.createElement('path',{d:'M'+(s.x+8.3)+' 51 A6.2 6.2 0 0 1 '+(s.x+20.7)+' 51',fill:'none',stroke:'rgba(255,228,185,.30)',strokeWidth:1}),
+React.createElement('rect',{x:s.x,y:55,width:29,height:15,rx:4,fill:occ?'#030303':'#020202'}),
+React.createElement('rect',{x:s.x,y:55,width:29,height:1.4,rx:.7,fill:occ?'rgba(255,222,175,.12)':'rgba(255,222,175,.05)'}))})))),
 React.createElement('div',{style:{display:'flex',justifyContent:'space-around',margin:'14px 0 2px'}},
 screenItems.map(function(item,i){return React.createElement('div',{key:i,style:{textAlign:'center',flex:1}},
 React.createElement('div',{className:'tag'},item[0]),
