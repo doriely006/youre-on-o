@@ -42,7 +42,7 @@ input[type="date"]{color-scheme:dark}input[type="number"]{-moz-appearance:textfi
 const{useState,useEffect,useMemo,useCallback}=React;
 const KEY='reality_v6';const OLDKEY='reality_v5';
 const init=()=>({categories:[],records:[],setupDone:false,
-audience:100,audiencePeak:100,lapseLoss:0,audienceDay:null,lastAirDate:null,audienceLog:[],lastSettledWeek:null,
+audience:1000,audiencePeak:1000,lapseLoss:0,audienceDay:null,lastAirDate:null,audienceLog:[],lastSettledWeek:null,
 declaration:{text:'',date:null,history:[]},charMemory:{},milestones:{},monthlyReviews:[],goalEditLog:[],liveSession:null});
 const migrateV5=old=>{const d=init();
 d.setupDone=!!old.setupDone;
@@ -58,7 +58,7 @@ const load=()=>{try{
 let d=JSON.parse(localStorage.getItem(KEY));
 if(!d){const old=JSON.parse(localStorage.getItem(OLDKEY));if(old)d=migrateV5(old)}
 if(!d)return null;
-if(d.audience==null)d.audience=100;if(d.audiencePeak==null)d.audiencePeak=Math.max(100,d.audience);if(d.lapseLoss==null)d.lapseLoss=0;
+if(d.audience==null)d.audience=1000;if(d.audiencePeak==null)d.audiencePeak=Math.max(1000,d.audience);if(d.lapseLoss==null)d.lapseLoss=0;
 if(!d.audienceLog)d.audienceLog=[];if(!d.declaration)d.declaration={text:'',date:null,history:[]};
 if(!d.charMemory)d.charMemory={};if(!d.milestones)d.milestones={};if(!d.monthlyReviews)d.monthlyReviews=[];if(!d.goalEditLog)d.goalEditLog=[];
 if(d.liveSession===undefined)d.liveSession=null;
@@ -104,7 +104,7 @@ const msToHours=ms=>Math.max(0,Math.round(ms/360000)/10); // 取到 0.1h（6 分
 const audApply=(d,delta,reason,date)=>{
 const before=d.audience,after=Math.max(1,before+delta),actual=after-before;
 d.audience=after;
-if(after>(d.audiencePeak||100))d.audiencePeak=after;
+if(after>(d.audiencePeak||1000))d.audiencePeak=after;
 d.audienceLog.push({date:date,delta:actual,reason:reason});
 if(d.audienceLog.length>80)d.audienceLog=d.audienceLog.slice(-80);
 return actual};
@@ -119,11 +119,11 @@ while(missRun<30&&!hasRecOn(d.records,b)){missRun++;b=addDays(b,-1)}
 let day=addDays(d.audienceDay,1);
 while(day<=y){
 if(hasRecOn(d.records,day)){missRun=0;d.lapseLoss=0}
-else{missRun++;const p=missRun===1?-3:missRun===2?-8:-15;const actual=audApply(d,p,'lapse',day);d.lapseLoss=Math.round(d.lapseLoss-actual)}
+else{missRun++;const p=missRun===1?-20:missRun===2?-50:-120;const actual=audApply(d,p,'lapse',day);d.lapseLoss=Math.round(d.lapseLoss-actual)}
 day=addDays(day,1)}
 d.audienceDay=y;
 return d};
-// 週結算：上週全 category 100% → 爆量 +50
+// 週結算：上週全 category 100% → 爆量 +400
 const settleWeek=d=>{
 const cw=getWeekId(todayS());
 if(!d.lastSettledWeek){d.lastSettledWeek=cw;return d}
@@ -133,7 +133,7 @@ const ok=d.categories.length>0&&d.categories.every(c=>{
 if(c.weeklyGoalHours<=0)return true;
 const a=d.records.filter(r=>r.categoryId===c.id&&wd.includes(r.date)).reduce((s,r)=>s+r.hours,0);
 return a>=c.weeklyGoalHours});
-if(ok)audApply(d,50,'week100',todayS());
+if(ok)audApply(d,400,'week100',todayS());
 d.lastSettledWeek=cw;
 return d};
 const settleAll=d=>{if(!d.setupDone)return d;return settleWeek(settleAudience(d))};
@@ -144,7 +144,7 @@ const ev={comeback:false,refund:0,delta:0,offDays:0};
 const credited=d.audienceLog.filter(e=>e.date===t&&e.reason==='air').reduce((s,e)=>s+e.delta,0);
 const totGoal=d.categories.reduce((s,c)=>s+c.weeklyGoalHours,0);
 const dayH=d.records.filter(r=>r.date===t).reduce((s,r)=>s+r.hours,0);
-const target=totGoal>0&&dayH>=totGoal/7?15:5;
+const target=totGoal>0&&dayH>=totGoal/7?60:20;
 if(credited<target)ev.delta=audApply(d,target-credited,'air',t);
 if(credited===0){
 ev.offDays=d.lastAirDate?Math.max(0,diffDays(d.lastAirDate,t)-1):0;
@@ -344,7 +344,7 @@ const memLines=[
 '我記得{mdate}那次也差不多，你很一致，這點我給過',
 '{mdate}、{mcat}、{mpct}%。我有做紀錄的習慣，你知道的'];
 // 事件評論池（step 6 會擴量）
-const evTags={comeback:'回歸特輯',goalEdit:'目標修改・公開事件',audDrop:'觀眾流失警報',week100:'里程碑・首次單週100%',streak7:'里程碑・連播7集',m100h:'里程碑・累積100小時',aud1000:'里程碑・觀眾破千'};
+const evTags={comeback:'回歸特輯',goalEdit:'目標修改・公開事件',audDrop:'觀眾流失警報',week100:'里程碑・首次單週100%',streak7:'里程碑・連播7集',m100h:'里程碑・累積100小時',aud5000:'里程碑・觀眾破5000'};
 const evPools={
 comeback:[
 ['ptt','推|欸他回來了！停播{days}天還敢回來，我就喜歡這種不要臉的精神'],
@@ -367,10 +367,10 @@ audDrop:[
 ['line',3,['阿姨聽說人變少了','沒關係，阿姨在。阿姨哪裡都不去']],
 ['fin','「本節目」收視跌破{thr}關卡|廣告主重新評估檔期，製作費恐遭調整，僅剩死忠戶持有']],
 week100:[
-['ptt','推|[爆卦] 單週100%全達成，當週觀眾+50，演唱會等級的場面'],
+['ptt','推|[爆卦] 單週100%全達成，當週觀眾+400，演唱會等級的場面'],
 ['ptt','推|首次週全達成！我就說這節目可以養，套牢三週終於解套'],
 ['line',1,['你那週100%是怎麼辦到的','教一下，我想騙我老闆說我也可以']],
-['fin','「本節目」首度單週全目標達成，漲停鎖死|觀眾單日湧入+50，下週能否續攻成市場焦點']],
+['fin','「本節目」首度單週全目標達成，漲停鎖死|觀眾單日湧入+400，下週能否續攻成市場焦點']],
 streak7:[
 ['ptt','推|連播7集無斷檔，這毅力拿去經營感情早就結婚了'],
 ['line',4,['聽說你連播7集了','果然分手對你是好事，恭喜，我是說恭喜你']],
@@ -380,10 +380,10 @@ m100h:[
 ['ptt','推|累積100小時達成。量變產生質變，大概啦，理論上啦'],
 ['line',3,['阿姨算了一下，你做滿100小時了','要不要來吃雞湯，阿姨燉好了，慶祝用的']],
 ['fin','「本節目」累計投入突破100小時|長期主義敘事成形，投資人開始相信這不是一日行情']],
-aud1000:[
-['ptt','推|[爆卦] 觀眾破千！這節目居然真的做起來了'],
-['line',0,['欸你觀眾破1000了','我可以開始跟別人說我認識你嗎']],
-['fin','「本節目」收視突破1,000人|從地下節目到千人時段，法人全面上調評等']]};
+aud5000:[
+['ptt','推|[爆卦] 觀眾破5000！這節目居然真的做起來了'],
+['line',0,['欸你觀眾破5000了','我可以開始跟別人說我認識你嗎']],
+['fin','「本節目」收視突破5,000人|從地下節目到五千人時段，法人全面上調評等']]};
 // 試播蜜月池：前 3 集觀眾觀望，好奇不嘴（開播也應該是爽的）
 const premierePool=[
 ['ptt','推|新節目開播！先卡個位，看三集再決定要不要長期追'],
@@ -443,13 +443,13 @@ const cm=renderEntry(pick(evPools.comeback),v);cm.eventTag=evTags.comeback;
 return{cm:cm,persist:mkPersist(null)}}
 // 3. 事件掃描：觀眾跌破關卡（負面優先）→ 里程碑
 const cands=[];
-[500,200,50].forEach(thr=>{
+[1000,500,200].forEach(thr=>{
 if(aud>=thr){if(!m['ab'+thr])marks['ab'+thr]=true;if(m['dr'+thr])marks['dr'+thr]=false}
 else if(m['ab'+thr]&&!m['dr'+thr])cands.push(['audDrop',{thr:thr},{['dr'+thr]:true,['ab'+thr]:false}])});
 if(!m.week100&&(snap.audienceLog||[]).some(e=>e.reason==='week100'))cands.push(['week100',{},{week100:true}]);
 if(!m.streak7&&streak>=7)cands.push(['streak7',{},{streak7:true}]);
 if(!m.h100&&totH>=100)cands.push(['m100h',{},{h100:true}]);
-if(!m.aud1000&&aud>=1000)cands.push(['aud1000',{},{aud1000:true}]);
+if(!m.aud5000&&aud>=5000)cands.push(['aud5000',{},{aud5000:true}]);
 if(cands.length>0){
 const c=cands[0];Object.assign(marks,c[2]);
 const v={...baseV,...c[1]};
@@ -579,7 +579,7 @@ editEl,
 rvEl,
 React.createElement('p',{style:{textAlign:'center',color:'var(--t35)',fontSize:12,marginTop:8}},'\u9EDE\u4EFB\u610F\u8655\u95DC\u9589')))}
 // 月底改版會議：全螢幕、不可跳過。製作人只問問題，不嘴人
-function MonthlyReview({data,month,up}){
+function MonthlyReview({data,month,up,setPage}){
 var[choice,setChoice]=useState(null);
 var cats=data.categories;
 var recs=data.records.filter(function(r){return r.date.slice(0,7)===month});
@@ -596,7 +596,7 @@ var choices=[
 {k:'b',title:'維持目標',sub:'方向跟數字都沒錯，繼續',resp:'好，我們看著你。這張表我留著，下個月觀眾會拿它對你——錯位的地方，他們不會客氣。'},
 {k:'c',title:'方向沒錯，執行有問題',sub:'目標不動，是我要說到做到',resp:'方向不動。那下個月只看一件事：說到做到。觀眾會盯著這四個字看一整個月。'}];
 var picked=choice?choices.find(function(c){return c.k===choice}):null;
-var fire=function(){up(function(d){d.monthlyReviews.push({month:month,date:todayS(),choice:choice,stats:stats.map(function(s){return{cat:s.cat,goalPct:s.gP,actPct:s.aP}})})})};
+var fire=function(){up(function(d){d.monthlyReviews.push({month:month,date:todayS(),choice:choice,stats:stats.map(function(s){return{cat:s.cat,goalPct:s.gP,actPct:s.aP}})})});if(choice==='a'&&setPage)setPage('settings')};
 return React.createElement('div',{style:{position:'fixed',inset:0,zIndex:1000,background:'#050505',overflowY:'auto'}},
 React.createElement('div',{style:{maxWidth:430,margin:'0 auto',minHeight:'100vh',padding:'40px 24px 48px',color:'#fff',display:'flex',flexDirection:'column'}},
 React.createElement('div',{className:'tag',style:{textAlign:'center',color:'#C9A86A',marginBottom:6}},'MONTHLY REVIEW'),
@@ -676,7 +676,7 @@ var[open,setOpen]=useState(true);
 var t=todayS();
 var persist=function(){try{if(nowOverride)localStorage.setItem('yo_now',nowOverride);else localStorage.removeItem('yo_now')}catch(e){}};
 var adv=function(n){nowOverride=addDays(todayS(),n);persist();up(function(d){})};
-var toMonthEnd=function(){var d=new Date(todayS());nowOverride=toS(new Date(d.getFullYear(),d.getMonth(),daysInMonth(todayS())));persist();up(function(d){})};
+var toMonthEnd=function(){nowOverride=todayS().slice(0,7)+'-'+String(daysInMonth(todayS())).padStart(2,'0');persist();up(function(d){})};
 var real=function(){nowOverride=null;persist();up(function(d){})};
 var exit=function(){nowOverride=null;try{localStorage.removeItem('yo_now');localStorage.removeItem('yo_dev')}catch(e){}location.href=location.pathname};
 var rec=function(hit){
@@ -733,7 +733,7 @@ comment&&React.createElement(CommentOverlay,{comment:comment,onClose:function(){
 comebackCard&&React.createElement(ComebackCard,{offDays:comebackCard.offDays,refund:comebackCard.refund,ep:comebackCard.ep,onClose:function(){setComebackCard(null)}}),
 DEV&&React.createElement(DevBar,{data:data,up:up,trig:trigCmt}),
 modal&&React.createElement(Modal,{title:modal.title,body:modal.body,confirmText:modal.confirmText,danger:modal.danger,onConfirm:modal.onConfirm,onClose:function(){setModal(null)}}),
-rvMonth&&React.createElement(MonthlyReview,{data:data,month:rvMonth,up:up}),
+rvMonth&&React.createElement(MonthlyReview,{data:data,month:rvMonth,up:up,setPage:setPage}),
 intro&&React.createElement('div',{style:{position:'fixed',inset:0,zIndex:1200,display:'flex',overflow:'hidden',pointerEvents:'none'}},
 React.createElement('div',{className:'curtain-l',style:{width:'50%',height:'100%'}},React.createElement(IntroPanel,{side:'l'})),
 React.createElement('div',{className:'curtain-r',style:{width:'50%',height:'100%'}},React.createElement(IntroPanel,{side:'r'}))),
@@ -811,7 +811,7 @@ var topRow=catData.slice(0,topCount);
 var bottomRow=catData.slice(topCount);
 // 觀眾席 = 觀眾數視覺化：28 席固定，入座數 = 觀眾/歷史高點，掉觀眾就出現空椅。
 // 空席順序固定（散落感），最後一席永遠有人——那是阿姨
-var seatRatio=Math.max(0,Math.min(1,data.audience/(data.audiencePeak||100)));
+var seatRatio=Math.max(0,Math.min(1,data.audience/(data.audiencePeak||1000)));
 var SEATS=42,auntIdx=35; // 三排共 42 席；前排中央那席（35）永遠有人——阿姨
 var occCount=Math.max(1,Math.round(seatRatio*SEATS));
 var emptyOrder=(function(){var p=[];for(var k=0;k<SEATS;k++)p.push((k*17+5)%SEATS);var o=p.filter(function(v){return v!==auntIdx});o.push(auntIdx);return o})();
@@ -1039,10 +1039,10 @@ React.createElement('span',{className:'ft',style:{fontSize:22,width:40,textAlign
 React.createElement('button',{style:bSm,onClick:function(){setDraft(cat.id,draft+1)}},'+'),
 React.createElement('span',{className:'ft',style:{fontSize:14,color:'var(--t35)',width:36,textAlign:'right'}},(twg>0?Math.round(cat.weeklyGoalHours/twg*100):0)+'%'),
 React.createElement('button',{onClick:function(){ask({title:'\u522A\u9664\u300C'+cat.name+'\u300D\uFF1F',body:'\u9019\u500B category \u548C\u5B83\u7684\u76EE\u6A19\u6703\u6D88\u5931\uFF0C\u5DF2\u8A18\u9304\u7684\u6642\u6578\u6703\u4FDD\u7559\u5728\u6B77\u53F2\u88E1\u3002',confirmText:'\u522A\u9664',danger:true,onConfirm:function(){up(function(d){d.categories=d.categories.filter(function(x){return x.id!==cat.id})})}})},style:{background:'transparent',border:'none',color:'var(--t35)',cursor:'pointer',padding:4,display:'flex'}},React.createElement(Icon,{name:'x',size:15}))),
-dirty&&React.createElement('div',{style:{display:'flex',alignItems:'center',gap:8,marginTop:8,padding:'6px 8px',background:'rgba(201,168,106,.07)',borderRadius:8}},
-React.createElement('span',{style:{fontSize:11,color:'#C9A86A',flex:1}},cat.weeklyGoalHours+'h \u2192 '+draft+'h\uFF0C\u7ACB\u5373\u751F\u6548'),
-React.createElement('button',{onClick:function(){var v=draft,from=cat.weeklyGoalHours;up(function(d){var c=d.categories.find(function(x){return x.id===cat.id});if(c){c.weeklyGoalHours=v;d.goalEditLog.push({date:todayS(),catId:cat.id,from:from,to:v})}});setDraft(cat.id,null);setTimeout(function(){trig(null,{goalEdit:{cat:cat.name,from:from,to:v,n:(data.goalEditLog||[]).length+1}})},400)},style:{padding:'4px 10px',background:'#FF2D20',border:'none',borderRadius:6,color:'#fff',fontSize:11,cursor:'pointer'}},'\u78BA\u8A8D\u4FEE\u6539'),
-React.createElement('button',{onClick:function(){setDraft(cat.id,null)},style:{padding:'4px 10px',background:'transparent',border:'1px solid #333',borderRadius:6,color:'#888',fontSize:11,cursor:'pointer'}},'\u9084\u539F')))}),
+dirty&&React.createElement('div',{style:{display:'flex',alignItems:'center',gap:8,marginTop:8,padding:'8px 10px',background:'rgba(201,168,106,.12)',borderRadius:8,border:'1px solid rgba(201,168,106,.35)'}},
+React.createElement('span',{style:{fontSize:12,color:'#C9A86A',flex:1,fontWeight:500}},cat.weeklyGoalHours+'h \u2192 '+draft+'h ?'),
+React.createElement('button',{onClick:function(){setDraft(cat.id,null)},style:{padding:'6px 12px',background:'transparent',border:'1px solid rgba(255,255,255,.2)',borderRadius:6,color:'var(--t60)',fontSize:12,cursor:'pointer'}},'\u53D6\u6D88'),
+React.createElement('button',{onClick:function(){var v=draft,from=cat.weeklyGoalHours;up(function(d){var c=d.categories.find(function(x){return x.id===cat.id});if(c){c.weeklyGoalHours=v;d.goalEditLog.push({date:todayS(),catId:cat.id,from:from,to:v})}});setDraft(cat.id,null);setTimeout(function(){trig(null,{goalEdit:{cat:cat.name,from:from,to:v,n:(data.goalEditLog||[]).length+1}})},400)},style:{padding:'6px 16px',background:'#C9A86A',border:'none',borderRadius:6,color:'#0a0a0a',fontSize:12,fontWeight:600,cursor:'pointer'}},'\u2713 \u78BA\u8A8D\u6539\u52D5')))}),
 React.createElement('h2',{className:'tag',style:{margin:'26px 0 10px'}},'NEW CATEGORY'),
 React.createElement('div',{style:{display:'flex',gap:8,alignItems:'center'}},
 React.createElement('input',{value:nc,onChange:function(e){setNc(e.target.value)},placeholder:'\u540D\u7A31',style:{flex:1,padding:'10px 12px',background:'#0d0d0d',border:'1px solid var(--line)',borderRadius:8,color:'#fff',fontSize:14,outline:'none',minWidth:0}}),
