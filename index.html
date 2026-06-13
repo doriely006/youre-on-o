@@ -529,10 +529,10 @@ React.createElement('span',{style:{fontSize:9,color:'rgba(255,255,255,.45)',marg
 var userReply=React.createElement('div',{key:'reply',style:{display:'flex',justifyContent:'flex-end',alignItems:'flex-end',marginTop:8}},
 React.createElement('span',{style:{fontSize:9,color:'rgba(255,255,255,.45)',marginRight:4,marginBottom:2}},'\u5DF2\u8B80'),
 React.createElement('div',{style:{position:'relative'}},
-React.createElement('div',{style:{position:'absolute',right:-6,top:8,width:0,height:0,borderTop:'6px solid transparent',borderBottom:'6px solid transparent',borderLeft:'6px solid #5AC463'}}),
-React.createElement('div',{style:{background:'#5AC463',color:'#fff',padding:'8px 12px',borderRadius:'18px 2px 18px 18px',fontSize:14}},'\u22EF')));
-lineEl=React.createElement('div',{style:{background:'#7494A7',borderRadius:12,overflow:'hidden'}},
-React.createElement('div',{style:{background:'#6B8FA8',padding:'10px 14px',display:'flex',alignItems:'center',gap:8}},
+React.createElement('div',{style:{position:'absolute',right:-6,top:8,width:0,height:0,borderTop:'6px solid transparent',borderBottom:'6px solid transparent',borderLeft:'6px solid #06C755'}}),
+React.createElement('div',{style:{background:'#06C755',color:'#fff',padding:'8px 12px',borderRadius:'18px 2px 18px 18px',fontSize:14}},'\u22EF')));
+lineEl=React.createElement('div',{style:{background:'#8cabd8',borderRadius:12,overflow:'hidden'}},
+React.createElement('div',{style:{background:'#7e9ecb',padding:'10px 14px',display:'flex',alignItems:'center',gap:8}},
 React.createElement('span',{style:{color:'rgba(255,255,255,.7)',fontSize:14}},'\u25C0'),
 React.createElement('span',{style:{fontSize:24}},cm.char.avatar),
 React.createElement('span',{style:{color:'#fff',fontSize:15,fontWeight:600}},cm.char.name)),
@@ -677,7 +677,7 @@ var snap={...data,records:data.records.concat(newRecs||[])};
 var out=genComment(snap,ev);
 if(out){if(ev&&!ev.goalEdit)out.cm.air=ev;if(out.persist)up(out.persist);
 if(ev&&ev.comeback){var ep=Object.keys(snap.records.reduce(function(m,r){if(r.hours>0)m[r.date]=1;return m},{})).length;setComebackCard({offDays:ev.offDays,refund:ev.refund||0,ep:ep})}
-setComment(out.cm)}},[data,up]);
+setComment(out.cm);setPage('dashboard')}},[data,up]);
 var[intro,setIntro]=useState(function(){return!!data.setupDone});
 useEffect(function(){var id=setTimeout(function(){setIntro(false)},2300);return function(){clearTimeout(id)}},[]);
 var[modal,setModal]=useState(null);
@@ -830,7 +830,11 @@ React.createElement('stop',{offset:1,stopColor:'#050505'})),
 React.createElement('linearGradient',{id:'seatD',x1:0,y1:0,x2:0,y2:1},
 React.createElement('stop',{offset:0,stopColor:'#121212'}),
 React.createElement('stop',{offset:.5,stopColor:'#070707'}),
-React.createElement('stop',{offset:1,stopColor:'#020202'}))),
+React.createElement('stop',{offset:1,stopColor:'#020202'})),
+React.createElement('radialGradient',{id:'headG',cx:'42%',cy:'30%',r:'72%'},
+React.createElement('stop',{offset:0,stopColor:'#3a352d'}),
+React.createElement('stop',{offset:.55,stopColor:'#151515'}),
+React.createElement('stop',{offset:1,stopColor:'#040404'}))),
 backRow.map(function(s){var occ=!emptySet[s.idx];return React.createElement('g',{key:'b'+s.idx},
 occ&&React.createElement('circle',{cx:s.x+10,cy:11,r:3.4,fill:'#070707'}),
 occ&&React.createElement('path',{d:'M'+(s.x+6.6)+' 11 A3.4 3.4 0 0 1 '+(s.x+13.4)+' 11',fill:'none',stroke:'rgba(255,225,180,.12)',strokeWidth:.6}),
@@ -841,10 +845,9 @@ occ&&React.createElement('circle',{cx:s.x+13.5,cy:28,r:4.6,fill:'#070707'}),
 React.createElement('path',{d:topRect(s.x,30,27,18,8),fill:occ?(lt?'url(#seatL)':'url(#seatD)'):(lt?'#080808':'#050505')}),
 React.createElement('path',{d:topArc(s.x,30,27,8),fill:'none',stroke:occ?(lt?'rgba(255,226,182,.26)':'rgba(255,226,182,.15)'):'rgba(255,226,182,.06)',strokeWidth:.9}))}),
 frontRow.map(function(s){var occ=!emptySet[s.idx],lt=s.idx%2===0,cx=s.x+16;return React.createElement('g',{key:'f'+s.idx},
-occ&&React.createElement('circle',{cx:cx,cy:39,r:6.8,fill:'#0a0a0a'}),
+occ&&React.createElement('circle',{cx:cx,cy:39,r:6.8,fill:'url(#headG)'}),
 React.createElement('path',{d:topRect(s.x,42,32,28,10),fill:occ?(lt?'url(#seatL)':'url(#seatD)'):(lt?'#080808':'#050505')}),
-React.createElement('path',{d:topArc(s.x,42,32,10),fill:'none',stroke:occ?(lt?'rgba(255,228,185,.3)':'rgba(255,228,185,.17)'):'rgba(255,228,185,.07)',strokeWidth:1}),
-occ&&React.createElement('path',{d:'M'+(cx-6.8)+' 39 A6.8 6.8 0 0 1 '+(cx+6.8)+' 39',fill:'none',stroke:'rgba(255,231,196,.55)',strokeWidth:1.3}))})))),
+React.createElement('path',{d:topArc(s.x,42,32,10),fill:'none',stroke:occ?(lt?'rgba(255,228,185,.3)':'rgba(255,228,185,.17)'):'rgba(255,228,185,.07)',strokeWidth:1}))})))),
 React.createElement('div',{style:{display:'flex',justifyContent:'space-around',margin:'14px 0 2px'}},
 screenItems.map(function(item,i){return React.createElement('div',{key:i,style:{textAlign:'center',flex:1}},
 React.createElement('div',{className:'tag'},item[0]),
