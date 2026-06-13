@@ -37,7 +37,7 @@ input[type="date"]{color-scheme:dark}input[type="number"]{-moz-appearance:textfi
 const{useState,useEffect,useMemo,useCallback}=React;
 const KEY='reality_v6';const OLDKEY='reality_v5';
 const init=()=>({categories:[],records:[],setupDone:false,
-audience:100,lapseLoss:0,audienceDay:null,lastAirDate:null,audienceLog:[],lastSettledWeek:null,
+audience:100,audiencePeak:100,lapseLoss:0,audienceDay:null,lastAirDate:null,audienceLog:[],lastSettledWeek:null,
 declaration:{text:'',date:null,history:[]},charMemory:{},milestones:{},monthlyReviews:[],goalEditLog:[]});
 const migrateV5=old=>{const d=init();
 d.setupDone=!!old.setupDone;
@@ -53,7 +53,7 @@ const load=()=>{try{
 let d=JSON.parse(localStorage.getItem(KEY));
 if(!d){const old=JSON.parse(localStorage.getItem(OLDKEY));if(old)d=migrateV5(old)}
 if(!d)return null;
-if(d.audience==null)d.audience=100;if(d.lapseLoss==null)d.lapseLoss=0;
+if(d.audience==null)d.audience=100;if(d.audiencePeak==null)d.audiencePeak=Math.max(100,d.audience);if(d.lapseLoss==null)d.lapseLoss=0;
 if(!d.audienceLog)d.audienceLog=[];if(!d.declaration)d.declaration={text:'',date:null,history:[]};
 if(!d.charMemory)d.charMemory={};if(!d.milestones)d.milestones={};if(!d.monthlyReviews)d.monthlyReviews=[];if(!d.goalEditLog)d.goalEditLog=[];
 return d}catch{return null}};
@@ -91,6 +91,7 @@ const hasRecOn=(recs,date)=>recs.some(r=>r.date===date&&r.hours>0);
 const audApply=(d,delta,reason,date)=>{
 const before=d.audience,after=Math.max(1,before+delta),actual=after-before;
 d.audience=after;
+if(after>(d.audiencePeak||100))d.audiencePeak=after;
 d.audienceLog.push({date:date,delta:actual,reason:reason});
 if(d.audienceLog.length>80)d.audienceLog=d.audienceLog.slice(-80);
 return actual};
@@ -711,10 +712,14 @@ var sizeCap=n<=2?150:n===3?125:n===4?118:n<=6?103:92;
 var ringSize=Math.min(sizeCap,Math.floor((398-8*(maxRow-1))/maxRow));
 var topRow=catData.slice(0,topCount);
 var bottomRow=catData.slice(topCount);
-// 觀眾席：連續人群剪影（頭+肩弧線），後排小、前排大，前排頂緣吃銀幕光
-var crowdPath=function(heads,yb){var p='M-4 60 L-4 '+yb;heads.forEach(function(h){p+=' L'+Math.round((h.x-h.r)*10)/10+' '+yb+' A'+h.r+' '+Math.round(h.r*1.12*10)/10+' 0 0 1 '+Math.round((h.x+h.r)*10)/10+' '+yb});return p+' L434 '+yb+' L434 60 Z'};
-var backHeads=Array.from({length:30},function(_,i){return{x:2+i*14.6+((i*11)%4)-1.5,r:3.9+((i*7)%4)*0.35}});
-var frontHeads=Array.from({length:24},function(_,i){return{x:i*18.2+((i*3)%5)-2,r:6+((i*7)%5)*0.45}});
+// 觀眾席 = 觀眾數視覺化：28 席固定，入座數 = 觀眾/歷史高點，掉觀眾就出現空椅。
+// 空席順序固定（散落感），最後一席永遠有人——那是阿姨
+var seatRatio=Math.max(0,Math.min(1,data.audience/(data.audiencePeak||100)));
+var occCount=Math.max(1,Math.round(seatRatio*28));
+var emptyOrder=[3,14,7,22,11,26,1,18,9,24,5,16,13,27,2,20,6,25,10,15,0,19,8,23,12,21,4,17];
+var emptySet={};emptyOrder.slice(0,28-occCount).forEach(function(ix){emptySet[ix]=1});
+var backRow=Array.from({length:16},function(_,i){return{idx:i,x:8+i*26.4}});
+var frontRow=Array.from({length:12},function(_,i){return{idx:16+i,x:2+i*36}});
 return React.createElement('div',{style:{padding:'0 16px',minHeight:'calc(100vh - 70px)',display:'flex',flexDirection:'column'}},
 React.createElement('div',{style:{position:'relative',margin:'0 -16px',height:354,overflow:'hidden'}},
 React.createElement(Auditorium,null),
@@ -738,8 +743,16 @@ React.createElement('div',{style:{color:offDays>=1?'#b3261a':'#6b5836',fontSize:
 React.createElement('div',{style:{position:'absolute',left:0,right:0,bottom:0,height:54,zIndex:2}},
 React.createElement('div',{style:{position:'absolute',top:-26,left:0,right:0,height:30,background:'linear-gradient(180deg,transparent,rgba(255,235,200,.06))',pointerEvents:'none'}}),
 React.createElement('svg',{width:'100%',height:54,style:{position:'absolute',bottom:0,left:0},viewBox:'0 0 430 54',preserveAspectRatio:'xMidYMax slice'},
-React.createElement('path',{d:crowdPath(backHeads,26),fill:'#070707',stroke:'rgba(255,222,172,.09)',strokeWidth:.8}),
-React.createElement('path',{d:crowdPath(frontHeads,50),fill:'#020202',stroke:'rgba(255,228,185,.20)',strokeWidth:1})))),
+backRow.map(function(s){var occ=!emptySet[s.idx];return React.createElement('g',{key:'b'+s.idx},
+occ&&React.createElement('circle',{cx:s.x+10,cy:14,r:4.2,fill:'#080808'}),
+occ&&React.createElement('path',{d:'M'+(s.x+5.8)+' 14 A4.2 4.2 0 0 1 '+(s.x+14.2)+' 14',fill:'none',stroke:'rgba(255,225,180,.13)',strokeWidth:.7}),
+React.createElement('rect',{x:s.x,y:18,width:20,height:11,rx:3,fill:occ?'#060606':'#040404'}),
+React.createElement('rect',{x:s.x,y:18,width:20,height:1,rx:.5,fill:occ?'rgba(255,220,170,.07)':'rgba(255,220,170,.035)'}))}),
+frontRow.map(function(s){var occ=!emptySet[s.idx];return React.createElement('g',{key:'f'+s.idx},
+occ&&React.createElement('circle',{cx:s.x+14,cy:33,r:6,fill:'#050505'}),
+occ&&React.createElement('path',{d:'M'+(s.x+8)+' 33 A6 6 0 0 1 '+(s.x+20)+' 33',fill:'none',stroke:'rgba(255,228,185,.30)',strokeWidth:1}),
+React.createElement('rect',{x:s.x,y:38,width:28,height:16,rx:4,fill:occ?'#040404':'#030303'}),
+React.createElement('rect',{x:s.x,y:38,width:28,height:1.4,rx:.7,fill:occ?'rgba(255,222,175,.12)':'rgba(255,222,175,.05)'}))})))),
 React.createElement('div',{style:{display:'flex',justifyContent:'space-around',margin:'14px 0 2px'}},
 screenItems.map(function(item,i){return React.createElement('div',{key:i,style:{textAlign:'center',flex:1}},
 React.createElement('div',{className:'tag'},item[0]),
