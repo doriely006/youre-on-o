@@ -43,7 +43,7 @@ const{useState,useEffect,useMemo,useCallback}=React;
 const KEY='reality_v6';const OLDKEY='reality_v5';
 const init=()=>({categories:[],records:[],setupDone:false,
 audience:1000,audiencePeak:1000,lapseLoss:0,audienceDay:null,lastAirDate:null,audienceLog:[],lastSettledWeek:null,
-declaration:{text:'',date:null,history:[]},charMemory:{},milestones:{},monthlyReviews:[],goalEditLog:[],liveSession:null});
+declaration:{text:'',date:null,history:[]},charMemory:{},milestones:{},monthlyReviews:[],goalEditLog:[],liveSession:null,walkSeen:false});
 const migrateV5=old=>{const d=init();
 d.setupDone=!!old.setupDone;
 d.records=(old.records||[]).map(r=>({...r}));
@@ -62,6 +62,7 @@ if(d.audience==null)d.audience=1000;if(d.audiencePeak==null)d.audiencePeak=Math.
 if(!d.audienceLog)d.audienceLog=[];if(!d.declaration)d.declaration={text:'',date:null,history:[]};
 if(!d.charMemory)d.charMemory={};if(!d.milestones)d.milestones={};if(!d.monthlyReviews)d.monthlyReviews=[];if(!d.goalEditLog)d.goalEditLog=[];
 if(d.liveSession===undefined)d.liveSession=null;
+if(d.walkSeen===undefined)d.walkSeen=false;
 return d}catch{return null}};
 const save=d=>{try{localStorage.setItem(KEY,JSON.stringify(d))}catch{}};
 const toS=d=>d.toISOString().slice(0,10);
@@ -699,6 +700,61 @@ React.createElement('button',{onClick:toMonthEnd,style:btn},'→月底'),
 React.createElement('button',{onClick:real,style:Object.assign({},btn,{color:'#C9A86A'})},'回真實'),
 React.createElement('button',{onClick:exit,style:Object.assign({},btn,{color:'#FF6B6B'})},'關DEV'),
 React.createElement('button',{onClick:function(){setOpen(false)},style:btn},'▲'))}
+// 主畫面縮圖：帶看時讓使用者先認得 dashboard 的三個重點（收看人數 / 達成率 / 觀眾席）
+function MiniDash(){
+return React.createElement('div',{style:{border:'1px solid rgba(255,255,255,.1)',borderRadius:12,padding:'14px 16px 12px',margin:'6px 0 2px',background:'radial-gradient(ellipse 80% 60% at 50% 28%,rgba(201,168,106,.07),rgba(255,255,255,.012))'}},
+React.createElement('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}},
+React.createElement('div',{style:{display:'flex',alignItems:'center',gap:5}},
+React.createElement('span',{style:{width:6,height:6,borderRadius:3,background:'#FF2D20',boxShadow:'0 0 8px rgba(255,45,32,.8)'}}),
+React.createElement('span',{style:{fontSize:8,letterSpacing:2,color:'#FF2D20'}},'ON AIR')),
+React.createElement('span',{className:'ft',style:{fontSize:11,color:'var(--t35)',letterSpacing:1}},'EP.1')),
+React.createElement('div',{style:{textAlign:'center'}},
+React.createElement('div',{style:{fontSize:8,letterSpacing:3,color:'var(--t35)'}},'目前收看人數'),
+React.createElement('div',{className:'ft',style:{fontSize:44,color:'#C9A86A',lineHeight:1.08,textShadow:'0 0 14px rgba(201,168,106,.35)'}},'1,000'),
+React.createElement('div',{style:{fontSize:8,color:'#C9A86A',letterSpacing:1}},'↑ 全畫面最大的數字，就是它')),
+React.createElement('div',{style:{display:'flex',justifyContent:'center',gap:4,marginTop:10}},
+[1,1,1,0,1,1,1,1,0,1,1].map(function(o,k){return React.createElement('div',{key:k,style:{width:14,height:11,borderRadius:'5px 5px 2px 2px',background:o?'#222':'transparent',border:o?'none':'1px dashed rgba(255,255,255,.14)'}})})),
+React.createElement('div',{style:{textAlign:'center',fontSize:8,color:'var(--t35)',letterSpacing:1,marginTop:6}},'觀眾席 — 空位 = 離席的觀眾'))}
+// 製作人開場帶看：新使用者設定前先帶看一遍；也可從 Settings 重看。製作人是全節目唯一不嘴你、只解釋的角色
+function Walkthrough({onDone,replay}){
+var[i,setI]=useState(0);
+var steps=[
+{tag:'WELCOME ・ 製作人開場',title:'這不是待辦清單。\n這是你的節目。',
+lines:['我是這個節目的製作人。它叫 You’re On。','先別急著填表——給我一分鐘，我帶你看一遍它怎麼運作。看懂了，再開始。']},
+{tag:'STEP 1 ・ 節目單',title:'先決定\n你要播什麼',
+lines:['把你想投入的領域，各開成一個「單元」——找工作、健身、英文，隨你。','每個單元設一個「每週想花幾小時」。這份就是你的節目單，也是你對自己的承諾。']},
+{tag:'STEP 2 ・ 收看人數',title:'這個數字，\n是你的觀眾',
+lines:['主畫面最大的那個數字＝目前收看人數。','每天有記錄＝今天有播出，觀眾會進場；連續幾天不記＝停播，觀眾會離席，座位一個個空掉。','不用算分數，看觀眾就好。數字不會說謊。'],visual:'dash'},
+{tag:'STEP 3 ・ 怎麼播出',title:'記一筆，\n就是播一集',
+lines:['到下排的 RECORD，幫每個單元填今天的時數，按「播出本集」——這集就播了。','沒空慢慢算？用 LIVE 計時器邊做邊播，停止時自動換算填好。']},
+{tag:'STEP 4 ・ 觀眾席',title:'觀眾會說話，\n而且記仇',
+lines:['播完，觀眾會留言：朋友、同事、老闆、阿姨、前任。','他們有記憶——會翻你舊帳、引用你說過的話。被嘴是這節目的一部分，別當真到刪 app。','我，是全場唯一不嘴你的人。']},
+{tag:'STEP 5 ・ 開場宣言',title:'最後一句話：\n你為什麼開這個節目？',
+lines:['等等設定時，你要寫一句開場宣言——年底前轉職、瘦十公斤，什麼都行。','觀眾會記住它。月底我會拿這句話，問你一個問題。只問，不嘴。']},
+{tag:'YOU’RE ON',title:'好，\n換你上場了',
+lines:['大概就這樣。看不懂很正常——做一遍就懂了。','燈亮了，觀眾陸續進場。我們開始設定你的節目。'],cta:true}];
+var last=i===steps.length-1,s=steps[i];
+var go=function(n){setI(Math.max(0,Math.min(steps.length-1,n)))};
+return React.createElement('div',{style:{position:'fixed',inset:0,zIndex:1300,background:'radial-gradient(ellipse 100% 70% at 50% 0%,#0c0c0c,#050505 70%)',overflowY:'auto'}},
+React.createElement('div',{style:{maxWidth:430,margin:'0 auto',minHeight:'100vh',padding:'30px 26px 34px',color:'#fff',display:'flex',flexDirection:'column',boxSizing:'border-box'}},
+React.createElement('div',{style:{display:'flex',justifyContent:'flex-end',marginBottom:10,height:18}},
+!last&&React.createElement('button',{onClick:onDone,style:{background:'none',border:'none',color:'var(--t35)',fontSize:12,letterSpacing:1,cursor:'pointer',padding:0}},replay?'關閉':'略過教學')),
+React.createElement('div',{className:'tag',style:{color:'#C9A86A',letterSpacing:4,marginBottom:18}},s.tag),
+React.createElement('div',{className:'spot',style:{display:'flex',alignItems:'center',gap:11,marginBottom:18}},
+React.createElement('div',{style:{width:40,height:40,borderRadius:20,border:'1px solid rgba(201,168,106,.5)',display:'flex',alignItems:'center',justifyContent:'center',color:'#C9A86A',fontFamily:"'Bebas Neue',sans-serif",fontSize:19,flexShrink:0}},'P'),
+React.createElement('div',null,
+React.createElement('div',{style:{fontSize:14,fontWeight:500}},'製作人'),
+React.createElement('div',{style:{fontSize:10,color:'var(--t35)'}},'全節目唯一不嘴你的人。他只帶你看一遍。'))),
+React.createElement('h1',{className:'ft',style:{fontSize:38,letterSpacing:1,lineHeight:1.08,margin:'4px 0 20px',whiteSpace:'pre-line'}},s.title),
+React.createElement('div',{key:i,className:'fade-in'},
+s.lines.map(function(p,k){return React.createElement('p',{key:k,style:{fontSize:15,color:'rgba(255,255,255,.82)',lineHeight:1.85,margin:'0 0 12px'}},p)}),
+s.visual==='dash'&&React.createElement(MiniDash,null)),
+React.createElement('div',{style:{flex:1,minHeight:18}}),
+React.createElement('div',{style:{display:'flex',justifyContent:'center',gap:7,margin:'0 0 18px'}},
+steps.map(function(_,k){return React.createElement('button',{key:k,onClick:function(){go(k)},style:{width:k===i?20:7,height:7,borderRadius:4,border:'none',padding:0,cursor:'pointer',background:k===i?'#C9A86A':'rgba(255,255,255,.18)',transition:'all .2s'}})})),
+React.createElement('div',{style:{display:'flex',gap:10}},
+i>0&&React.createElement('button',{onClick:function(){go(i-1)},style:{padding:'14px 20px',background:'transparent',border:'1px solid rgba(255,255,255,.14)',borderRadius:12,color:'var(--t60)',fontSize:13,cursor:'pointer'}},'上一步'),
+React.createElement('button',{onClick:function(){last?onDone():go(i+1)},style:{flex:1,padding:'14px 0',background:'#C9A86A',border:'none',borderRadius:12,color:'#0a0a0a',fontSize:last?17:15,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:2,cursor:'pointer'}},last?(replay?'知道了':'開始設定我的節目'):'下一步'))))}
 function App(){
 var[data,setData]=useState(function(){var d=load()||init();d=settleAll(d);save(d);return d});
 var[page,setPage]=useState('dashboard');
@@ -717,13 +773,16 @@ setComment(out.cm);setPage('dashboard')}},[data,up]);
 var[intro,setIntro]=useState(function(){return!!data.setupDone});
 useEffect(function(){var id=setTimeout(function(){setIntro(false)},2300);return function(){clearTimeout(id)}},[]);
 var[modal,setModal]=useState(null);
+var[showWalk,setShowWalk]=useState(false);
 var ask=useCallback(function(o){setModal(o)},[]);
-if(!data.setupDone)return React.createElement(Setup,{up:up});
+if(!data.setupDone){
+if(!data.walkSeen)return React.createElement(Walkthrough,{onDone:function(){up(function(d){d.walkSeen=true})}});
+return React.createElement(Setup,{up:up});}
 var rvMonth=dueReviewMonth(data);
 var content=null;
 if(page==='dashboard')content=React.createElement(Dash,{data:data});
 if(page==='record')content=React.createElement(Rec,{data:data,up:up,trig:trigCmt,ask:ask});
-if(page==='settings')content=React.createElement(Settings,{data:data,up:up,ask:ask,trig:trigCmt});
+if(page==='settings')content=React.createElement(Settings,{data:data,up:up,ask:ask,trig:trigCmt,replayGuide:function(){setShowWalk(true)}});
 var navItems=[['dashboard','home','HOME'],['record','record','RECORD'],['settings','settings','SETTINGS']];
 return React.createElement('div',{style:{maxWidth:430,margin:'0 auto',minHeight:'100vh',background:'transparent',fontFamily:"'Noto Sans TC',sans-serif",color:'#fff',paddingBottom:74}},
 content,
@@ -733,6 +792,7 @@ comment&&React.createElement(CommentOverlay,{comment:comment,onClose:function(){
 comebackCard&&React.createElement(ComebackCard,{offDays:comebackCard.offDays,refund:comebackCard.refund,ep:comebackCard.ep,onClose:function(){setComebackCard(null)}}),
 DEV&&React.createElement(DevBar,{data:data,up:up,trig:trigCmt}),
 modal&&React.createElement(Modal,{title:modal.title,body:modal.body,confirmText:modal.confirmText,danger:modal.danger,onConfirm:modal.onConfirm,onClose:function(){setModal(null)}}),
+showWalk&&React.createElement(Walkthrough,{replay:true,onDone:function(){setShowWalk(false)}}),
 rvMonth&&React.createElement(MonthlyReview,{data:data,month:rvMonth,up:up,setPage:setPage}),
 intro&&React.createElement('div',{style:{position:'fixed',inset:0,zIndex:1200,display:'flex',overflow:'hidden',pointerEvents:'none'}},
 React.createElement('div',{className:'curtain-l',style:{width:'50%',height:'100%'}},React.createElement(IntroPanel,{side:'l'})),
@@ -996,7 +1056,7 @@ React.createElement('p',{className:'tag',style:{marginBottom:8}},date===todayS()
 React.createElement('div',{style:{display:'flex',flexWrap:'wrap',gap:8}},
 dayLog.map(function(l,i){return React.createElement('span',{key:i,style:{padding:'4px 10px',borderRadius:6,fontSize:13,color:'var(--t60)',background:'rgba(255,255,255,.04)'}},l.name+' ',React.createElement('span',{className:'ft',style:{color:'#C9A86A'}},l.hours+'h'),l.live&&React.createElement('span',{style:{marginLeft:5,fontSize:9,color:'#FF2D20',letterSpacing:1,fontWeight:500}},'● LIVE'))}))),
 React.createElement('button',{onClick:submit,style:{width:'100%',padding:16,marginTop:8,background:saved?'#C9A86A':total>0?'#C9A86A':'rgba(255,255,255,.06)',border:'none',borderRadius:12,color:saved||total>0?'#0a0a0a':'var(--t35)',fontSize:19,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:3,cursor:total>0?'pointer':'default'}},saved?'\u2713 ON AIR':'\u64ad\u51fa\u672c\u96c6'))}
-function Settings({data,up,ask,trig}){
+function Settings({data,up,ask,trig,replayGuide}){
 var[nc,setNc]=useState('');
 var[nh,setNh]=useState(5);
 var[drafts,setDrafts]=useState({});
@@ -1010,6 +1070,12 @@ return React.createElement('div',{style:{padding:16}},
 React.createElement('div',{style:{margin:'18px 0 14px'}},
 React.createElement('h1',{className:'ft',style:{fontSize:30,letterSpacing:1,margin:0}},'SETTINGS'),
 React.createElement('p',{className:'tag'},'\u88FD\u4F5C\u55AE\u4F4D\u5F8C\u53F0')),
+replayGuide&&React.createElement('button',{onClick:replayGuide,style:{width:'100%',display:'flex',alignItems:'center',gap:11,padding:'12px 14px',marginBottom:6,background:'rgba(201,168,106,.06)',border:'1px solid rgba(201,168,106,.28)',borderRadius:12,color:'#fff',cursor:'pointer',textAlign:'left'}},
+React.createElement('div',{style:{width:32,height:32,borderRadius:16,border:'1px solid rgba(201,168,106,.5)',display:'flex',alignItems:'center',justifyContent:'center',color:'#C9A86A',fontFamily:"'Bebas Neue',sans-serif",fontSize:16,flexShrink:0}},'P'),
+React.createElement('div',{style:{flex:1}},
+React.createElement('div',{style:{fontSize:14,fontWeight:500}},'\u91CD\u770B\u88FD\u4F5C\u4EBA\u5E36\u770B'),
+React.createElement('div',{style:{fontSize:10,color:'var(--t35)'}},'\u4E0D\u61C2\u9019\u500B app \u600E\u9EBC\u73A9\uFF1F\u8B93\u88FD\u4F5C\u4EBA\u518D\u5E36\u4F60\u8D70\u4E00\u904D')),
+React.createElement('span',{style:{color:'var(--t35)',fontSize:18}},'\u203A')),
 (data.goalEditLog||[]).length>0&&React.createElement('p',{style:{color:'#C9A86A',fontSize:11,marginBottom:2,display:'flex',alignItems:'center',gap:5}},React.createElement(Icon,{name:'eye',size:13,color:'#C9A86A'}),'\u76EE\u6A19\u5DF2\u4FEE\u6539 '+data.goalEditLog.length+' \u6B21\uFF0C\u89C0\u773E\u90FD\u8A18\u5F97'),
 React.createElement('h2',{className:'tag',style:{margin:'22px 0 6px'}},'OPENING DECLARATION'),
 !dEdit&&React.createElement('div',{style:{padding:'2px 2px 4px'}},
